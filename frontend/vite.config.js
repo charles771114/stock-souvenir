@@ -1,8 +1,9 @@
-import { defineConfig } from 'vite';
-import vue from '@vitejs/plugin-vue';
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  base: '/stock-souvenir/',
   plugins: [vue()],
   resolve: {
     alias: {
@@ -10,8 +11,8 @@ export default defineConfig({
     }
   },
   server: {
-    proxy: {
+    proxy: mode === 'development' ? {
       '/api': 'http://localhost:3001'
-    }
+    } : undefined
   }
-});
+}))
