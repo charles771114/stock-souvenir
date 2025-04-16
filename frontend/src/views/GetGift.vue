@@ -28,6 +28,9 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import GiftList from '@/components/GiftList.vue'
+
+const baseUrl = import.meta.env.VITE_API_BASE_URL
+
 const gifts = ref([])
 const year = ref(new Date().getFullYear())
 const loading = ref(true)
@@ -35,14 +38,14 @@ const error = ref('')
 const syncing = ref(false)
 const syncResult = ref('')
 
-// 🔄 手動觸發 Firestore 同步
+// 手動觸發 Firestore 同步
 const syncFirestore = async () => {
   syncing.value = true
   syncResult.value = ''
   try {
-    const res = await axios.post('/api/firestore/sync')
+    const res = await axios.post(`${baseUrl}/api/firestore/sync`)
     syncResult.value = res.data.message || '同步完成'
-    await fetchGifts() // 同步完重新抓取
+    await fetchGifts()
   } catch (e) {
     syncResult.value = '同步失敗：' + (e.response?.data?.error || e.message)
   } finally {
@@ -50,12 +53,11 @@ const syncFirestore = async () => {
   }
 }
 
-// 🧊 抓資料
+// 抓資料
 const fetchGifts = async () => {
   loading.value = true
   try {
-    const { data } = await axios.get('/api/firestore/gifts')
-    console.log(data)
+    const { data } = await axios.get(`${baseUrl}/api/firestore/gifts`)
     gifts.value = data
   } catch (err) {
     error.value = err.message
@@ -65,5 +67,4 @@ const fetchGifts = async () => {
 }
 
 onMounted(() => fetchGifts())
-
 </script>

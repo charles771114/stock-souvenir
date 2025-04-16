@@ -5,6 +5,8 @@ import axios from 'axios'
 import { collection, getDocs } from 'firebase/firestore'
 import { db } from '@/firebase'
 
+const baseUrl = import.meta.env.VITE_API_BASE_URL
+
 export const usePdfGiftStore = defineStore('pdfGift', () => {
   const file = ref(null)
   const password = ref('')
@@ -34,7 +36,7 @@ export const usePdfGiftStore = defineStore('pdfGift', () => {
       error.value = ''
       result.value = []
 
-      const { data } = await axios.post('/api/pdf/decrypt', formData)
+      const { data } = await axios.post(`${baseUrl}/api/pdf/decrypt`, formData)
       result.value = data.stocks || []
 
       compareWithGifts()

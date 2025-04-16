@@ -6,7 +6,8 @@ yarn-debug.log*
 yarn-error.log*
 firebase-debug.log*
 firebase-debug.*.log*
-
+frontend/.env.development
+frontend/.env.production
 # Firebase cache
 .firebase/
 server/.env

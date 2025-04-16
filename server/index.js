@@ -1,14 +1,10 @@
 import express from 'express'
-import axios from 'axios'
-import * as cheerio from 'cheerio'
-import iconv from 'iconv-lite'
 import multer from 'multer'
 import pkg from 'pdfjs-dist/legacy/build/pdf.js'
 import cors from 'cors'
 import { db } from './firebase.js'
-import crypto from 'crypto'
 
-// ✅ 匯入 Firestore 同步函式
+//  匯入 Firestore 同步函式
 import { updateToFirestore } from './syncFirestore.js'
 
 const { getDocument } = pkg
@@ -32,7 +28,7 @@ app.get('/api/firestore/gifts', async (req, res) => {
 })
 
 /**
- * 🔁 由前端觸發：手動同步 Firestore
+ * 由前端觸發：手動同步 Firestore
  */
 app.post('/api/firestore/sync', async (req, res) => {
   try {
@@ -45,7 +41,7 @@ app.post('/api/firestore/sync', async (req, res) => {
 })
 
 /**
- * 🔓 PDF 解密 API：解析上傳的 PDF 並提取代碼與名稱
+ * PDF 解密 API：解析上傳的 PDF 並提取代碼與名稱
  */
 app.post('/api/pdf/decrypt', upload.single('file'), async (req, res) => {
   try {
@@ -104,6 +100,19 @@ app.post('/api/pdf/decrypt', upload.single('file'), async (req, res) => {
     res.status(500).json({ error: 'PDF 解密或讀取失敗，可能密碼錯誤或檔案損壞' })
   }
 })
+
+// 取得render 啟動狀態
+app.get('/api/health', (req, res) => {
+  const coldStartThreshold = 10000 // 10 秒
+  const uptime = Math.floor(process.uptime() * 1000)
+
+  res.json({
+    status: uptime < coldStartThreshold ? 'cold-start' : 'warm',
+    uptimeMs: uptime,
+    serverTime: new Date().toISOString()
+  })
+})
+
 
 // 啟動伺服器
 const PORT = process.env.PORT || 3001

@@ -3,6 +3,7 @@
     <!-- <Loading /> -->
     <Header />
     <div class="main">
+      <HealthCheck/>
       <AppMain />
     </div>
   </div>
@@ -13,6 +14,7 @@
 import AppMain from '@/layout/components/AppMain.vue'
 import Header from '@/layout/components/Header.vue'
 import Sidebar from '@/layout/components/Sidebar.vue'
+import HealthCheck from '../components/HealthCheck.vue'
 // import NavigationBar from '@/layout/components/NavigationBar.vue'
 import { defineComponent } from 'vue'
 
@@ -22,7 +24,8 @@ export default defineComponent({
     // Loading,
     AppMain,
     Header,
-    Sidebar
+    Sidebar,
+    HealthCheck
     // NavigationBar
   }
 })
