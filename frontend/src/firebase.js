@@ -1,5 +1,5 @@
-// src/firebase.js
 import { initializeApp } from 'firebase/app'
+import { getAuth, GoogleAuthProvider } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 
 const firebaseConfig = {
@@ -11,10 +11,10 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APPID
 }
 
-// 初始化 Firebase App
 const app = initializeApp(firebaseConfig)
 
-// 初始化 Firestore
+const auth = getAuth(app)
+const provider = new GoogleAuthProvider()
 const db = getFirestore(app)
 
-export { db }
+export { auth, provider, db }

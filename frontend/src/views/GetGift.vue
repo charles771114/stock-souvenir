@@ -1,6 +1,5 @@
 <template>
   <div class="p-6 max-w-4xl mx-auto">
-
     <label class="block mb-4">
       篩選年份：
       <input type="number" v-model="year" class="border px-2 py-1 ml-2 w-24" />
@@ -25,12 +24,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import GiftList from '@/components/GiftList.vue'
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL
-
 const gifts = ref([])
 const year = ref(new Date().getFullYear())
 const loading = ref(true)

@@ -1,6 +1,6 @@
 <template>
   <div class="app-wrapper">
-    <!-- <Loading /> -->
+    <Loading />
     <Header />
     <div class="main">
       <HealthCheck/>
@@ -10,7 +10,7 @@
 </template>
 
 <script>
-// import Loading from '@/components/Loading.vue'
+import Loading from '@/components/Loading.vue'
 import AppMain from '@/layout/components/AppMain.vue'
 import Header from '@/layout/components/Header.vue'
 import Sidebar from '@/layout/components/Sidebar.vue'
@@ -21,7 +21,7 @@ import { defineComponent } from 'vue'
 export default defineComponent({
   name: 'Layout',
   components: {
-    // Loading,
+    Loading,
     AppMain,
     Header,
     Sidebar,
