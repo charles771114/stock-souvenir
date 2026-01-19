@@ -1,0 +1,12 @@
+{
+  "name": "stock-souvenir-scripts",
+  "version": "1.0.0",
+  "description": "Scripts for the stock-souvenir project",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.3",
+    "dotenv": "^16.3.1",
+    "googleapis": "^126.0.1"
+  }
+}

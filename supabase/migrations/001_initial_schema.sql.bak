@@ -1,0 +1,417 @@
+-- ============================================
+-- Phase 1: 資料庫設計與認證機制
+-- 股東紀念品管理系統
+-- ============================================
+
+-- ============================================
+-- 1. 建立所有資料表
+-- ============================================
+
+-- users 表（用戶基本資料）
+CREATE TABLE IF NOT EXISTS public.users (
+  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email text UNIQUE NOT NULL,
+  is_admin boolean DEFAULT false,
+  display_name text,
+  avatar_url text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now()
+);
+
+-- admin_emails 表（admin 白名單）
+CREATE TABLE IF NOT EXISTS public.admin_emails (
+  email text PRIMARY KEY,
+  added_by uuid REFERENCES public.users(id),
+  added_at timestamp with time zone DEFAULT now()
+);
+
+-- gift_catalog 表（紀念品目錄）
+CREATE TABLE IF NOT EXISTS public.gift_catalog (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_code text NOT NULL,
+  company_name text NOT NULL,
+  gift_name text NOT NULL,
+  gift_year integer NOT NULL,
+  gift_category text,
+  image_url text,
+  source_url text,
+  scraped_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  UNIQUE(company_code, gift_year, gift_name)
+);
+
+-- user_collections 表（用戶收藏記錄）
+CREATE TABLE IF NOT EXISTS public.user_collections (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES public.users(id) ON DELETE CASCADE,
+  gift_id uuid REFERENCES public.gift_catalog(id) ON DELETE CASCADE,
+  collected_date date,
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  UNIQUE(user_id, gift_id)
+);
+
+-- scraper_sources 表（爬蟲來源設定）
+CREATE TABLE IF NOT EXISTS public.scraper_sources (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  source_name text NOT NULL,
+  source_url text NOT NULL,
+  selector_config jsonb NOT NULL,
+  is_active boolean DEFAULT true,
+  last_scraped_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now()
+);
+
+-- scraper_logs 表（爬蟲執行紀錄）
+CREATE TABLE IF NOT EXISTS public.scraper_logs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  source_id uuid REFERENCES public.scraper_sources(id) ON DELETE CASCADE,
+  status text NOT NULL CHECK (status IN ('success', 'failed', 'running')),
+  items_scraped integer DEFAULT 0,
+  error_message text,
+  executed_at timestamp with time zone DEFAULT now(),
+  completed_at timestamp with time zone
+);
+
+-- ============================================
+-- 2. 建立索引
+-- ============================================
+
+-- users 表索引
+CREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);
+CREATE INDEX IF NOT EXISTS idx_users_is_admin ON public.users(is_admin);
+
+-- gift_catalog 表索引
+CREATE INDEX IF NOT EXISTS idx_gift_catalog_company_code ON public.gift_catalog(company_code);
+CREATE INDEX IF NOT EXISTS idx_gift_catalog_gift_year ON public.gift_catalog(gift_year DESC);
+CREATE INDEX IF NOT EXISTS idx_gift_catalog_created_at ON public.gift_catalog(created_at DESC);
+
+-- user_collections 表索引
+CREATE INDEX IF NOT EXISTS idx_user_collections_user_id ON public.user_collections(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_collections_gift_id ON public.user_collections(gift_id);
+
+-- scraper_sources 表索引
+CREATE INDEX IF NOT EXISTS idx_scraper_sources_is_active ON public.scraper_sources(is_active);
+
+-- scraper_logs 表索引
+CREATE INDEX IF NOT EXISTS idx_scraper_logs_source_id ON public.scraper_logs(source_id);
+CREATE INDEX IF NOT EXISTS idx_scraper_logs_executed_at ON public.scraper_logs(executed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_scraper_logs_status ON public.scraper_logs(status);
+
+-- ============================================
+-- 3. 自動設定 Admin 權限
+-- ============================================
+
+-- Function：登入時自動檢查是否為 admin
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  user_email text;
+  is_admin_user boolean := false;
+BEGIN
+  user_email := NEW.email;
+  
+  -- 檢查 email 是否在 admin 白名單
+  IF EXISTS (SELECT 1 FROM public.admin_emails WHERE email = user_email) THEN
+    is_admin_user := true;
+  END IF;
+  
+  -- 建立或更新 user 記錄
+  INSERT INTO public.users (id, email, is_admin, display_name, avatar_url)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    is_admin_user,
+    NEW.raw_user_meta_data->>'full_name',
+    NEW.raw_user_meta_data->>'avatar_url'
+  )
+  ON CONFLICT (id) 
+  DO UPDATE SET
+    is_admin = is_admin_user,
+    display_name = EXCLUDED.display_name,
+    avatar_url = EXCLUDED.avatar_url,
+    updated_at = now();
+  
+  RETURN NEW;
+END;
+$$;
+
+-- Trigger：auth.users 有新用戶時觸發
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_user();
+
+-- ============================================
+-- 4. 自動更新 updated_at 欄位
+-- ============================================
+
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+
+-- 為需要的表建立 updated_at trigger
+DROP TRIGGER IF EXISTS set_updated_at_users ON public.users;
+CREATE TRIGGER set_updated_at_users
+  BEFORE UPDATE ON public.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_updated_at();
+
+DROP TRIGGER IF EXISTS set_updated_at_gift_catalog ON public.gift_catalog;
+CREATE TRIGGER set_updated_at_gift_catalog
+  BEFORE UPDATE ON public.gift_catalog
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_updated_at();
+
+DROP TRIGGER IF EXISTS set_updated_at_user_collections ON public.user_collections;
+CREATE TRIGGER set_updated_at_user_collections
+  BEFORE UPDATE ON public.user_collections
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_updated_at();
+
+DROP TRIGGER IF EXISTS set_updated_at_scraper_sources ON public.scraper_sources;
+CREATE TRIGGER set_updated_at_scraper_sources
+  BEFORE UPDATE ON public.scraper_sources
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_updated_at();
+
+-- ============================================
+-- 5. Row Level Security (RLS) Policies
+-- ============================================
+
+-- users 表 RLS
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own profile" ON public.users;
+CREATE POLICY "Users can view own profile" 
+  ON public.users 
+  FOR SELECT 
+  USING (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Admins can view all profiles" ON public.users;
+CREATE POLICY "Admins can view all profiles" 
+  ON public.users 
+  FOR SELECT 
+  USING (public.is_admin(auth.uid()));
+
+DROP POLICY IF EXISTS "Users can update own profile" ON public.users;
+CREATE POLICY "Users can update own profile"
+  ON public.users
+  FOR UPDATE
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
+
+-- gift_catalog 表 RLS（所有人可讀，admin 可寫）
+ALTER TABLE public.gift_catalog ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can view gifts" ON public.gift_catalog;
+CREATE POLICY "Anyone can view gifts" 
+  ON public.gift_catalog 
+  FOR SELECT 
+  TO authenticated 
+  USING (true);
+
+DROP POLICY IF EXISTS "Admins can manage gifts" ON public.gift_catalog;
+CREATE POLICY "Admins can manage gifts" 
+  ON public.gift_catalog 
+  FOR ALL 
+  USING (public.is_admin(auth.uid()));
+
+-- user_collections 表 RLS（用戶只能管理自己的收藏）
+ALTER TABLE public.user_collections ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own collections" ON public.user_collections;
+CREATE POLICY "Users can view own collections" 
+  ON public.user_collections 
+  FOR SELECT 
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own collections" ON public.user_collections;
+CREATE POLICY "Users can insert own collections" 
+  ON public.user_collections 
+  FOR INSERT 
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own collections" ON public.user_collections;
+CREATE POLICY "Users can update own collections" 
+  ON public.user_collections 
+  FOR UPDATE 
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can delete own collections" ON public.user_collections;
+CREATE POLICY "Users can delete own collections" 
+  ON public.user_collections 
+  FOR DELETE 
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Admins can view all collections" ON public.user_collections;
+CREATE POLICY "Admins can view all collections" 
+  ON public.user_collections 
+  FOR SELECT 
+  USING (public.is_admin(auth.uid()));
+
+-- scraper_sources 表 RLS（只有 admin 可管理）
+ALTER TABLE public.scraper_sources ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins can manage scraper sources" ON public.scraper_sources;
+CREATE POLICY "Admins can manage scraper sources" 
+  ON public.scraper_sources 
+  FOR ALL 
+  USING (public.is_admin(auth.uid()));
+
+-- scraper_logs 表 RLS（只有 admin 可讀取）
+ALTER TABLE public.scraper_logs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins can view scraper logs" ON public.scraper_logs;
+CREATE POLICY "Admins can view scraper logs" 
+  ON public.scraper_logs 
+  FOR SELECT 
+  USING (public.is_admin(auth.uid()));
+
+DROP POLICY IF EXISTS "Admins can insert scraper logs" ON public.scraper_logs;
+CREATE POLICY "Admins can insert scraper logs"
+  ON public.scraper_logs
+  FOR INSERT
+  WITH CHECK (public.is_admin(auth.uid()));
+
+-- admin_emails 表 RLS（只有 admin 可管理）
+ALTER TABLE public.admin_emails ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins can manage admin list" ON public.admin_emails;
+CREATE POLICY "Admins can manage admin list" 
+  ON public.admin_emails 
+  FOR ALL 
+  USING (public.is_admin(auth.uid()));
+
+-- ============================================
+-- 6. 初始資料
+-- ============================================
+
+-- 初始 admin 資料（請改成你的 Gmail）
+-- 注意：這裡需要手動修改成實際的 admin email
+INSERT INTO public.admin_emails (email) 
+VALUES ('charles771114@gmail.com')
+ON CONFLICT (email) DO NOTHING;
+
+-- 範例爬蟲來源設定
+INSERT INTO public.scraper_sources (source_name, source_url, selector_config, is_active)
+VALUES (
+  '永豐金證券股東會紀念品',
+  'https://www.sinotrade.com.tw/richclub/tools/gifts',
+  '{
+    "container": "table tbody tr",
+    "selectors": {
+      "company_code": "td:nth-child(1)",
+      "company_name": "td:nth-child(2)",
+      "gift_name": "td:nth-child(3)",
+      "gift_year": "td:nth-child(4)",
+      "image_url": "td:nth-child(5) img"
+    }
+  }'::jsonb,
+  true
+)
+ON CONFLICT DO NOTHING;
+
+-- ============================================
+-- 7. 實用的 View（可選）
+-- ============================================
+
+-- View: 用戶收藏統計
+CREATE OR REPLACE VIEW public.user_collection_stats AS
+SELECT 
+  u.id as user_id,
+  u.email,
+  u.display_name,
+  COUNT(uc.id) as total_collections,
+  COUNT(CASE WHEN uc.collected_date IS NOT NULL THEN 1 END) as collected_count,
+  MAX(uc.created_at) as last_collection_date
+FROM public.users u
+LEFT JOIN public.user_collections uc ON u.id = uc.user_id
+GROUP BY u.id, u.email, u.display_name;
+
+-- View: 爬蟲執行統計
+CREATE OR REPLACE VIEW public.scraper_stats AS
+SELECT 
+  ss.id as source_id,
+  ss.source_name,
+  ss.is_active,
+  ss.last_scraped_at,
+  COUNT(sl.id) as total_runs,
+  COUNT(CASE WHEN sl.status = 'success' THEN 1 END) as success_count,
+  COUNT(CASE WHEN sl.status = 'failed' THEN 1 END) as failed_count,
+  SUM(sl.items_scraped) as total_items_scraped,
+  MAX(sl.executed_at) as last_run_at
+FROM public.scraper_sources ss
+LEFT JOIN public.scraper_logs sl ON ss.id = sl.source_id
+GROUP BY ss.id, ss.source_name, ss.is_active, ss.last_scraped_at;
+
+-- ============================================
+-- 8. 輔助函數
+-- ============================================
+
+-- Function: 檢查用戶是否為 admin
+CREATE OR REPLACE FUNCTION public.is_admin(user_id uuid)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.users 
+    WHERE id = user_id AND is_admin = true
+  );
+END;
+$$;
+
+-- Function: 取得用戶收藏數量
+CREATE OR REPLACE FUNCTION public.get_user_collection_count(user_id uuid)
+RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  collection_count integer;
+BEGIN
+  SELECT COUNT(*) INTO collection_count
+  FROM public.user_collections
+  WHERE user_collections.user_id = get_user_collection_count.user_id;
+  
+  RETURN collection_count;
+END;
+$$;
+
+-- ============================================
+-- Phase 1 完成
+-- ============================================
+
+-- 顯示建立的表格
+SELECT 
+  schemaname,
+  tablename,
+  tableowner
+FROM pg_tables
+WHERE schemaname = 'public'
+ORDER BY tablename;
+
+-- 顯示 RLS 狀態
+SELECT 
+  schemaname,
+  tablename,
+  rowsecurity
+FROM pg_tables
+WHERE schemaname = 'public'
+ORDER BY tablename;

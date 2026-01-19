@@ -1,0 +1,9 @@
+[
+    {
+        "souce": "https://www.wantgoo.com/stock/calendar/shareholders-meeting-souvenirs",
+        "method": "Manual Browser Script (via Agent)",
+        "intermediary": "scripts/temp_*.json (Local Files)",
+        "destination": "Supabase Local Docker (Table: souvenirs)",
+        "processing_logic": "Date Calculation (Cross-year check), Key Normalization, Deduplication"
+    }
+]

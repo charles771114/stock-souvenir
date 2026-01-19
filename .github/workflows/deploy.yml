@@ -1,26 +1,43 @@
-name: Firebase Deploy (Optional)
+name: Deploy to GitHub Pages
 
 on:
-  workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools
+      - name: Install Dependencies
+        run: npm ci
 
-      - name: Deploy Firebase
-        run: firebase deploy --only functions
+      - name: Build
+        run: npm run build
         env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          # Inject production env vars here if not in repository secrets
+          # Ideally, you should set these in GitHub Repo Settings > Secrets
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Create 404.html for SPA
+        # Copy index.html to 404.html to handle client-side routing
+        run: cp dist/index.html dist/404.html
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: gh-pages

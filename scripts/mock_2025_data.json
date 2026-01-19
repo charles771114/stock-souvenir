@@ -1,0 +1,1010 @@
+[
+  {
+    "code": "2371",
+    "name": "大同",
+    "souvenir_item": "統一超商商品卡100元",
+    "last_buy_date": "10/29",
+    "meeting_date": "12/30"
+  },
+  {
+    "code": "1591",
+    "name": "駿吉-KY",
+    "souvenir_item": "全家便利商店禮物卡50元",
+    "last_buy_date": "10/29",
+    "meeting_date": "12/30"
+  },
+  {
+    "code": "3312",
+    "name": "弘憶股",
+    "souvenir_item": "統一超商商品卡",
+    "last_buy_date": "10/23",
+    "meeting_date": "12/26"
+  },
+  {
+    "code": "6241",
+    "name": "易通展",
+    "souvenir_item": "精神旺盛 牛樟芝菌絲體x薑黃精粹飲(1入)",
+    "last_buy_date": "10/23",
+    "meeting_date": "12/26"
+  },
+  {
+    "code": "6111",
+    "name": "大宇資",
+    "souvenir_item": "全家禮物卡50元",
+    "last_buy_date": "10/22",
+    "meeting_date": "12/23"
+  },
+  {
+    "code": "6547",
+    "name": "高端疫苗",
+    "souvenir_item": "7-11商品卡",
+    "last_buy_date": "10/22",
+    "meeting_date": "12/24"
+  },
+  {
+    "code": "1570",
+    "name": "力肯",
+    "souvenir_item": "超商商品卡 50元",
+    "last_buy_date": "10/16",
+    "meeting_date": "12/19"
+  },
+  {
+    "code": "1463",
+    "name": "強盛新",
+    "souvenir_item": "7-11商品卡50元",
+    "last_buy_date": "09/30",
+    "meeting_date": "12/01"
+  },
+  {
+    "code": "2109",
+    "name": "華豐",
+    "souvenir_item": "超商商品卡50元",
+    "last_buy_date": "09/30",
+    "meeting_date": "12/01"
+  },
+  {
+    "code": "3041",
+    "name": "揚智",
+    "souvenir_item": "統一超商50元商品卡",
+    "last_buy_date": "09/25",
+    "meeting_date": "11/28"
+  },
+  {
+    "code": "6179",
+    "name": "亞通",
+    "souvenir_item": "全家禮物卡100元",
+    "last_buy_date": "09/23",
+    "meeting_date": "11/24"
+  },
+  {
+    "code": "1316",
+    "name": "上曜",
+    "souvenir_item": "朝和生醫保健食品一包",
+    "last_buy_date": "09/04",
+    "meeting_date": "11/07"
+  },
+  {
+    "code": "7780",
+    "name": "大研生醫",
+    "souvenir_item": "大研生醫股東專屬$680購物金(結帳滿990元即可使用)",
+    "last_buy_date": "09/03",
+    "meeting_date": "11/06"
+  },
+  {
+    "code": "4728",
+    "name": "雙美",
+    "souvenir_item": "金屬旋轉摺疊手機支架",
+    "last_buy_date": "08/27",
+    "meeting_date": "10/29"
+  },
+  {
+    "code": "4174",
+    "name": "浩鼎",
+    "souvenir_item": "超商50元禮物卡",
+    "last_buy_date": "08/19",
+    "meeting_date": "10/20"
+  },
+  {
+    "code": "6684",
+    "name": "安格",
+    "souvenir_item": "炫彩時尚杯一個",
+    "last_buy_date": "08/13",
+    "meeting_date": "10/14"
+  },
+  {
+    "code": "8431",
+    "name": "匯鑽科",
+    "souvenir_item": "統一100元禮物卡",
+    "last_buy_date": "07/30",
+    "meeting_date": "09/30"
+  },
+  {
+    "code": "5283",
+    "name": "禾聯碩",
+    "souvenir_item": "超商100元商品卡",
+    "last_buy_date": "07/24",
+    "meeting_date": "09/26"
+  },
+  {
+    "code": "6130",
+    "name": "上亞科技",
+    "souvenir_item": "7-11商品卡100元",
+    "last_buy_date": "07/23",
+    "meeting_date": "09/25"
+  },
+  {
+    "code": "3563",
+    "name": "牧德",
+    "souvenir_item": "宜睿好禮即享券50元",
+    "last_buy_date": "07/16",
+    "meeting_date": "09/16"
+  },
+  {
+    "code": "8489",
+    "name": "三貝德",
+    "souvenir_item": "統一超商50元商品卡",
+    "last_buy_date": "07/08",
+    "meeting_date": "09/08"
+  },
+  {
+    "code": "3323",
+    "name": "加百裕",
+    "souvenir_item": "超商100元商品卡",
+    "last_buy_date": "07/02",
+    "meeting_date": "09/03"
+  },
+  {
+    "code": "3708",
+    "name": "上緯投控",
+    "souvenir_item": "統一超商商品卡(新台幣50元)",
+    "last_buy_date": "07/01",
+    "meeting_date": "09/01"
+  },
+  {
+    "code": "6543",
+    "name": "普惠醫工",
+    "souvenir_item": "50元商品卡。",
+    "last_buy_date": "05/28",
+    "meeting_date": "07/29"
+  },
+  {
+    "code": "6593",
+    "name": "台灣銘板",
+    "souvenir_item": "7-11商品卡35元",
+    "last_buy_date": "05/21",
+    "meeting_date": "07/22"
+  },
+  {
+    "code": "2102",
+    "name": "泰豐",
+    "souvenir_item": "超商商品卡(50元)",
+    "last_buy_date": "04/30",
+    "meeting_date": "07/01"
+  },
+  {
+    "code": "6876",
+    "name": "朗齊生醫*",
+    "souvenir_item": "全家禮物卡50元",
+    "last_buy_date": "04/29",
+    "meeting_date": "06/30"
+  },
+  {
+    "code": "3041",
+    "name": "揚智",
+    "souvenir_item": "Luminarc繁花強化餐盤",
+    "last_buy_date": "04/29",
+    "meeting_date": "06/30"
+  },
+  {
+    "code": "6186",
+    "name": "新潤",
+    "souvenir_item": "7-11商品卡",
+    "last_buy_date": "04/29",
+    "meeting_date": "06/30"
+  },
+  {
+    "code": "3011",
+    "name": "今皓",
+    "souvenir_item": "超商35元商品卡",
+    "last_buy_date": "04/29",
+    "meeting_date": "06/30"
+  },
+  {
+    "code": "3390",
+    "name": "旭軟",
+    "souvenir_item": "全家便利商店禮物卡50元",
+    "last_buy_date": "04/24",
+    "meeting_date": "06/27"
+  },
+  {
+    "code": "4174",
+    "name": "浩鼎",
+    "souvenir_item": "超商50元禮物卡",
+    "last_buy_date": "04/24",
+    "meeting_date": "06/27"
+  },
+  {
+    "code": "6169",
+    "name": "昱泉",
+    "souvenir_item": "多功能雙面砧板",
+    "last_buy_date": "04/24",
+    "meeting_date": "06/27"
+  },
+  {
+    "code": "2911",
+    "name": "麗嬰房",
+    "souvenir_item": "嬰兒柔護濕巾20抽/單包",
+    "last_buy_date": "04/24",
+    "meeting_date": "06/27"
+  },
+  {
+    "code": "4590",
+    "name": "富田",
+    "souvenir_item": "盈涼有餘保冰袋1個。",
+    "last_buy_date": "04/24",
+    "meeting_date": "06/27"
+  },
+  {
+    "code": "3552",
+    "name": "同致",
+    "souvenir_item": "7-11商品卡50元",
+    "last_buy_date": "04/24",
+    "meeting_date": "06/27"
+  },
+  {
+    "code": "4804",
+    "name": "大略-KY",
+    "souvenir_item": "全家50元禮品卡",
+    "last_buy_date": "04/24",
+    "meeting_date": "06/27"
+  },
+  {
+    "code": "1786",
+    "name": "科妍",
+    "souvenir_item": "統一超商35元商品卡",
+    "last_buy_date": "04/24",
+    "meeting_date": "06/27"
+  },
+  {
+    "code": "1540",
+    "name": "喬福",
+    "souvenir_item": "伊莎貝爾櫻花抗菌皂75G+-3G",
+    "last_buy_date": "04/24",
+    "meeting_date": "06/27"
+  },
+  {
+    "code": "2406",
+    "name": "國碩",
+    "souvenir_item": ":統一超商商品卡35元",
+    "last_buy_date": "04/24",
+    "meeting_date": "06/27"
+  },
+  {
+    "code": "7719",
+    "name": "碳基",
+    "souvenir_item": "統一超商商品卡50元。",
+    "last_buy_date": "04/24",
+    "meeting_date": "06/27"
+  },
+  {
+    "code": "6793",
+    "name": "天力離岸",
+    "souvenir_item": "50元商品卡",
+    "last_buy_date": "04/24",
+    "meeting_date": "06/27"
+  },
+  {
+    "code": "3230",
+    "name": "錦明",
+    "souvenir_item": "錦明股東專屬會員卡",
+    "last_buy_date": "04/24",
+    "meeting_date": "06/27"
+  },
+  {
+    "code": "3593",
+    "name": "力銘",
+    "souvenir_item": "統一超商35元商品卡",
+    "last_buy_date": "04/24",
+    "meeting_date": "06/27"
+  },
+  {
+    "code": "6261",
+    "name": "久元",
+    "souvenir_item": "7-11商品券35元",
+    "last_buy_date": "04/24",
+    "meeting_date": "06/27"
+  },
+  {
+    "code": "6727",
+    "name": "亞泰金屬",
+    "souvenir_item": "統一超商商品卡，面額200元",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "6786",
+    "name": "芯測",
+    "souvenir_item": "全家禮物卡100元",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "4909",
+    "name": "新復興",
+    "souvenir_item": "統一超商35元商品卡",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "6160",
+    "name": "欣技",
+    "souvenir_item": "7-11(35元咖啡卡)",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/24"
+  },
+  {
+    "code": "4564",
+    "name": "元翎",
+    "souvenir_item": "洗碗精(紀念品數量不足時，將提供等值商品)",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "4908",
+    "name": "前鼎",
+    "souvenir_item": "充電式手電筒",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "2734",
+    "name": "易飛網",
+    "souvenir_item": "高露潔旅行組",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "3484",
+    "name": "崧騰",
+    "souvenir_item": "可立式藍芽自拍棒",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "3312",
+    "name": "弘憶股",
+    "souvenir_item": "統一超商商品卡",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "3373",
+    "name": "熱映",
+    "souvenir_item": "蜂王清新植感草本皂",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "6492",
+    "name": "生華科",
+    "souvenir_item": "全家禮物卡50元",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "3605",
+    "name": "宏致",
+    "souvenir_item": "環保袋",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "1220",
+    "name": "台榮",
+    "souvenir_item": "無患子洗手乳",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "8436",
+    "name": "大江",
+    "souvenir_item": "至尊膠原面膜限量盲盒",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "1517",
+    "name": "利奇",
+    "souvenir_item": "多功能手機支架",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "3711",
+    "name": "日月光投控",
+    "souvenir_item": "微波保鮮盒(屆時若數量不足將以等值禮品替代之)",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "1217",
+    "name": "愛之味",
+    "souvenir_item": "愛之味咖哩豆腐2罐或其他等值商品",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "6586",
+    "name": "醣基",
+    "souvenir_item": "統一超商商品卡50元",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "4513",
+    "name": "福裕",
+    "souvenir_item": "7-11商品卡50元",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "1225",
+    "name": "福懋油",
+    "souvenir_item": "統一超商商品卡100元",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "1203",
+    "name": "味王",
+    "souvenir_item": "咖哩雞肉(2入組)一盒",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "2355",
+    "name": "敬鵬",
+    "souvenir_item": "保溫保冷袋",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "8071",
+    "name": "能率網通",
+    "souvenir_item": "\"稻回皂\"糠碳美容皂",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "1737",
+    "name": "臺鹽",
+    "souvenir_item": "洗手露1瓶(數量如有不足，得以價值相當者替代之)及台鹽線上股東專區購物金2,000元",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "2380",
+    "name": "虹光",
+    "souvenir_item": "環保購物袋",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "4540",
+    "name": "全球傳動",
+    "souvenir_item": "統一超商35元(中杯美式)商品卡",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "2374",
+    "name": "佳能",
+    "souvenir_item": "稻回皂-糠碳美容皂",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "2460",
+    "name": "建通",
+    "souvenir_item": "雙口認證快充充電頭(不足時以等值商品替代)",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "3455",
+    "name": "由田",
+    "souvenir_item": "7-11商品卡50元。",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "3025",
+    "name": "星通",
+    "souvenir_item": "統一超商商品券50元(紀念品如有不足時，得以等值商品替代之)",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "4721",
+    "name": "美琪瑪",
+    "souvenir_item": "超商商品卡50元",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "5863",
+    "name": "瑞興銀",
+    "souvenir_item": "菱格紳士襪乙雙或其他等值紀念品",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/24"
+  },
+  {
+    "code": "6462",
+    "name": "神盾",
+    "souvenir_item": "全家禮物卡50元",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "6547",
+    "name": "高端疫苗",
+    "souvenir_item": "潔手用品",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "6885",
+    "name": "全福生技",
+    "souvenir_item": "商品卡35元",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "9914",
+    "name": "美利達",
+    "souvenir_item": "統一超商商品卡",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "3607",
+    "name": "谷崧",
+    "souvenir_item": "超商咖啡提領卡(35元)",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "7769",
+    "name": "鴻勁",
+    "souvenir_item": "超商商品卡100元",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "8104",
+    "name": "錸寶",
+    "souvenir_item": "除霉凝膠",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/24"
+  },
+  {
+    "code": "4979",
+    "name": "華星光",
+    "souvenir_item": "統一超商中杯美式咖啡卡",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/24"
+  },
+  {
+    "code": "3537",
+    "name": "堡達",
+    "souvenir_item": "便利店禮物卡",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "3078",
+    "name": "僑威",
+    "souvenir_item": "450g毛寶洗碗精",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "9902",
+    "name": "台火",
+    "souvenir_item": "香皂",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/24"
+  },
+  {
+    "code": "3325",
+    "name": "旭品",
+    "souvenir_item": "統一超商50元商品卡一張",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "3625",
+    "name": "西勝",
+    "souvenir_item": "英國熊五合一螺絲工具組",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "5608",
+    "name": "四維航",
+    "souvenir_item": "全家便利商店35元禮物卡(紀念品數量不足時，將以價值相當商品替代)",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "3645",
+    "name": "達邁",
+    "souvenir_item": "全家便利商店伍拾元禮物卡",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "4104",
+    "name": "佳醫",
+    "souvenir_item": "面膜",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "4142",
+    "name": "國光生",
+    "souvenir_item": "統一超商200元商品卡",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "6180",
+    "name": "橘子",
+    "souvenir_item": "購物橘子現金抵用券88元",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "4999",
+    "name": "鑫禾",
+    "souvenir_item": "廚房料理剪刀",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/24"
+  },
+  {
+    "code": "2537",
+    "name": "聯上發",
+    "souvenir_item": "毛寶洗衣精",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "2929",
+    "name": "淘帝-KY",
+    "souvenir_item": "統一超商咖啡卡35元",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "3060",
+    "name": "銘異",
+    "souvenir_item": "全家便利商店50元禮物卡",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "4971",
+    "name": "IET-KY",
+    "souvenir_item": "統一超商35元(中杯美式)咖啡卡",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "6419",
+    "name": "京晨科",
+    "souvenir_item": "全家便利商店禮物卡50元",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "5905",
+    "name": "南仁湖",
+    "souvenir_item": "小墾丁渡假村300元住宿抵用券",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "3043",
+    "name": "科風",
+    "souvenir_item": "統一超商商品卡35元",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/24"
+  },
+  {
+    "code": "2014",
+    "name": "中鴻",
+    "souvenir_item": "7-11商品卡50元",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "3051",
+    "name": "力特",
+    "souvenir_item": "精美料理剪刀",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/24"
+  },
+  {
+    "code": "3520",
+    "name": "華盈",
+    "souvenir_item": "全家商品卡35元",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "3546",
+    "name": "宇峻",
+    "souvenir_item": "安妮兔抽取超細纖維萬用布10抽",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "5521",
+    "name": "工信",
+    "souvenir_item": "電子行李秤",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "4976",
+    "name": "佳凌",
+    "souvenir_item": "統一超商45元咖啡卡",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "6148",
+    "name": "驊宏資",
+    "souvenir_item": "多功能觸控原子筆",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/24"
+  },
+  {
+    "code": "1570",
+    "name": "力肯",
+    "souvenir_item": "超商商品卡50元",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/24"
+  },
+  {
+    "code": "2208",
+    "name": "台船",
+    "souvenir_item": "統一超商45元咖啡卡",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "3128",
+    "name": "昇銳",
+    "souvenir_item": "全家便利商店禮物卡50元",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "3419",
+    "name": "譁裕",
+    "souvenir_item": "單顆香皂",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "3693",
+    "name": "營邦",
+    "souvenir_item": "超商商品卡50元",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "5014",
+    "name": "建錩",
+    "souvenir_item": "全家中杯美式咖啡券乙張",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/25"
+  },
+  {
+    "code": "5488",
+    "name": "松普",
+    "souvenir_item": "蜂王清新植感草本皂",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "6216",
+    "name": "居易",
+    "souvenir_item": "輕薄辦公室便利貼",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "2206",
+    "name": "三陽工業",
+    "souvenir_item": "餐具套組",
+    "last_buy_date": "04/23",
+    "meeting_date": "06/26"
+  },
+  {
+    "code": "6182",
+    "name": "合晶",
+    "souvenir_item": "統一超商35元商品卡",
+    "last_buy_date": "04/22",
+    "meeting_date": "06/23"
+  },
+  {
+    "code": "8358",
+    "name": "金居",
+    "souvenir_item": "統一超商50元禮物卡",
+    "last_buy_date": "04/22",
+    "meeting_date": "06/23"
+  },
+  {
+    "code": "8054",
+    "name": "安國",
+    "souvenir_item": "統一超商50元商品卡",
+    "last_buy_date": "04/22",
+    "meeting_date": "06/23"
+  },
+  {
+    "code": "6672",
+    "name": "騰輝電子-KY",
+    "souvenir_item": "面額台幣50元全家便利商店禮物卡",
+    "last_buy_date": "04/22",
+    "meeting_date": "06/23"
+  },
+  {
+    "code": "6426",
+    "name": "統新",
+    "souvenir_item": "修容組",
+    "last_buy_date": "04/22",
+    "meeting_date": "06/23"
+  },
+  {
+    "code": "2887",
+    "name": "台新新光金",
+    "souvenir_item": "精緻密封調味罐",
+    "last_buy_date": "04/22",
+    "meeting_date": "06/23"
+  },
+  {
+    "code": "1591",
+    "name": "駿吉-KY",
+    "souvenir_item": "全家禮物卡50元",
+    "last_buy_date": "04/22",
+    "meeting_date": "06/23"
+  },
+  {
+    "code": "6138",
+    "name": "茂達",
+    "souvenir_item": "7-ELEVEN商品卡50元",
+    "last_buy_date": "04/22",
+    "meeting_date": "06/23"
+  },
+  {
+    "code": "5460",
+    "name": "同協",
+    "souvenir_item": "抹布",
+    "last_buy_date": "04/22",
+    "meeting_date": "06/23"
+  },
+  {
+    "code": "1201",
+    "name": "味全",
+    "souvenir_item": "料理高手-蔬果本味調味料",
+    "last_buy_date": "04/22",
+    "meeting_date": "06/23"
+  },
+  {
+    "code": "1784",
+    "name": "訊聯",
+    "souvenir_item": "Meta Exosome外泌體水光潤澤修護面膜",
+    "last_buy_date": "04/17",
+    "meeting_date": "06/20"
+  },
+  {
+    "code": "2498",
+    "name": "宏達電",
+    "souvenir_item": "HTC多彩環保對杯",
+    "last_buy_date": "04/17",
+    "meeting_date": "06/20"
+  },
+  {
+    "code": "3268",
+    "name": "海德威",
+    "souvenir_item": "宜睿好禮即享券35元",
+    "last_buy_date": "04/17",
+    "meeting_date": "06/20"
+  },
+  {
+    "code": "2611",
+    "name": "志信",
+    "souvenir_item": "7-11 商品卡35元",
+    "last_buy_date": "04/17",
+    "meeting_date": "06/20"
+  },
+  {
+    "code": "3508",
+    "name": "位速",
+    "souvenir_item": "統一超商商品卡50元",
+    "last_buy_date": "04/17",
+    "meeting_date": "06/20"
+  },
+  {
+    "code": "1312",
+    "name": "國喬",
+    "souvenir_item": "掌廚可樂膳304不鏽鋼分隔防燙保鮮盒",
+    "last_buy_date": "04/17",
+    "meeting_date": "06/20"
+  },
+  {
+    "code": "6284",
+    "name": "佳邦",
+    "souvenir_item": "7-11商品卡35元",
+    "last_buy_date": "04/17",
+    "meeting_date": "06/20"
+  },
+  {
+    "code": "3058",
+    "name": "立德",
+    "souvenir_item": "蜂王清新植感草本皂",
+    "last_buy_date": "04/17",
+    "meeting_date": "06/20"
+  },
+  {
+    "code": "4306",
+    "name": "炎洲",
+    "souvenir_item": "超商禮券50元",
+    "last_buy_date": "04/17",
+    "meeting_date": "06/20"
+  },
+  {
+    "code": "5243",
+    "name": "乙盛-KY",
+    "souvenir_item": "硅藻土杯墊",
+    "last_buy_date": "04/17",
+    "meeting_date": "06/20"
+  },
+  {
+    "code": "6244",
+    "name": "茂迪",
+    "souvenir_item": "優選經典米",
+    "last_buy_date": "04/17",
+    "meeting_date": "06/20"
+  },
+  {
+    "code": "3032",
+    "name": "偉訓",
+    "souvenir_item": "菲蘇德美燕麥潔膚皂",
+    "last_buy_date": "04/17",
+    "meeting_date": "06/20"
+  },
+  {
+    "code": "5484",
+    "name": "慧友",
+    "souvenir_item": "白人牙膏",
+    "last_buy_date": "04/17",
+    "meeting_date": "06/20"
+  },
+  {
+    "code": "3024",
+    "name": "憶聲",
+    "souvenir_item": "小麥秸稈餐具組",
+    "last_buy_date": "04/17",
+    "meeting_date": "06/20"
+  },
+  {
+    "code": "8089",
+    "name": "康全電訊",
+    "souvenir_item": "蜂王清新植感草本皂",
+    "last_buy_date": "04/17",
+    "meeting_date": "06/20"
+  }
+]
