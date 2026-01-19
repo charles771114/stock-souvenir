@@ -1,45 +1,42 @@
-# 任務計畫: 後台歷史資料匯入功能
+# 任務計畫: 後台歷史資料匯入與權限管理
 
-## 任務清單
+## Phase 3.1: 資料庫與基礎建設 (Database & Infra)
+- [ ] **DB-01**: 建立 Migration `migrations/20260120000000_admin_policies.sql`。
+    - [ ] 新增 Policy: `Admins can insert souvenirs`。
+    - [ ] 新增 Policy: `Admins can update souvenirs`。
+    - [ ] 新增 Policy: `Admins can view all profiles`。
+- [ ] **DEP-01**: 安裝前端依賴。
+    - [ ] 執行 `npm install papaparse xlsx`。
+    - [ ] 安裝型別 (若有需要) `npm install -D @types/papaparse`。
 
-- [ ] **Task 1: 資料庫權限設定 (Backend)**
-    - [ ] 建立 migration `supabase/migrations/[timestamp]_add_admin_souvenir_policy.sql`。
-    - [ ] 加入 `public.souvenirs` 的 Admin RLS Policies (Insert/Update)。
-    - [ ] 加入 `public.profiles` 的 Admin RLS Policies (Select all)。
-    - [ ] 執行 `supabase db reset` (或適當的 migration 指令)。
+## Phase 3.2: 核心邏輯 (Core Logic)
+- [ ] **UTIL-01**: 實作 `src/utils/fileParser.ts`。
+    - [ ] 實作 `parseFile(file, targetYear)` 函式。
+    - [ ] 實作 `KEY_MAPPING` 可以辨識中英文欄位。
+    - [ ] 實作 `doc_id` 生成邏輯: `${code}_${formatted_date}`。
+    - [ ] 實作年份強制邏輯: 若 `targetYear` 存在，強制替換/補全日期年份。
 
-- [ ] **Task 2: 前端基礎建設 (Frontend Infra)**
-    - [ ] 安裝套件: `npm install papaparse xlsx`。
-    - [ ] 建立/更新 `src/utils/fileParser.ts`。
-        - [ ] 實作 CSV 解析 (PapaParse)。
-        - [ ] 實作 Excel 解析 (SheetJS)。
-        - [ ] **實作年份注入邏輯**: 支援外部傳入 `targetYear`，補足缺失年份的日期。
-        - [ ] 實作欄位正規化邏輯 (Mapping Strategy)。
-    - [ ] *Verification*: 測試 parser 能正確處理「無年份日期」與「已有年份日期」。
+## Phase 3.3: 前端元件開發 (Frontend Components)
+- [ ] **COMP-01**: 建立 `src/components/AdminImportPanel.vue`。
+    - [ ] UI: 年份選擇器 (`<select>`).
+    - [ ] UI: 檔案上傳區域 (Drag & Drop).
+    - [ ] UI: 預覽表格 (前 5 筆).
+    - [ ] Logic: 呼叫 `parseFile` 並顯示結果。
+    - [ ] Logic: 執行 Supabase `upsert`。
+- [ ] **COMP-02**: 建立 `src/components/AdminUserList.vue`。
+    - [ ] Logic: 使用 `useAdmin` composable 獲取資料。
+    - [ ] UI: 表格顯示 Email, Role, Created At。
+    - [ ] UI: 簡單的 Loading / Empty 狀態。
 
-- [ ] **Task 3: 實作匯入 UI 元件 (Frontend UI)**
-    - [ ] 建立 `src/components/AdminImportPanel.vue`。
-    - [ ] 實作 **年份選擇器** (Select Year)。
-    - [ ] 實作檔案拖曳/選擇介面。
-    - [ ] 整合 `fileParser`，傳入使用者選擇的年份。
-    - [ ] 實作資料預覽功能。
-    - [ ] 整合 Supabase 寫入邏輯。
-    - [ ] *Verification*: 上傳無年份的檔案，確認預覽中顯示正確的年份。
+## Phase 3.4: 整合與頁面 (Integration)
+- [ ] **VIEW-01**: 更新 `src/views/AdminPanel.vue`。
+    - [ ] 引入 `AdminImportPanel`。
+    - [ ] 引入 `AdminUserList`。
+    - [ ] 調整版面配置。
+- [ ] **COMPOSABLE-01**: 更新 `src/composables/useAdmin.js`。
+    - [ ] 新增 `fetchAllUsers()` 函式 (對應 RLS)。
 
-- [ ] **Task 4: 實作使用者管理清單 (User Management)**
-    - [ ] 建立 `src/components/AdminUserList.vue`。
-    - [ ] Fetch `profiles` 資料 (需確認 RLS 生效)。
-    - [ ] 顯示 Email, Role, Created At。
-    - [ ] (Optional) 實作簡單的搜尋功能。
-
-- [ ] **Task 5: 整合至 Admin Panel**
-    - [ ] 修改 `src/views/AdminPanel.vue`。
-    - [ ] 加入 `AdminImportPanel`。
-    - [ ] 加入 `AdminUserList`。
-    - [ ] 設定 Tab 切換或區塊分隔。
-
-- [ ] **Task 6: 端對端測試 (E2E Test)**
-    - [ ] 準備測試資料: 包含中文欄位、無年份日期的 Excel/CSV。
-    - [ ] Admin 登入 -> 選擇年份 -> 上傳 -> 驗證資料庫。
-    - [ ] Admin 登入 -> 查看使用者列表 -> 驗證能看到所有使用者。
-    - [ ] User 登入 -> 嘗試存取 Admin 頁面 -> 驗證被拒絕。
+## Phase 3.5: 驗證 (Verification)
+- [ ] **TEST-01**: 使用 Admin 帳號登入，上傳一份測試 Excel (含缺年份資料)，指定年份 2024。
+    - [ ] 驗證資料庫是否成功寫入，且日期為 2024 年。
+- [ ] **TEST-02**: 使用一般 User 帳號登入，確認無法看見 Admin Panel，也無法呼叫相關 API。

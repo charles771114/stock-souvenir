@@ -223,7 +223,7 @@ const handleImport = async () => {
       .upsert(chunk, { onConflict: 'doc_id' })
     
     if (error) {
-      console.error('Batch import error:', error)
+      console.error('Batch import import error:', error)
       errors += chunk.length // count all chunk as failed
     } else {
       uploaded += chunk.length

@@ -51,7 +51,8 @@ npm install papaparse xlsx
     -   上傳按鈕: 觸發 `supabase.upsert`。
 -   **邏輯**:
     -   `handleFileUpload`: 呼叫 `parseFile(file, selectedYear)`。
-    -   `uploadData`: 批次寫入。
+    -   **doc_id 生成**: 在 `parseFile` 內部，組合 `code` + `formatted_date` (ex: `2330_2024-06-15`) 產生唯一鍵。
+    -   `uploadData`: 使用 `supabase.from('souvenirs').upsert(data, { onConflict: 'doc_id' })` 執行批次寫入。
 
 ### 4. 新增元件 `AdminUserList.vue`
 -   **UI**:

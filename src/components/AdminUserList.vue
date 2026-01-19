@@ -1,32 +1,30 @@
 <template>
   <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-      <div>
-        <h3 class="text-lg font-semibold text-gray-900">使用者管理 (User Management)</h3>
-        <p class="text-sm text-gray-600">管理所有註冊使用者與權限</p>
-      </div>
-      <div class="text-sm text-gray-500">
-        總人數: <span class="font-bold text-gray-900">{{ users.length }}</span>
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h3 class="text-lg font-semibold text-gray-900">帳號管理 (User Management)</h3>
+    </div>
+    
+    <div v-if="error" class="bg-red-50 border-l-4 border-red-400 p-4 m-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm text-red-700">讀取失敗: {{ error }}</p>
+        </div>
       </div>
     </div>
 
-    <!-- User Table -->
     <div class="overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Email
-            </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              角色 (Role)
-            </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              註冊時間
-            </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              ID
-            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">角色 (Role)</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">註冊時間</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User ID</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
@@ -41,33 +39,19 @@
              </td>
           </tr>
           <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50">
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex items-center">
-                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
-                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <div class="ml-3">
-                  <div class="text-sm font-medium text-gray-900">{{ user.email || 'No Email' }}</div>
-                  <div class="text-xs text-gray-500">{{ user.full_name || 'No Name' }}</div>
-                </div>
-              </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ user.email }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
               <span 
-                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                :class="user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'"
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                :class="user.is_admin ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800'"
               >
                 {{ user.role || 'user' }}
               </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {{ new Date(user.created_at).toLocaleDateString() }}
+               {{ new Date(user.created_at).toLocaleDateString() }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-400 font-mono">
-              {{ user.id }}
-            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-400 font-mono">{{ user.id }}</td>
           </tr>
         </tbody>
       </table>
@@ -79,7 +63,7 @@
 import { onMounted } from 'vue'
 import { useAdmin } from '@/composables/useAdmin'
 
-const { users, loading, fetchAllUsers } = useAdmin()
+const { users, loading, error, fetchAllUsers } = useAdmin()
 
 onMounted(() => {
   fetchAllUsers()
