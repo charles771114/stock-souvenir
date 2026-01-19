@@ -25,6 +25,20 @@
           </select>
           <p class="mt-1 text-xs text-gray-500">若檔案日期缺少年份，將使用此設定。</p>
        </div>
+
+       <!-- Encoding Selection -->
+       <div class="w-48">
+          <label for="encoding" class="block text-sm font-medium text-gray-700 mb-1">CSV 編碼 (Encoding)</label>
+          <select
+            id="encoding"
+            v-model="selectedEncoding"
+            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+          >
+            <option value="UTF-8">UTF-8 (預設)</option>
+            <option value="Big5">Big5 (繁體中文)</option>
+          </select>
+          <p class="mt-1 text-xs text-gray-500">若 CSV 顯示亂碼請切換此選項。</p>
+       </div>
     </div>
 
     <!-- File Upload Zone -->
@@ -145,38 +159,17 @@ const parsedData = ref<ParsedSouvenir[]>([])
 const uploading = ref(false)
 const progress = ref(0)
 const selectedYear = ref('')
+const selectedEncoding = ref('UTF-8')
 
 const previewRows = computed(() => {
   return parsedData.value.slice(0, 5)
 })
-
-const triggerFileInput = () => {
-  fileInput.value?.click()
-}
-
-const handleDrop = (e: DragEvent) => {
-  const droppedFile = e.dataTransfer?.files[0]
-  if (droppedFile) processFile(droppedFile)
-}
-
-const handleFileSelect = (e: Event) => {
-  const selectedFile = (e.target as HTMLInputElement).files?.[0]
-  if (selectedFile) processFile(selectedFile)
-}
-
+// ... (skip lines)
 const processFile = async (f: File) => {
-  if (!f.name.match(/\.(csv|xlsx|xls)$/i)) {
-    alert('僅支援 CSV 或 Excel 檔案')
-    return
-  }
-  
-  file.value = f
-  processing.value = true
-  parsedData.value = []
-  
+  // ... (skip lines)
   try {
-    // Pass selectedYear to parser
-    const data = await parseFile(f, selectedYear.value)
+    // Pass selectedYear and encoding to parser
+    const data = await parseFile(f, selectedYear.value, selectedEncoding.value)
     
     if (data.length === 0) {
       alert('檔案中沒有可用的資料或格式不正確')

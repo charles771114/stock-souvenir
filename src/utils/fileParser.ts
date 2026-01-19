@@ -105,13 +105,13 @@ const parseBoolean = (val: any): boolean => {
     return ['yes', 'y', 'true', '1', '是', 'v', '有'].includes(s);
 };
 
-export const parseFile = async (file: File, targetYear?: string): Promise<ParsedSouvenir[]> => {
+export const parseFile = async (file: File, targetYear?: string, encoding: string = 'UTF-8'): Promise<ParsedSouvenir[]> => {
     const extension = file.name.split('.').pop()?.toLowerCase();
     let rawData: any[] = [];
 
     try {
         if (extension === 'csv') {
-            rawData = await parseCSV(file);
+            rawData = await parseCSV(file, encoding);
         } else if (['xlsx', 'xls'].includes(extension || '')) {
             rawData = await parseExcel(file);
         } else {
@@ -125,12 +125,12 @@ export const parseFile = async (file: File, targetYear?: string): Promise<Parsed
     }
 };
 
-const parseCSV = (file: File): Promise<any[]> => {
+const parseCSV = (file: File, encoding: string = 'UTF-8'): Promise<any[]> => {
     return new Promise((resolve, reject) => {
         Papa.parse(file, {
             header: true,
             skipEmptyLines: true,
-            encoding: 'UTF-8', // default request
+            encoding: encoding,
             complete: (results) => resolve(results.data),
             error: (error) => reject(error),
         });
