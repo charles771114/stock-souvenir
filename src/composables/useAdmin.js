@@ -42,7 +42,7 @@ export function useAdmin() {
     const { data } = await supabase
       .from('souvenirs')
       .select('*')
-      .order('created_at', { ascending: false })
+      .order('updated_at', { ascending: false })
       .limit(5)
 
     if (data) {
