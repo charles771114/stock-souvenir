@@ -158,6 +158,11 @@ const parseExcel = (file: File): Promise<any[]> => {
 };
 
 const normalizeData = (data: any[], targetYear?: string): ParsedSouvenir[] => {
+    if (data.length > 0) {
+        console.log('[Debug] Raw Data Keys (Row 0):', Object.keys(data[0]));
+        console.log('[Debug] Raw Data Values (Row 0):', data[0]);
+    }
+
     return data
         .map((row) => {
             const normalized: any = {};
