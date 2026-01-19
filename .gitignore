@@ -12,7 +12,7 @@ firebase-debug.*.log*
 !.env.example
 
 # Supabase
-supabase/config.toml
+# supabase/config.toml
 
 server/firebase-key.*.json
 # Firebase config
