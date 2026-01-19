@@ -164,7 +164,21 @@ const selectedEncoding = ref('UTF-8')
 const previewRows = computed(() => {
   return parsedData.value.slice(0, 5)
 })
-// ... (skip lines)
+
+const triggerFileInput = () => {
+  fileInput.value?.click()
+}
+
+const handleDrop = (e: DragEvent) => {
+  const droppedFile = e.dataTransfer?.files[0]
+  if (droppedFile) processFile(droppedFile)
+}
+
+const handleFileSelect = (e: Event) => {
+  const selectedFile = (e.target as HTMLInputElement).files?.[0]
+  if (selectedFile) processFile(selectedFile)
+}
+
 const processFile = async (f: File) => {
   // ... (skip lines)
   try {
