@@ -1,5 +1,5 @@
-import { createRouter, createWebHistory } from 'vue-router'
 import { supabase } from '@/lib/supabase'
+import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
   {
@@ -49,6 +49,12 @@ const routes = [
     path: '/admin/panel',
     name: 'AdminPanel',
     component: () => import('@/views/AdminPanel.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/favorites',
+    name: 'AdminUserFavorites',
+    component: () => import('@/views/AdminUserFavorites.vue'),
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
