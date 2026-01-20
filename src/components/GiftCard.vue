@@ -1,70 +1,87 @@
 <template>
-  <div class="group bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col h-full transform hover:-translate-y-1">
-    <div class="p-6 flex flex-col h-full relative overflow-hidden">
-      <!-- Decorative Gradient Blob -->
-      <div class="absolute top-[-50px] right-[-50px] w-24 h-24 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full blur-2xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
+  <div class="group relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col h-full">
+    <!-- Category Indicator (Left Border) -->
+    <div class="absolute left-0 top-0 bottom-0 w-1.5" :class="getCategoryBorderClass(gift.categoryColor)"></div>
+
+    <!-- Card Content -->
+    <div class="p-5 flex-1 flex flex-col">
       
-      <!-- Header -->
-      <div class="flex justify-between items-start mb-4 relative z-10">
-        <div>
-           <div class="flex items-center space-x-2">
-               <span class="text-xs font-bold tracking-wider text-indigo-500 bg-indigo-50 px-2 py-1 rounded-md">{{ gift.code }}</span>
-               <h3 class="text-xl font-bold text-gray-900 tracking-tight">{{ gift.name }}</h3>
-           </div>
-           <p class="text-xs text-gray-400 mt-1" v-if="gift.meeting_date">股東會: {{ formatDate(gift.meeting_date) }}</p>
+      <!-- Header: Code & Action -->
+      <div class="flex justify-between items-start mb-3 pl-2">
+        <div class="flex items-center space-x-2">
+          <span class="font-mono text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded">
+            {{ gift.code }}
+          </span>
+          <span 
+            class="text-xs font-medium px-2 py-0.5 rounded-full border" 
+            :class="getCategoryBadgeClass(gift.categoryColor)"
+          >
+            {{ gift.category }}
+          </span>
         </div>
-        <span 
-          :class="[
-            'text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide border',
-            gift.odd_lot 
-              ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-              : 'bg-gray-50 text-gray-500 border-gray-100'
-          ]"
+        
+        <!-- Favorite Button -->
+        <button 
+          @click.stop="$emit('toggle-collection', gift)"
+          class="relative p-2 rounded-full transition-colors hover:bg-gray-50 focus:outline-none group/btn"
         >
-          {{ gift.odd_lot ? '零股可領' : '限整股' }}
-        </span>
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            class="h-6 w-6 transition-all duration-300"
+            :class="gift.isCollected ? 'text-rose-500 fill-current transform scale-110' : 'text-gray-300 hover:text-rose-400 group-hover/btn:scale-110'"
+            viewBox="0 0 24 24" 
+            stroke="currentColor" 
+            stroke-width="2"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+        </button>
       </div>
 
-      <!-- Souvenir Name -->
-      <div class="mb-6 flex-grow relative z-10">
-        <h4 class="text-sm text-gray-500 mb-1 font-medium">紀念品</h4>
-        <p class="text-base text-gray-800 font-semibold line-clamp-2" :title="gift.souvenir_item">
-          {{ gift.souvenir_item || '尚未公佈' }}
+      <!-- Company Name -->
+      <h3 class="text-lg font-bold text-gray-900 mb-1 pl-2 truncate" :title="gift.name">
+        {{ gift.name }}
+      </h3>
+
+      <!-- Souvenir Name (Main Focus) -->
+      <div class="pl-2 mb-4 flex-1">
+        <p class="text-sm text-gray-600 font-medium line-clamp-2 leading-relaxed" :title="gift.souvenir">
+          {{ gift.souvenir }}
         </p>
       </div>
 
-      <!-- Last Buy Date (Urgency) -->
-      <div class="mt-auto pt-4 border-t border-gray-50 relative z-10">
-        <div class="flex justify-between items-end mb-4">
-             <div>
-                 <p class="text-xs text-gray-400 font-medium">最後買進日</p>
-                 <p class="text-sm font-bold mt-0.5" :class="isUrgent(gift.last_buy_date) ? 'text-rose-500' : 'text-gray-700'">
-                     {{ formatDate(gift.last_buy_date) || '未定' }}
-                 </p>
-             </div>
-             <div v-if="isUrgent(gift.last_buy_date)" class="animate-pulse">
-                 <span class="inline-block w-2 h-2 rounded-full bg-rose-500 mr-1"></span>
-                 <span class="text-xs text-rose-500 font-bold">即將截止</span>
-             </div>
-        </div>
+      <!-- Dates Footer -->
+      <div class="mt-auto pt-4 border-t border-gray-50 pl-2">
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Last Buy Date -->
+          <div>
+            <p class="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-0.5">最後買進日</p>
+            <div class="flex items-center">
+              <span 
+                class="font-mono text-sm font-bold"
+                :class="isExpired(gift.lastBuy) ? 'text-gray-400 line-through decoration-gray-300' : 'text-emerald-600'"
+              >
+                {{ gift.lastBuy || '尚未公布' }}
+              </span>
+              <!-- Urgent Indicator (if within 7 days and not expired) -->
+              <span v-if="!isExpired(gift.lastBuy) && isUrgent(gift.lastBuy)" class="flex h-2 w-2 relative ml-1.5">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+              </span>
+            </div>
+            <span v-if="isExpired(gift.lastBuy)" class="text-[10px] text-rose-500 font-medium block mt-0.5">已截止</span>
+          </div>
 
-        <!-- Action Button -->
-        <button
-          @click.stop="toggleCollection"
-          :class="[
-            'w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center justify-center space-x-2',
-            isCollected
-              ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md hover:shadow-lg hover:from-indigo-700 hover:to-purple-700'
-          ]"
-        >
-          <svg v-if="isCollected" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-          </svg>
-          <span v-else>＋</span>
-          <span>{{ isCollected ? '已收藏' : '加入清單' }}</span>
-        </button>
+          <!-- Meeting Date -->
+          <div class="text-right">
+            <p class="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-0.5">開會日期</p>
+            <span class="font-mono text-sm text-gray-600">
+              {{ gift.meeting || '-' }}
+            </span>
+          </div>
+        </div>
       </div>
+
     </div>
   </div>
 </template>
@@ -75,22 +92,15 @@ const props = defineProps({
     type: Object,
     required: true
   },
-  isCollected: {
-    type: Boolean,
-    default: false
+  isExpired: {
+    type: Function,
+    default: () => false
   }
 })
 
-const emit = defineEmits(['toggle-collection'])
+defineEmits(['toggle-collection'])
 
-const formatDate = (dateString, format = 'YYYY-MM-DD') => {
-  if (!dateString) return ''
-  // Simple check for YYYY-MM-DD format validity
-  const date = new Date(dateString)
-  if (isNaN(date.getTime())) return ''
-  return dateString // Assuming input is YYYY-MM-DD, just return it. Or format properly.
-}
-
+// Helper to check urgency (within 7 days)
 const isUrgent = (dateString) => {
   if (!dateString) return false
   const target = new Date(dateString)
@@ -100,7 +110,32 @@ const isUrgent = (dateString) => {
   return diffDays <= 7 && diffDays >= 0
 }
 
-const toggleCollection = () => {
-  emit('toggle-collection', props.gift)
+// Helpers for Dynamic Colors (Keep in line with ClassificationCenter logic)
+const getCategoryBorderClass = (color) => {
+    const map = {
+        gray: 'bg-gray-400',
+        red: 'bg-red-400',
+        yellow: 'bg-yellow-400',
+        green: 'bg-emerald-400',
+        blue: 'bg-blue-400',
+        indigo: 'bg-indigo-400',
+        purple: 'bg-purple-400',
+        pink: 'bg-pink-400',
+    }
+    return map[color] || 'bg-gray-300'
+}
+
+const getCategoryBadgeClass = (color) => {
+    const map = {
+        gray: 'text-gray-600 bg-gray-50 border-gray-100',
+        red: 'text-red-700 bg-red-50 border-red-100',
+        yellow: 'text-yellow-700 bg-yellow-50 border-yellow-100',
+        green: 'text-emerald-700 bg-emerald-50 border-emerald-100',
+        blue: 'text-blue-700 bg-blue-50 border-blue-100',
+        indigo: 'text-indigo-700 bg-indigo-50 border-indigo-100',
+        purple: 'text-purple-700 bg-purple-50 border-purple-100',
+        pink: 'text-pink-700 bg-pink-50 border-pink-100',
+    }
+    return map[color] || map['gray']
 }
 </script>

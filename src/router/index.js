@@ -58,6 +58,33 @@ const routes = [
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
+    path: '/admin/classification',
+    name: 'ClassificationCenter',
+    component: () => import('@/views/admin/ClassificationCenterView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  // Retrofit old routes to redirect
+  {
+    path: '/admin/categories',
+    redirect: '/admin/classification'
+  },
+  {
+    path: '/admin/review',
+    redirect: '/admin/classification'
+  },
+  {
+    path: '/admin/import',
+    name: 'AdminImport',
+    component: () => import('@/views/admin/DataImportView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/users',
+    name: 'UserManagement',
+    component: () => import('@/views/admin/UserManagementView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     redirect: '/gifts'

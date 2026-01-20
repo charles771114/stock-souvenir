@@ -1,11 +1,15 @@
 import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
+import { useLocalStorageCache } from './useLocalStorageCache'
 
 export function useGifts() {
   const gifts = ref([])
   const myCollections = ref([])
   const loading = ref(false)
   const error = ref(null)
+
+  // 初始化快取
+  const cache = useLocalStorageCache()
 
   /**
    * 取得紀念品列表（支援篩選）
@@ -21,6 +25,33 @@ export function useGifts() {
     error.value = null
 
     try {
+      const currentYear = new Date().getFullYear()
+      const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+      const requestYear = filters.year
+
+      // 檢查快取（僅當有指定年份且無其他篩選條件時）
+      if (requestYear && !filters.companyCode && !filters.companyName && !filters.giftName) {
+        const cacheKey = `gifts:${requestYear}`
+        const cachedEntry = cache.getWithMetadata(cacheKey)
+
+        if (cachedEntry) {
+          // 過去年度：永久快取
+          if (requestYear !== currentYear.toString()) {
+            gifts.value = cachedEntry.data
+            loading.value = false
+            return { data: cachedEntry.data, error: null, fromCache: true }
+          }
+
+          // 當年度：檢查是否為今天的快取
+          if (cachedEntry.date === today) {
+            gifts.value = cachedEntry.data
+            loading.value = false
+            return { data: cachedEntry.data, error: null, fromCache: true }
+          }
+        }
+      }
+
+      // 呼叫 API
       let query = supabase
         .from('souvenirs') // Updated table name
         .select('*')
@@ -54,10 +85,38 @@ export function useGifts() {
       if (fetchError) throw fetchError
 
       gifts.value = data || []
-      return { data, error: null }
+
+      // 儲存快取（僅當有指定年份且無其他篩選條件時）
+      if (requestYear && !filters.companyCode && !filters.companyName && !filters.giftName) {
+        const cacheKey = `gifts:${requestYear}`
+        const metadata = {
+          year: parseInt(requestYear, 10)
+        }
+
+        // 當年度加入日期標記
+        if (requestYear === currentYear.toString()) {
+          metadata.date = today
+        }
+
+        cache.set(cacheKey, data, metadata)
+      }
+
+      return { data, error: null, fromCache: false }
     } catch (e) {
       console.error('取得紀念品列表失敗:', e)
       error.value = e.message
+
+      // Fallback: 嘗試使用快取（即使過期）
+      if (filters.year && !filters.companyCode && !filters.companyName && !filters.giftName) {
+        const cacheKey = `gifts:${filters.year}`
+        const cachedEntry = cache.getWithMetadata(cacheKey)
+        if (cachedEntry) {
+          gifts.value = cachedEntry.data
+          console.warn('Using cached data due to API error')
+          return { data: cachedEntry.data, error: e, fromCache: true }
+        }
+      }
+
       return { data: null, error: e }
     } finally {
       loading.value = false

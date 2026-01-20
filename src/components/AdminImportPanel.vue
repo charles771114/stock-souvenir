@@ -1,6 +1,8 @@
 <template>
-  <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
-    <div class="mb-6">
+  <div class="bg-white/60 backdrop-blur-xl border border-white/40 rounded-2xl shadow-xl shadow-indigo-100/20 p-8 mb-8 relative overflow-hidden">
+    <!-- Gradient Overlay -->
+    <div class="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none"></div>
+    <div class="relative z-10">
       <h3 class="text-lg font-semibold text-gray-900">匯入歷史資料 (Historical Data Import)</h3>
       <p class="text-sm text-gray-600 mt-1">
         支援拖曳或點擊上傳 CSV / Excel (.xlsx, .xls) 檔案。系統將自動解析並寫入資料庫。
@@ -106,6 +108,8 @@
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 公司名稱</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                分類 (Auto)</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 開會日期</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">紀念品
               </th>
@@ -117,6 +121,15 @@
             <tr v-for="(item, index) in previewRows" :key="index">
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ item.code }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.name }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm">
+                <span v-if="item.classification_status === 'system_matched'" 
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  {{ categories.find(c => c.id === item.category_id)?.name || 'Matched' }}
+                </span>
+                <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                  需審核
+                </span>
+              </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {{ item.meeting_date }}
                 <span v-if="selectedYear && item.meeting_date.startsWith(selectedYear)"
@@ -127,7 +140,7 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.price }}</td>
             </tr>
             <tr v-if="parsedData.length > 5">
-              <td colspan="5" class="px-6 py-3 text-center text-sm text-gray-500 bg-gray-50">
+              <td colspan="6" class="px-6 py-3 text-center text-sm text-gray-500 bg-gray-50">
                 ... 還有 {{ parsedData.length - 5 }} 筆資料
               </td>
             </tr>
@@ -141,13 +154,20 @@
 <script setup lang="ts">
 import { supabase } from '@/lib/supabase'
 import { parseFile, type ParsedSouvenir } from '@/utils/fileParser'
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
+import { useCategories } from '@/composables/useCategories'
+
+const { categories, fetchCategories, matchCategory } = useCategories()
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const file = ref<File | null>(null)
 const processing = ref(false)
 const parsedData = ref<ParsedSouvenir[]>([])
 const uploading = ref(false)
+
+onMounted(() => {
+  fetchCategories()
+})
 const progress = ref(0)
 const selectedYear = ref('')
 const selectedEncoding = ref('UTF-8')
@@ -190,6 +210,13 @@ const processFile = async (f: File) => {
       alert('檔案中沒有可用的有效資料')
       if (result.errors.length === 0) reset()
     } else {
+      // Apply classification logic
+      result.data.forEach(item => {
+        const match = matchCategory(item.souvenir_item)
+        item.category_id = match.id || undefined
+        item.classification_status = match.status
+      })
+      
       parsedData.value = result.data
       console.log('Parsed Valid Data:', result.data.slice(0, 3))
     }

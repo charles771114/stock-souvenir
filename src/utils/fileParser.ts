@@ -13,6 +13,8 @@ export interface ParsedSouvenir {
     odd_lot?: boolean;
     doc_id: string;
     status: string;
+    category_id?: number | null;
+    classification_status?: 'system_matched' | 'verified' | 'unclassified';
 }
 
 // Helper to normalize headers from various accepted formats to database keys
@@ -24,6 +26,7 @@ const KEY_MAPPING: Record<string, string> = {
 
     '名稱': 'name',
     '公司名稱': 'name',
+    '股票名稱': 'name',
     'Name': 'name',
     'Company Name': 'name',
     '股名': 'name',
@@ -58,7 +61,7 @@ const KEY_MAPPING: Record<string, string> = {
 
     '零股': 'odd_lot',
     'Odd Lot': 'odd_lot',
-    
+
     '股價': 'price',
     'Price': 'price'
 };
@@ -80,8 +83,8 @@ const formatDate = (val: any): string | null => {
     // Handle Excel serial date (number or string-number)
     let numVal = Number(val);
     if (!isNaN(numVal) && numVal > 20000 && numVal < 60000 && typeof val !== 'object') {
-         const date = new Date(Math.round((numVal - 25569) * 86400 * 1000));
-         return date.toISOString().split('T')[0];
+        const date = new Date(Math.round((numVal - 25569) * 86400 * 1000));
+        return date.toISOString().split('T')[0];
     }
 
     // Handle strings like 2024/05/20 or 113/05/20 (Taiwan year) or 5/26/25 (US Short)
@@ -94,11 +97,11 @@ const formatDate = (val: any): string | null => {
         const p2 = parseInt(twDateMatch[2]);
         const p3 = parseInt(twDateMatch[3]);
 
-        if (p1 < 1911 && p1 > 100) { 
-             const fullYear = p1 + 1911;
-             return `${fullYear}-${p2.toString().padStart(2, '0')}-${p3.toString().padStart(2, '0')}`;
+        if (p1 < 1911 && p1 > 100) {
+            const fullYear = p1 + 1911;
+            return `${fullYear}-${p2.toString().padStart(2, '0')}-${p3.toString().padStart(2, '0')}`;
         }
-        
+
         if (p1 <= 12 && p3 < 100) {
             const fullYear = 2000 + p3;
             // ambiguous case handled as year last for short format
@@ -183,7 +186,7 @@ const normalizeData = (data: any[], targetYear?: string): ParseResult => {
 
     data.forEach((row, index) => {
         const normalized: any = {};
-        const rowNum = index + 2; 
+        const rowNum = index + 2;
 
         try {
             Object.keys(row).forEach((key) => {
@@ -205,8 +208,8 @@ const normalizeData = (data: any[], targetYear?: string): ParseResult => {
 
             let meetingDate = formatDate(normalized.meeting_date);
             if (!meetingDate) {
-                 errors.push({ row: rowNum, reason: `開會日期格式錯誤: ${normalized.meeting_date}`, raw: row });
-                 return;
+                errors.push({ row: rowNum, reason: `開會日期格式錯誤: ${normalized.meeting_date}`, raw: row });
+                return;
             }
 
             let lastBuyDate = formatDate(normalized.last_buy_date);

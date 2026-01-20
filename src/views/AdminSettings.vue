@@ -64,16 +64,25 @@
           >
             <div class="flex-1">
               <div class="flex items-center">
-                <div class="flex-shrink-0 h-10 w-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                <div class="relative flex-shrink-0 h-10 w-10 bg-indigo-100 rounded-full flex items-center justify-center">
                   <span class="text-indigo-600 font-medium text-sm">
                     {{ admin.email.charAt(0).toUpperCase() }}
                   </span>
+                  <!-- Primary Badge -->
+                  <div v-if="admin.is_primary_admin" class="absolute -top-1 -right-1 bg-yellow-400 rounded-full p-0.5 border-2 border-white" title="主管理員">
+                    <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  </div>
                 </div>
                 <div class="ml-4">
-                  <div class="text-sm font-medium text-gray-900">
+                  <div class="text-sm font-medium text-gray-900 flex items-center">
                     {{ admin.email }}
-                    <span v-if="isCurrentUser(admin.email)" class="ml-2 text-xs text-indigo-600">
-                      (您)
+                    <span v-if="isCurrentUser(admin.email)" class="ml-2 text-xs text-indigo-600 font-normal bg-indigo-50 px-2 py-0.5 rounded-full">
+                      (您現在的帳號)
+                    </span>
+                    <span v-if="admin.is_primary_admin" class="ml-2 text-xs text-amber-600 font-normal bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
+                      Primary
                     </span>
                   </div>
                   <div class="text-xs text-gray-500">
@@ -83,16 +92,28 @@
               </div>
             </div>
 
-            <button
-              v-if="!isCurrentUser(admin.email)"
-              @click="confirmRemove(admin.email)"
-              class="ml-4 px-3 py-1.5 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
-            >
-              移除
-            </button>
-            <span v-else class="ml-4 px-3 py-1.5 text-sm text-gray-400">
-              無法移除
-            </span>
+            <div class="flex items-center space-x-2">
+              <!-- Promote Button -->
+              <button
+                v-if="!admin.is_primary_admin"
+                @click="confirmPromote(admin.email)"
+                class="px-3 py-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors border border-transparent hover:border-indigo-100"
+              >
+                設為主管理員
+              </button>
+
+              <!-- Remove Button -->
+              <button
+                v-if="!isCurrentUser(admin.email) && !admin.is_primary_admin"
+                @click="confirmRemove(admin.email)"
+                class="px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                移除權限
+              </button>
+              <span v-else-if="admin.is_primary_admin" class="px-3 py-1.5 text-xs text-gray-400 italic">
+                無法移除
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -124,7 +145,7 @@ import { useAuth } from '@/composables/useAuth'
 import Navbar from '@/components/Navbar.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
-const { adminEmails, loading, error, fetchAdminEmails, addAdminEmail, removeAdminEmail } = useAdmin()
+const { adminEmails, loading, error, fetchAdminEmails, addAdminEmail, removeAdminEmail, promoteToPrimary } = useAdmin()
 const { user } = useAuth()
 
 const newAdminEmail = ref('')
@@ -161,6 +182,20 @@ const confirmRemove = async (email) => {
   
   if (!removeError) {
     alert('Admin 移除成功')
+  } else {
+    alert(removeError.message)
+  }
+}
+
+const confirmPromote = async (email) => {
+  if (!confirm(`確定要將「${email}」設為主管理員 (Primary Admin) 嗎？\n\n主管理員擁有最高權限，且不能被移除。`)) return
+
+  const { error: promoteError } = await promoteToPrimary(email)
+  
+  if (!promoteError) {
+    alert('已成功設為主管理員')
+  } else {
+    alert(promoteError.message)
   }
 }
 

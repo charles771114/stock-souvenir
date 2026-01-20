@@ -51,7 +51,7 @@
             <td class="py-4 px-6">
               <span 
                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border"
-                :class="getCategoryColor(item.category)"
+                :class="getCategoryColor(item.categoryColor)"
               >
                 {{ item.category }}
               </span>
@@ -111,17 +111,17 @@ defineProps({
 
 defineEmits(['toggle-collection'])
 
-const getCategoryColor = (category) => {
-  const map = {
-    '7-11': 'bg-orange-50 text-orange-700 border-orange-200',
-    '全家': 'bg-green-50 text-green-700 border-green-200',
-    '超商卡': 'bg-blue-50 text-blue-700 border-blue-200',
-    '餐飲': 'bg-yellow-50 text-yellow-700 border-yellow-200',
-    '日用品': 'bg-cyan-50 text-cyan-700 border-cyan-200',
-    '保健': 'bg-red-50 text-red-700 border-red-200',
-    '美妝': 'bg-pink-50 text-pink-700 border-pink-200',
-    '其他': 'bg-gray-50 text-gray-600 border-gray-200'
-  }
-  return map[category] || map['其他']
+const getCategoryColor = (color) => {
+    const map = {
+        gray: 'bg-gray-50 text-gray-600 border-gray-200',
+        red: 'bg-red-50 text-red-700 border-red-200',
+        yellow: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+        green: 'bg-green-50 text-green-700 border-green-200',
+        blue: 'bg-blue-50 text-blue-700 border-blue-200',
+        indigo: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+        purple: 'bg-purple-50 text-purple-700 border-purple-200',
+        pink: 'bg-pink-50 text-pink-700 border-pink-200',
+    }
+    return map[color] || map['gray']
 }
 </script>
