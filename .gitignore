@@ -73,3 +73,5 @@ node_modules/
 # dataconnect generated files
 .dataconnect
 /dist
+# Secrets
+server/firebase-key.json

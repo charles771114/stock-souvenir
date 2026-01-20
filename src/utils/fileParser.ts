@@ -43,9 +43,6 @@ const KEY_MAPPING: Record<string, string> = {
     'Last Buy Date': 'last_buy_date',
     'Last Date': 'last_buy_date',
 
-    // '股價': 'price',
-    // 'Price': 'price',
-
     '股東會性質': 'meeting_type',
     '性質': 'meeting_type',
     'Type': 'meeting_type',
@@ -56,19 +53,13 @@ const KEY_MAPPING: Record<string, string> = {
     'Location': 'location',
     'Place': 'location',
 
-    // '市場別': 'market_type',
-    // 'Market': 'market_type',
-
-    // '代領截止時間': 'proxy_deadline',
-    // 'Proxy Deadline': 'proxy_deadline',
-
     '零股': 'odd_lot',
     'Odd Lot': 'odd_lot',
 
-    // New keys from user feedback
+    // User requested specific fields
     '開會時間': 'meeting_date',
     '開會性質': 'meeting_type',
-    '最後過戶日': 'last_buy_date', // Sometimes mixed up, but robust to add variations
+    '最後過戶日': 'last_buy_date',
 };
 
 // Helper: Force specific year on a date string (YYYY-MM-DD)
@@ -86,13 +77,10 @@ const formatDate = (val: any): string | null => {
     if (!val) return null;
 
     // Handle Excel serial date (number or string-number)
-    // Excel base date: Dec 30 1899 usually (25569 days offset from 1970-01-01)
     let numVal = Number(val);
     if (!isNaN(numVal) && numVal > 20000 && numVal < 60000 && typeof val !== 'object') {
-        // It's likely an Excel serial date (e.g. 45000 is year 2023)
-        // 25569 = 1970-01-01 in Excel serial
-        const date = new Date(Math.round((numVal - 25569) * 86400 * 1000));
-        return date.toISOString().split('T')[0];
+         const date = new Date(Math.round((numVal - 25569) * 86400 * 1000));
+         return date.toISOString().split('T')[0];
     }
 
     // Handle strings like 2024/05/20 or 113/05/20 (Taiwan year) or 5/26/25 (US Short)
@@ -105,15 +93,11 @@ const formatDate = (val: any): string | null => {
         const p2 = parseInt(twDateMatch[2]);
         const p3 = parseInt(twDateMatch[3]);
 
-        // Case 1: TW Year (e.g. 113) -> 2024
         if (p1 < 1911 && p1 > 100) { 
              const fullYear = p1 + 1911;
              return `${fullYear}-${p2.toString().padStart(2, '0')}-${p3.toString().padStart(2, '0')}`;
         }
         
-        // Case 2: M/D/YY (e.g. 5/26/25) -> 2025-05-26
-        // Heuristic: if p1 is small (<13) and p3 is small year (<100)
-        // Note: This is ambiguous with YYYY/MM/DD if not careful, but usually YYYY is > 1000.
         if (p1 <= 12 && p3 < 100) {
             const fullYear = 2000 + p3;
             return `${fullYear}-${p1.toString().padStart(2, '0')}-${p2.toString().padStart(2, '0')}`;
@@ -195,17 +179,11 @@ const normalizeData = (data: any[], targetYear?: string): ParseResult => {
     const validData: ParsedSouvenir[] = [];
     const errors: { row: number; reason: string; raw: any }[] = [];
 
-    if (data.length > 0) {
-        console.log('[Debug] Raw Data Keys (Row 0):', Object.keys(data[0]));
-        console.log('[Debug] Raw Data Values (Row 0):', data[0]);
-    }
-
     data.forEach((row, index) => {
         const normalized: any = {};
-        const rowNum = index + 2; // Excel row number (1-based, +1 for header)
+        const rowNum = index + 2; 
 
         try {
-            // 1. Key Mapping
             Object.keys(row).forEach((key) => {
                 const trimmedKey = key.trim();
                 const mappedKey = KEY_MAPPING[trimmedKey];
@@ -214,22 +192,19 @@ const normalizeData = (data: any[], targetYear?: string): ParseResult => {
                 }
             });
 
-            // 2. Data Cleaning & Validation
             if (!normalized.code) {
                 errors.push({ row: rowNum, reason: '缺少股票代碼 (Code missing)', raw: row });
                 return;
             }
 
-            // Date Handling
             let meetingDate = formatDate(normalized.meeting_date);
             if (!meetingDate) {
                 errors.push({ row: rowNum, reason: `開會日期格式錯誤: ${normalized.meeting_date}`, raw: row });
-                return; // Mandatory for doc_id
+                return;
             }
 
             let lastBuyDate = formatDate(normalized.last_buy_date);
 
-            // Apply Target Year IF Provided
             if (targetYear) {
                 meetingDate = applyYear(meetingDate, targetYear);
                 lastBuyDate = applyYear(lastBuyDate, targetYear);
@@ -237,20 +212,14 @@ const normalizeData = (data: any[], targetYear?: string): ParseResult => {
 
             normalized.meeting_date = meetingDate;
             normalized.last_buy_date = lastBuyDate;
-
-            // Boolean Handling
             normalized.odd_lot = parseBoolean(normalized.odd_lot);
 
-            // Price Handling
             if (normalized.price) {
                 normalized.price = parseFloat(normalized.price);
                 if (isNaN(normalized.price)) normalized.price = null;
             }
 
-            // 3. Generate doc_id
             normalized.doc_id = `${normalized.code}_${normalized.meeting_date}`;
-
-            // 4. Default Status
             normalized.status = 'active';
 
             validData.push(normalized as ParsedSouvenir);
