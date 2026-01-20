@@ -31,9 +31,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
+import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const statusMessage = ref('登入中...')
@@ -45,54 +45,64 @@ const goToLogin = () => {
 
 onMounted(async () => {
   try {
-    // 等待 OAuth callback 處理完成
+    // 1. 等待 Supabase 處理 URLHash (pkce flow) 並建立 Session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
-    if (sessionError) {
-      throw sessionError
-    }
+    if (sessionError) throw sessionError
 
     if (!session) {
-      // 檢查網址是否有 hash (通常包含 access_token)
-      if (window.location.hash && window.location.hash.includes('access_token')) {
-        console.error('網址包含 token 但無法建立 session。這通常是因為 Anon Key 設定錯誤或無效。');
-        throw new Error('登入驗證失敗：無法解析 Token。請檢查 Supabase Anon Key 設定。');
+      // 容錯處理：有時候 Hash 處理需要一點時間，或是瀏覽器重整導致 Hash 消失
+       if (window.location.hash && window.location.hash.includes('access_token')) {
+        console.error('有 Token 但無 Session -> 可能是 Anon Key 問題或 PKCE 驗證失敗')
+        throw new Error('登入驗證失敗 (Token 無法交換 Session)')
       }
-      throw new Error('無法取得登入資訊 (Session 為空)')
+      // 若真的沒有 Session，導回登入頁
+      throw new Error('未偵測到登入狀態，請重新嘗試')
     }
 
     statusMessage.value = '正在載入用戶資料...'
 
-    // 取得用戶資料
-    // 取得用戶資料
-    // Ensure we query the correct table 'profiles'
+    // 2. 取得 Profile 以判斷角色
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', session.user.id)
       .maybeSingle()
-
+    
+    // 若 Profile 不存在 (理論上 trigger 會建立，但以防萬一)
+    // 這裡不拋出錯誤，而是視為普通用戶繼續，避免卡死
     if (profileError) {
-      console.error('取得用戶資料失敗:', profileError)
-      throw new Error('無法載入用戶資料，請重新登入')
+      console.warn('Profile fetch error:', profileError)
     }
 
-    // Role check logic
     const isAdmin = profile?.role === 'admin'
 
-    if (isAdmin) {
-      statusMessage.value = '歡迎回來，管理員！'
-      await new Promise(resolve => setTimeout(resolve, 500))
-      router.push('/admin/scraper')
-    } else {
-      statusMessage.value = '登入成功！'
-      await new Promise(resolve => setTimeout(resolve, 500))
-      router.push('/gifts')
+    // 3. 決定跳轉目標
+    // 優先讀取登入時傳入的 `next` 參數
+    const routeNode = router.currentRoute.value
+    // 注意：Supabase OAuth queryParams 會附加在 URL 上
+    // 但因為是 Hash 模式或 History 模式混用，要在 query 中找 'next'
+    // 實際上 supabase 會把 queryParams 帶回 redirect URL 的 query string
+    
+    // 嘗試從 query 取得 next
+    let nextPath = routeNode.query.next 
+    
+    // 如果沒有，依角色決定預設路徑
+    if (!nextPath) {
+        nextPath = isAdmin ? '/admin/scraper' : '/gifts'
     }
+
+    statusMessage.value = `登入成功！即將前往 ${isAdmin ? '管理後台' : '首頁'}...`
+    
+    // 稍微延遲讓用戶看到成功訊息
+    await new Promise(resolve => setTimeout(resolve, 800))
+    
+    console.log('Redirecting to:', nextPath)
+    router.replace(nextPath)
 
   } catch (e) {
     console.error('處理登入回調失敗:', e)
-    error.value = e.message || '登入過程發生錯誤'
+    error.value = e.message || '登入過程發生未知錯誤'
     statusMessage.value = '登入失敗'
   }
 })

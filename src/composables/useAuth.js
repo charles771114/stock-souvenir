@@ -1,5 +1,5 @@
-import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
+import { computed, ref } from 'vue'
 
 const user = ref(null)
 const profile = ref(null)
@@ -13,15 +13,30 @@ export function useAuth() {
   /**
    * Google OAuth 登入
    */
-  const signInWithGoogle = async () => {
+  /**
+   * Google OAuth 登入
+   * @param {string} redirectPath - 登入後要導向的內部路徑 (預設 /)
+   */
+  const signInWithGoogle = async (redirectPath = '/') => {
     loading.value = true
     error.value = null
 
     try {
+      // 1. 動態建構 Callback URL
+      // 優先使用環境變數 (適合正式環境固定網址)，否則使用當前 Origin (適合預覽/開發)
+      const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin
+      const callbackUrl = `${siteUrl}${import.meta.env.BASE_URL}auth/callback`
+      
+      console.log('Initiating Google Login with callback:', callbackUrl)
+
       const { data, error: signInError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}${import.meta.env.BASE_URL}auth/callback`,
+          redirectTo: callbackUrl,
+          // 將目標路徑存在 query params 中，讓 Callback 頁面讀取
+          queryParams: {
+            next: redirectPath
+          }
         },
       })
 
