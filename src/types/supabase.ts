@@ -1,13 +1,3 @@
-/**
- * Supabase Database Types
- * 
- * 這個檔案可以透過以下指令自動生成：
- * npm run supabase:types
- * 
- * 或手動執行：
- * supabase gen types typescript --local > src/types/supabase.ts
- */
-
 export type Json =
   | string
   | number
@@ -23,7 +13,6 @@ export interface Database {
         Row: {
           id: number
           doc_id: string
-          number: string | null
           code: string
           name: string | null
           price: number | null
@@ -32,17 +21,15 @@ export interface Database {
           meeting_type: string | null
           location: string | null
           souvenir_item: string | null
-          odd_lot: boolean
+          odd_lot: boolean | null
           source_url: string | null
           data_hash: string | null
-          status: string
-          created_at: string
-          updated_at: string
+          status: string | null
+          updated_at: string | null
         }
         Insert: {
           id?: number
           doc_id: string
-          number?: string | null
           code: string
           name?: string | null
           price?: number | null
@@ -51,17 +38,15 @@ export interface Database {
           meeting_type?: string | null
           location?: string | null
           souvenir_item?: string | null
-          odd_lot?: boolean
+          odd_lot?: boolean | null
           source_url?: string | null
           data_hash?: string | null
-          status?: string
-          created_at?: string
-          updated_at?: string
+          status?: string | null
+          updated_at?: string | null
         }
         Update: {
           id?: number
           doc_id?: string
-          number?: string | null
           code?: string
           name?: string | null
           price?: number | null
@@ -70,35 +55,34 @@ export interface Database {
           meeting_type?: string | null
           location?: string | null
           souvenir_item?: string | null
-          odd_lot?: boolean
+          odd_lot?: boolean | null
           source_url?: string | null
           data_hash?: string | null
-          status?: string
-          created_at?: string
-          updated_at?: string
+          status?: string | null
+          updated_at?: string | null
         }
       }
       profiles: {
         Row: {
           id: string
           email: string | null
-          role: string
-          created_at: string
-          updated_at: string
+          full_name: string | null
+          role: 'admin' | 'user' | null
+          created_at: string | null
         }
         Insert: {
           id: string
           email?: string | null
-          role?: string
-          created_at?: string
-          updated_at?: string
+          full_name?: string | null
+          role?: 'admin' | 'user' | null
+          created_at?: string | null
         }
         Update: {
           id?: string
           email?: string | null
-          role?: string
-          created_at?: string
-          updated_at?: string
+          full_name?: string | null
+          role?: 'admin' | 'user' | null
+          created_at?: string | null
         }
       }
       user_collections: {
@@ -106,65 +90,87 @@ export interface Database {
           id: number
           user_id: string
           souvenir_id: number
-          status: string
-          quantity: number
+          status: 'pending' | 'collected' | 'missed' | null
+          quantity: number | null
           note: string | null
-          created_at: string
-          updated_at: string
+          created_at: string | null
+          updated_at: string | null
         }
         Insert: {
           id?: number
           user_id: string
           souvenir_id: number
-          status?: string
-          quantity?: number
+          status?: 'pending' | 'collected' | 'missed' | null
+          quantity?: number | null
           note?: string | null
-          created_at?: string
-          updated_at?: string
+          created_at?: string | null
+          updated_at?: string | null
         }
         Update: {
           id?: number
           user_id?: string
           souvenir_id?: number
-          status?: string
-          quantity?: number
+          status?: 'pending' | 'collected' | 'missed' | null
+          quantity?: number | null
           note?: string | null
-          created_at?: string
-          updated_at?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
+      scraper_sources: {
+        Row: {
+          id: number
+          source_name: string
+          source_url: string
+          method: string | null
+          target_rules: Json | null
+          is_active: boolean | null
+          last_scraped_at: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: number
+          source_name: string
+          source_url: string
+          method?: string | null
+          target_rules?: Json | null
+          is_active?: boolean | null
+          last_scraped_at?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: number
+          source_name?: string
+          source_url?: string
+          method?: string | null
+          target_rules?: Json | null
+          is_active?: boolean | null
+          last_scraped_at?: string | null
+          created_at?: string | null
         }
       }
     }
     Views: {
-      [_ in never]: never
+      admin_user_favorites: {
+        Row: {
+          collection_id: number
+          user_id: string
+          email: string | null
+          souvenir_id: number
+          stock_code: string | null
+          company_name: string | null
+          souvenir_item: string | null
+          collected_at: string | null
+          last_buy_date: string | null
+          meeting_date: string | null
+        }
+      }
     }
     Functions: {
-      [_ in never]: never
+      [_: string]: never
     }
     Enums: {
-      [_ in never]: never
+      [_: string]: never
     }
   }
 }
-
-// Helper types
-export type Souvenir = Database['public']['Tables']['souvenirs']['Row']
-export type SouvenirInsert = Database['public']['Tables']['souvenirs']['Insert']
-export type SouvenirUpdate = Database['public']['Tables']['souvenirs']['Update']
-
-export type Profile = Database['public']['Tables']['profiles']['Row']
-export type ProfileInsert = Database['public']['Tables']['profiles']['Insert']
-export type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
-
-export type UserCollection = Database['public']['Tables']['user_collections']['Row']
-export type UserCollectionInsert = Database['public']['Tables']['user_collections']['Insert']
-export type UserCollectionUpdate = Database['public']['Tables']['user_collections']['Update']
-
-// Extended types with relations
-export type UserCollectionWithSouvenir = UserCollection & {
-  souvenir: Souvenir
-}
-
-// Status enums
-export type CollectionStatus = 'pending' | 'collected' | 'missed'
-export type UserRole = 'admin' | 'user'
-export type SouvenirStatus = 'active' | 'inactive'

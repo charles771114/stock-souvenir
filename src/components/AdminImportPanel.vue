@@ -148,9 +148,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { parseFile, type ParsedSouvenir } from '@/utils/fileParser'
+import { computed, ref } from 'vue'
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const file = ref<File | null>(null)
@@ -180,17 +180,29 @@ const handleFileSelect = (e: Event) => {
 }
 
 const processFile = async (f: File) => {
-  // ... (skip lines)
+  if (!f) return
+  
+  processing.value = true
+  file.value = f
+  parsedData.value = []
+  progress.value = 0
+  
   try {
     // Pass selectedYear and encoding to parser
-    const data = await parseFile(f, selectedYear.value, selectedEncoding.value)
+    const result = await parseFile(f, selectedYear.value, selectedEncoding.value)
     
-    if (data.length === 0) {
-      alert('檔案中沒有可用的資料或格式不正確')
-      reset()
+    if (result.errors.length > 0) {
+        // Show errors
+        console.warn('Parsing warnings/errors:', result.errors)
+        alert(`解析完成但有 ${result.errors.length} 筆錯誤。首筆錯誤: Row ${result.errors[0].row} - ${result.errors[0].reason}`)
+    }
+
+    if (result.data.length === 0) {
+      alert('檔案中沒有可用的有效資料')
+      if (result.errors.length === 0) reset()
     } else {
-      parsedData.value = data
-      console.log('Parsed Data:', data.slice(0, 3))
+      parsedData.value = result.data
+      console.log('Parsed Valid Data:', result.data.slice(0, 3))
     }
   } catch (err) {
     console.error(err)

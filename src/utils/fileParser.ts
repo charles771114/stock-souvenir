@@ -58,54 +58,70 @@ const KEY_MAPPING: Record<string, string> = {
 
     '零股': 'odd_lot',
     'Odd Lot': 'odd_lot',
-};
 
-// Helper: Force specific year on a date string (YYYY-MM-DD)
-const applyYear = (dateStr: string | null, year?: string): string | null => {
-    if (!dateStr || !year) return dateStr;
-    const parts = dateStr.split('-');
-    if (parts.length === 3) {
-        // parts[0] is year, replace it
-        return `${year}-${parts[1]}-${parts[2]}`;
-    }
-    return dateStr;
-};
+    // New keys from user feedback
+    '開會時間': 'meeting_date',
+    '開會性質': 'meeting_type',
+    '最後過戶日': 'last_buy_date', // Sometimes mixed up, but robust to add variations
 
-const formatDate = (val: any): string | null => {
-    if (!val) return null;
-    // Handle Excel serial date
-    if (typeof val === 'number') {
-        const date = new Date(Math.round((val - 25569) * 86400 * 1000));
-        return date.toISOString().split('T')[0];
-    }
-    // Handle strings like 2024/05/20 or 113/05/20 (Taiwan year)
-    let str = val.toString().trim();
 
-    // Taiwan Year conversion (e.g. 113/05/01 -> 2024-05-01)
-    const twDateMatch = str.match(/^(\d{2,3})[\/.-](\d{1,2})[\/.-](\d{1,2})$/);
-    if (twDateMatch) {
-        const year = parseInt(twDateMatch[1]);
-        if (year < 1911) { // Likely TW year
-            const fullYear = year + 1911;
-            return `${fullYear}-${twDateMatch[2].padStart(2, '0')}-${twDateMatch[3].padStart(2, '0')}`;
+    // Helper: Force specific year on a date string (YYYY-MM-DD)
+    const applyYear = (dateStr: string | null, year?: string): string | null => {
+        if (!dateStr || !year) return dateStr;
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            // parts[0] is year, replace it
+            return `${year}-${parts[1]}-${parts[2]}`;
         }
-    }
+        return dateStr;
+    };
 
-    const date = new Date(str);
-    if (!isNaN(date.getTime())) {
-        return date.toISOString().split('T')[0];
-    }
-    return null;
-};
+    const formatDate = (val: any): string | null => {
+        if (!val) return null;
 
-const parseBoolean = (val: any): boolean => {
-    if (!val) return false;
-    if (val === true) return true;
-    const s = val.toString().trim().toLowerCase();
-    return ['yes', 'y', 'true', '1', '是', 'v', '有'].includes(s);
-};
+        // Handle Excel serial date (number or string-number)
+        // Excel base date: Dec 30 1899 usually (25569 days offset from 1970-01-01)
+        let numVal = Number(val);
+        if (!isNaN(numVal) && numVal > 20000 && numVal < 60000 && typeof val !== 'object') {
+            // It's likely an Excel serial date (e.g. 45000 is year 2023)
+            // 25569 = 1970-01-01 in Excel serial
+            const date = new Date(Math.round((numVal - 25569) * 86400 * 1000));
+            return date.toISOString().split('T')[0];
+        }
 
-export const parseFile = async (file: File, targetYear?: string, encoding: string = 'UTF-8'): Promise<ParsedSouvenir[]> => {
+        // Handle strings like 2024/05/20 or 113/05/20 (Taiwan year)
+        let str = val.toString().trim();
+
+        // Taiwan Year conversion (e.g. 113/05/01 -> 2024-05-01)
+        const twDateMatch = str.match(/^(\d{2,3})[\/.-](\d{1,2})[\/.-](\d{1,2})$/);
+        if (twDateMatch) {
+            const year = parseInt(twDateMatch[1]);
+            if (year < 1911) { // Likely TW year
+                const fullYear = year + 1911;
+                return `${fullYear}-${twDateMatch[2].padStart(2, '0')}-${twDateMatch[3].padStart(2, '0')}`;
+            }
+        }
+
+        const date = new Date(str);
+        if (!isNaN(date.getTime())) {
+            return date.toISOString().split('T')[0];
+        }
+        return null;
+    };
+
+    const parseBoolean = (val: any): boolean => {
+        if (!val) return false;
+        if (val === true) return true;
+        const s = val.toString().trim().toLowerCase();
+        return ['yes', 'y', 'true', '1', '是', 'v', '有'].includes(s);
+    };
+
+    export interface ParseResult {
+        data: ParsedSouvenir[];
+errors: { row: number; reason: string; raw: any } [];
+}
+
+export const parseFile = async (file: File, targetYear?: string, encoding: string = 'UTF-8'): Promise<ParseResult> => {
     const extension = file.name.split('.').pop()?.toLowerCase();
     let rawData: any[] = [];
 
@@ -157,16 +173,20 @@ const parseExcel = (file: File): Promise<any[]> => {
     });
 };
 
-const normalizeData = (data: any[], targetYear?: string): ParsedSouvenir[] => {
+const normalizeData = (data: any[], targetYear?: string): ParseResult => {
+    const validData: ParsedSouvenir[] = [];
+    const errors: { row: number; reason: string; raw: any }[] = [];
+
     if (data.length > 0) {
         console.log('[Debug] Raw Data Keys (Row 0):', Object.keys(data[0]));
         console.log('[Debug] Raw Data Values (Row 0):', data[0]);
     }
 
-    return data
-        .map((row) => {
-            const normalized: any = {};
+    data.forEach((row, index) => {
+        const normalized: any = {};
+        const rowNum = index + 2; // Excel row number (1-based, +1 for header)
 
+        try {
             // 1. Key Mapping
             Object.keys(row).forEach((key) => {
                 const trimmedKey = key.trim();
@@ -177,11 +197,17 @@ const normalizeData = (data: any[], targetYear?: string): ParsedSouvenir[] => {
             });
 
             // 2. Data Cleaning & Validation
-            if (!normalized.code) return null; // Mandatory
+            if (!normalized.code) {
+                errors.push({ row: rowNum, reason: '缺少股票代碼 (Code missing)', raw: row });
+                return;
+            }
 
             // Date Handling
             let meetingDate = formatDate(normalized.meeting_date);
-            if (!meetingDate) return null; // Mandatory for doc_id
+            if (!meetingDate) {
+                errors.push({ row: rowNum, reason: `開會日期格式錯誤: ${normalized.meeting_date}`, raw: row });
+                return; // Mandatory for doc_id
+            }
 
             let lastBuyDate = formatDate(normalized.last_buy_date);
 
@@ -209,7 +235,11 @@ const normalizeData = (data: any[], targetYear?: string): ParsedSouvenir[] => {
             // 4. Default Status
             normalized.status = 'active';
 
-            return normalized as ParsedSouvenir;
-        })
-        .filter((item): item is ParsedSouvenir => item !== null);
+            validData.push(normalized as ParsedSouvenir);
+        } catch (e: any) {
+            errors.push({ row: rowNum, reason: `解析例外: ${e.message}`, raw: row });
+        }
+    });
+
+    return { data: validData, errors };
 };
