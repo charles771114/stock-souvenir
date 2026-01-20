@@ -9,56 +9,43 @@
 
     <!-- Controls Row -->
     <div class="flex items-end gap-6 mb-6">
-       <!-- Year Selection -->
-       <div class="w-48">
-          <label for="year" class="block text-sm font-medium text-gray-700 mb-1">目標年份 (Target Year)</label>
-          <select
-            id="year"
-            v-model="selectedYear"
-            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-          >
-            <option value="">自動偵測 (不強制)</option>
-            <option value="2023">2023</option>
-            <option value="2024">2024</option>
-            <option value="2025">2025</option>
-            <option value="2026">2026</option>
-          </select>
-          <p class="mt-1 text-xs text-gray-500">若檔案日期缺少年份，將使用此設定。</p>
-       </div>
+      <!-- Year Selection -->
+      <div class="w-48">
+        <label for="year" class="block text-sm font-medium text-gray-700 mb-1">目標年份 (Target Year)</label>
+        <select id="year" v-model="selectedYear"
+          class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+          <option value="">自動偵測 (不強制)</option>
+          <option value="2023">2023</option>
+          <option value="2024">2024</option>
+          <option value="2025">2025</option>
+          <option value="2026">2026</option>
+        </select>
+        <p class="mt-1 text-xs text-gray-500">若檔案日期缺少年份，將使用此設定。</p>
+      </div>
 
-       <!-- Encoding Selection -->
-       <div class="w-48">
-          <label for="encoding" class="block text-sm font-medium text-gray-700 mb-1">CSV 編碼 (Encoding)</label>
-          <select
-            id="encoding"
-            v-model="selectedEncoding"
-            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-          >
-            <option value="UTF-8">UTF-8 (預設)</option>
-            <option value="Big5">Big5 (繁體中文)</option>
-          </select>
-          <p class="mt-1 text-xs text-gray-500">若 CSV 顯示亂碼請切換此選項。</p>
-       </div>
+      <!-- Encoding Selection -->
+      <div class="w-48">
+        <label for="encoding" class="block text-sm font-medium text-gray-700 mb-1">CSV 編碼 (Encoding)</label>
+        <select id="encoding" v-model="selectedEncoding"
+          class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+          <option value="UTF-8">UTF-8 (預設)</option>
+          <option value="Big5">Big5 (繁體中文)</option>
+        </select>
+        <p class="mt-1 text-xs text-gray-500">若 CSV 顯示亂碼請切換此選項。</p>
+      </div>
     </div>
 
     <!-- File Upload Zone -->
     <div
       class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-indigo-500 hover:bg-indigo-50 transition-colors cursor-pointer"
-      @dragover.prevent
-      @drop.prevent="handleDrop"
-      @click="triggerFileInput"
-    >
-      <input
-        type="file"
-        ref="fileInput"
-        class="hidden"
-        accept=".csv,.xlsx,.xls"
-        @change="handleFileSelect"
-      />
-      
+      @dragover.prevent @drop.prevent="handleDrop" @click="triggerFileInput">
+      <input type="file" ref="fileInput" class="hidden" accept=".csv,.xlsx,.xls" @change="handleFileSelect" />
+
       <div v-if="!file && !processing" class="space-y-3">
         <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-          <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          <path
+            d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
         <div class="text-sm text-gray-600">
           <span class="font-medium text-indigo-600 hover:text-indigo-500">點擊上傳</span>
@@ -71,20 +58,23 @@
         <div v-if="processing" class="flex items-center space-x-2 text-indigo-600">
           <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <path class="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+            </path>
           </svg>
           <span>解析中...</span>
         </div>
         <div v-else class="text-left w-full max-w-sm">
-           <div class="flex items-center justify-between bg-indigo-50 p-3 rounded-md">
-             <div class="flex items-center">
-               <svg class="h-6 w-6 text-indigo-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-               </svg>
-               <span class="font-medium text-sm text-indigo-900 truncate">{{ file.name }}</span>
-             </div>
-             <button @click.stop="reset" class="text-sm text-red-500 hover:text-red-700">移除</button>
-           </div>
+          <div class="flex items-center justify-between bg-indigo-50 p-3 rounded-md">
+            <div class="flex items-center">
+              <svg class="h-6 w-6 text-indigo-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span class="font-medium text-sm text-indigo-900 truncate">{{ file.name }}</span>
+            </div>
+            <button @click.stop="reset" class="text-sm text-red-500 hover:text-red-700">移除</button>
+          </div>
         </div>
       </div>
     </div>
@@ -94,17 +84,12 @@
       <div class="flex items-center justify-between mb-4">
         <h4 class="text-base font-medium text-gray-900">資料預覽 (共 {{ parsedData.length }} 筆)</h4>
         <div class="space-x-3">
-          <button 
-            @click="reset"
-            class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
+          <button @click="reset"
+            class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
             取消
           </button>
-          <button 
-            @click="handleImport"
-            :disabled="uploading"
-            class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <button @click="handleImport" :disabled="uploading"
+            class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
             <span v-if="uploading">匯入中... ({{ progress }}%)</span>
             <span v-else>確認匯入</span>
           </button>
@@ -116,11 +101,16 @@
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">代號</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">公司名稱</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">開會日期</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">紀念品</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">股價</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">代號
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                公司名稱</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                開會日期</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">紀念品
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">股價
+              </th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
@@ -128,17 +118,18 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ item.code }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.name }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ item.meeting_date }}
-                  <span v-if="selectedYear && item.meeting_date.startsWith(selectedYear)" class="text-green-600 text-xs ml-1">(符合)</span>
-                  <span v-else-if="selectedYear" class="text-amber-500 text-xs ml-1">(不符)</span>
+                {{ item.meeting_date }}
+                <span v-if="selectedYear && item.meeting_date.startsWith(selectedYear)"
+                  class="text-green-600 text-xs ml-1">(符合)</span>
+                <span v-else-if="selectedYear" class="text-amber-500 text-xs ml-1">(不符)</span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.souvenir_item }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.price }}</td>
             </tr>
             <tr v-if="parsedData.length > 5">
-               <td colspan="5" class="px-6 py-3 text-center text-sm text-gray-500 bg-gray-50">
-                 ... 還有 {{ parsedData.length - 5 }} 筆資料
-               </td>
+              <td colspan="5" class="px-6 py-3 text-center text-sm text-gray-500 bg-gray-50">
+                ... 還有 {{ parsedData.length - 5 }} 筆資料
+              </td>
             </tr>
           </tbody>
         </table>
@@ -181,20 +172,18 @@ const handleFileSelect = (e: Event) => {
 
 const processFile = async (f: File) => {
   if (!f) return
-  
+
   processing.value = true
   file.value = f
   parsedData.value = []
   progress.value = 0
-  
+
   try {
-    // Pass selectedYear and encoding to parser
     const result = await parseFile(f, selectedYear.value, selectedEncoding.value)
-    
+
     if (result.errors.length > 0) {
-        // Show errors
-        console.warn('Parsing warnings/errors:', result.errors)
-        alert(`解析完成但有 ${result.errors.length} 筆錯誤。首筆錯誤: Row ${result.errors[0].row} - ${result.errors[0].reason}`)
+      console.warn('Parsing warnings/errors:', result.errors)
+      alert(`解析完成但有 ${result.errors.length} 筆錯誤。首筆錯誤: Row ${result.errors[0].row} - ${result.errors[0].reason}`)
     }
 
     if (result.data.length === 0) {
@@ -228,7 +217,7 @@ const handleImport = async () => {
 
   uploading.value = true
   progress.value = 0
-  
+
   const total = parsedData.value.length
   const batchSize = 100
   let uploaded = 0
@@ -236,14 +225,14 @@ const handleImport = async () => {
 
   for (let i = 0; i < total; i += batchSize) {
     const chunk = parsedData.value.slice(i, i + batchSize)
-    
+
     const { error } = await supabase
       .from('souvenirs')
       .upsert(chunk, { onConflict: 'doc_id' })
-    
+
     if (error) {
-      console.error('Batch import import error:', error)
-      errors += chunk.length // count all chunk as failed
+      console.error('Batch import error:', error)
+      errors += chunk.length
     } else {
       uploaded += chunk.length
     }
@@ -257,8 +246,6 @@ const handleImport = async () => {
   } else {
     alert(`成功匯入 ${uploaded} 筆資料！`)
     reset()
-    // Emit event to refresh data if parent needed?
-    // For now, page refresh might be needed or simple toast
   }
 }
 </script>

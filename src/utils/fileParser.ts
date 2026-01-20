@@ -38,15 +38,18 @@ const KEY_MAPPING: Record<string, string> = {
     '股東會日期': 'meeting_date',
     'Date': 'meeting_date',
     'Meeting Date': 'meeting_date',
+    '開會時間': 'meeting_date',
 
     '最後買進日': 'last_buy_date',
     'Last Buy Date': 'last_buy_date',
     'Last Date': 'last_buy_date',
+    '最後過戶日': 'last_buy_date',
 
     '股東會性質': 'meeting_type',
     '性質': 'meeting_type',
     'Type': 'meeting_type',
     'Meeting Type': 'meeting_type',
+    '開會性質': 'meeting_type',
 
     '開會地點': 'location',
     '地點': 'location',
@@ -55,11 +58,9 @@ const KEY_MAPPING: Record<string, string> = {
 
     '零股': 'odd_lot',
     'Odd Lot': 'odd_lot',
-
-    // User requested specific fields
-    '開會時間': 'meeting_date',
-    '開會性質': 'meeting_type',
-    '最後過戶日': 'last_buy_date',
+    
+    '股價': 'price',
+    'Price': 'price'
 };
 
 // Helper: Force specific year on a date string (YYYY-MM-DD)
@@ -100,6 +101,7 @@ const formatDate = (val: any): string | null => {
         
         if (p1 <= 12 && p3 < 100) {
             const fullYear = 2000 + p3;
+            // ambiguous case handled as year last for short format
             return `${fullYear}-${p1.toString().padStart(2, '0')}-${p2.toString().padStart(2, '0')}`;
         }
     }
@@ -193,14 +195,18 @@ const normalizeData = (data: any[], targetYear?: string): ParseResult => {
             });
 
             if (!normalized.code) {
+                // Try to find if user used unmapped keys
+                // But generally we rely on key mapping.
+                // If CSV has '股票代號' it maps to 'code'.
+                // If CSV has unmapped keys, they are ignored.
                 errors.push({ row: rowNum, reason: '缺少股票代碼 (Code missing)', raw: row });
                 return;
             }
 
             let meetingDate = formatDate(normalized.meeting_date);
             if (!meetingDate) {
-                errors.push({ row: rowNum, reason: `開會日期格式錯誤: ${normalized.meeting_date}`, raw: row });
-                return;
+                 errors.push({ row: rowNum, reason: `開會日期格式錯誤: ${normalized.meeting_date}`, raw: row });
+                 return;
             }
 
             let lastBuyDate = formatDate(normalized.last_buy_date);
@@ -219,6 +225,8 @@ const normalizeData = (data: any[], targetYear?: string): ParseResult => {
                 if (isNaN(normalized.price)) normalized.price = null;
             }
 
+            // Explicitly do NOT include market_type or proxy_deadline to allow upsert to work
+            // Create doc_id
             normalized.doc_id = `${normalized.code}_${normalized.meeting_date}`;
             normalized.status = 'active';
 
