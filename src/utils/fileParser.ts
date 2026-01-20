@@ -63,62 +63,62 @@ const KEY_MAPPING: Record<string, string> = {
     '開會時間': 'meeting_date',
     '開會性質': 'meeting_type',
     '最後過戶日': 'last_buy_date', // Sometimes mixed up, but robust to add variations
+};
 
+// Helper: Force specific year on a date string (YYYY-MM-DD)
+const applyYear = (dateStr: string | null, year?: string): string | null => {
+    if (!dateStr || !year) return dateStr;
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+        // parts[0] is year, replace it
+        return `${year}-${parts[1]}-${parts[2]}`;
+    }
+    return dateStr;
+};
 
-    // Helper: Force specific year on a date string (YYYY-MM-DD)
-    const applyYear = (dateStr: string | null, year?: string): string | null => {
-        if (!dateStr || !year) return dateStr;
-        const parts = dateStr.split('-');
-        if (parts.length === 3) {
-            // parts[0] is year, replace it
-            return `${year}-${parts[1]}-${parts[2]}`;
+const formatDate = (val: any): string | null => {
+    if (!val) return null;
+
+    // Handle Excel serial date (number or string-number)
+    // Excel base date: Dec 30 1899 usually (25569 days offset from 1970-01-01)
+    let numVal = Number(val);
+    if (!isNaN(numVal) && numVal > 20000 && numVal < 60000 && typeof val !== 'object') {
+        // It's likely an Excel serial date (e.g. 45000 is year 2023)
+        // 25569 = 1970-01-01 in Excel serial
+        const date = new Date(Math.round((numVal - 25569) * 86400 * 1000));
+        return date.toISOString().split('T')[0];
+    }
+
+    // Handle strings like 2024/05/20 or 113/05/20 (Taiwan year)
+    let str = val.toString().trim();
+
+    // Taiwan Year conversion (e.g. 113/05/01 -> 2024-05-01)
+    const twDateMatch = str.match(/^(\d{2,3})[\/.-](\d{1,2})[\/.-](\d{1,2})$/);
+    if (twDateMatch) {
+        const year = parseInt(twDateMatch[1]);
+        if (year < 1911) { // Likely TW year
+            const fullYear = year + 1911;
+            return `${fullYear}-${twDateMatch[2].padStart(2, '0')}-${twDateMatch[3].padStart(2, '0')}`;
         }
-        return dateStr;
-    };
+    }
 
-    const formatDate = (val: any): string | null => {
-        if (!val) return null;
+    const date = new Date(str);
+    if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+    }
+    return null;
+};
 
-        // Handle Excel serial date (number or string-number)
-        // Excel base date: Dec 30 1899 usually (25569 days offset from 1970-01-01)
-        let numVal = Number(val);
-        if (!isNaN(numVal) && numVal > 20000 && numVal < 60000 && typeof val !== 'object') {
-            // It's likely an Excel serial date (e.g. 45000 is year 2023)
-            // 25569 = 1970-01-01 in Excel serial
-            const date = new Date(Math.round((numVal - 25569) * 86400 * 1000));
-            return date.toISOString().split('T')[0];
-        }
+const parseBoolean = (val: any): boolean => {
+    if (!val) return false;
+    if (val === true) return true;
+    const s = val.toString().trim().toLowerCase();
+    return ['yes', 'y', 'true', '1', '是', 'v', '有'].includes(s);
+};
 
-        // Handle strings like 2024/05/20 or 113/05/20 (Taiwan year)
-        let str = val.toString().trim();
-
-        // Taiwan Year conversion (e.g. 113/05/01 -> 2024-05-01)
-        const twDateMatch = str.match(/^(\d{2,3})[\/.-](\d{1,2})[\/.-](\d{1,2})$/);
-        if (twDateMatch) {
-            const year = parseInt(twDateMatch[1]);
-            if (year < 1911) { // Likely TW year
-                const fullYear = year + 1911;
-                return `${fullYear}-${twDateMatch[2].padStart(2, '0')}-${twDateMatch[3].padStart(2, '0')}`;
-            }
-        }
-
-        const date = new Date(str);
-        if (!isNaN(date.getTime())) {
-            return date.toISOString().split('T')[0];
-        }
-        return null;
-    };
-
-    const parseBoolean = (val: any): boolean => {
-        if (!val) return false;
-        if (val === true) return true;
-        const s = val.toString().trim().toLowerCase();
-        return ['yes', 'y', 'true', '1', '是', 'v', '有'].includes(s);
-    };
-
-    export interface ParseResult {
-        data: ParsedSouvenir[];
-errors: { row: number; reason: string; raw: any } [];
+export interface ParseResult {
+    data: ParsedSouvenir[];
+    errors: { row: number; reason: string; raw: any }[];
 }
 
 export const parseFile = async (file: File, targetYear?: string, encoding: string = 'UTF-8'): Promise<ParseResult> => {
