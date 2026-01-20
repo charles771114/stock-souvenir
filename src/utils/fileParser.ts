@@ -43,8 +43,8 @@ const KEY_MAPPING: Record<string, string> = {
     'Last Buy Date': 'last_buy_date',
     'Last Date': 'last_buy_date',
 
-    '股價': 'price',
-    'Price': 'price',
+    // '股價': 'price',
+    // 'Price': 'price',
 
     '股東會性質': 'meeting_type',
     '性質': 'meeting_type',
@@ -55,6 +55,12 @@ const KEY_MAPPING: Record<string, string> = {
     '地點': 'location',
     'Location': 'location',
     'Place': 'location',
+
+    // '市場別': 'market_type',
+    // 'Market': 'market_type',
+
+    // '代領截止時間': 'proxy_deadline',
+    // 'Proxy Deadline': 'proxy_deadline',
 
     '零股': 'odd_lot',
     'Odd Lot': 'odd_lot',
@@ -89,16 +95,28 @@ const formatDate = (val: any): string | null => {
         return date.toISOString().split('T')[0];
     }
 
-    // Handle strings like 2024/05/20 or 113/05/20 (Taiwan year)
+    // Handle strings like 2024/05/20 or 113/05/20 (Taiwan year) or 5/26/25 (US Short)
     let str = val.toString().trim();
 
     // Taiwan Year conversion (e.g. 113/05/01 -> 2024-05-01)
     const twDateMatch = str.match(/^(\d{2,3})[\/.-](\d{1,2})[\/.-](\d{1,2})$/);
     if (twDateMatch) {
-        const year = parseInt(twDateMatch[1]);
-        if (year < 1911) { // Likely TW year
-            const fullYear = year + 1911;
-            return `${fullYear}-${twDateMatch[2].padStart(2, '0')}-${twDateMatch[3].padStart(2, '0')}`;
+        const p1 = parseInt(twDateMatch[1]);
+        const p2 = parseInt(twDateMatch[2]);
+        const p3 = parseInt(twDateMatch[3]);
+
+        // Case 1: TW Year (e.g. 113) -> 2024
+        if (p1 < 1911 && p1 > 100) { 
+             const fullYear = p1 + 1911;
+             return `${fullYear}-${p2.toString().padStart(2, '0')}-${p3.toString().padStart(2, '0')}`;
+        }
+        
+        // Case 2: M/D/YY (e.g. 5/26/25) -> 2025-05-26
+        // Heuristic: if p1 is small (<13) and p3 is small year (<100)
+        // Note: This is ambiguous with YYYY/MM/DD if not careful, but usually YYYY is > 1000.
+        if (p1 <= 12 && p3 < 100) {
+            const fullYear = 2000 + p3;
+            return `${fullYear}-${p1.toString().padStart(2, '0')}-${p2.toString().padStart(2, '0')}`;
         }
     }
 
