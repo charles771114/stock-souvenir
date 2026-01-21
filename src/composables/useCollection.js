@@ -1,16 +1,16 @@
+import { useAuth } from '@/composables/useAuth'
+import { supabase } from '@/lib/supabase'
 import { ref } from 'vue'
-import { supabase } from '@/supabase'
-import { useAuthStore } from '@/stores/auth'
 
 export function useCollection() {
     const collection = ref([])
     const loading = ref(false)
     const error = ref(null)
 
-    const authStore = useAuthStore()
+    const { user } = useAuth()
 
-    const fetchCollection = async () => {
-        if (!authStore.user) return
+    const fetchAllInventory = async () => {
+        if (!user.value) return
 
         loading.value = true
         error.value = null
@@ -22,7 +22,35 @@ export function useCollection() {
           *,
           souvenir: souvenirs (*)
         `)
-                .eq('user_id', authStore.user.id)
+                .eq('user_id', user.value.id)
+                .eq('status', 'collected') // Specifically for inventory (owned items)
+                .order('created_at', { ascending: false })
+
+            if (fetchError) throw fetchError
+
+            collection.value = data
+        } catch (err) {
+            console.error('Fetch inventory failed:', err)
+            error.value = err.message
+        } finally {
+            loading.value = false
+        }
+    }
+
+    const fetchCollection = async () => {
+        if (!user.value) return
+
+        loading.value = true
+        error.value = null
+
+        try {
+            const { data, error: fetchError } = await supabase
+                .from('user_collections')
+                .select(`
+          *,
+          souvenir: souvenirs (*)
+        `)
+                .eq('user_id', user.value.id)
                 .order('created_at', { ascending: false })
 
             if (fetchError) throw fetchError
@@ -37,16 +65,16 @@ export function useCollection() {
     }
 
     const addToCollection = async (souvenirId, quantity = 1, note = '') => {
-        if (!authStore.user) {
-            alert('請先登入')
-            return
+        if (!user.value) {
+            // Using a simple alert is not ideal for UX, consider returning error object
+            return { success: false, error: '請先登入' }
         }
 
         try {
             const { error: insertError } = await supabase
                 .from('user_collections')
                 .upsert({
-                    user_id: authStore.user.id,
+                    user_id: user.value.id,
                     souvenir_id: souvenirId,
                     quantity,
                     note,
@@ -55,12 +83,11 @@ export function useCollection() {
 
             if (insertError) throw insertError
 
-            await fetchCollection() // Reload
-            return true
+            await fetchAllInventory() // Reload inventory
+            return { success: true }
         } catch (err) {
             console.error('Add to collection failed:', err)
-            alert('加入收藏失敗: ' + err.message)
-            return false
+            return { success: false, error: err.message }
         }
     }
 
@@ -74,9 +101,10 @@ export function useCollection() {
             if (deleteError) throw deleteError
 
             collection.value = collection.value.filter(item => item.id !== collectionId)
+            return { success: true }
         } catch (err) {
             console.error('Remove from collection failed:', err)
-            alert('刪除失敗: ' + err.message)
+            return { success: false, error: err.message }
         }
     }
 
@@ -84,7 +112,8 @@ export function useCollection() {
         collection,
         loading,
         error,
-        fetchCollection,
+        fetchCollection, // Keep for backward compatibility
+        fetchAllInventory, // New explicit function
         addToCollection,
         removeFromCollection
     }

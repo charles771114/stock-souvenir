@@ -30,6 +30,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/inventory',
+    name: 'Inventory',
+    component: () => import('@/views/InventoryView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/admin',
     redirect: '/admin/scraper'
   },
@@ -74,6 +80,18 @@ const routes = [
     path: '/admin/import',
     name: 'AdminImport',
     component: () => import('@/views/admin/DataImportView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/import/inventory',
+    name: 'InventoryImport',
+    component: () => import('@/views/admin/InventoryImportView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/staging',
+    name: 'InventoryStaging',
+    component: () => import('@/views/admin/InventoryStagingView.vue'),
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {

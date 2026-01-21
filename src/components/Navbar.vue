@@ -33,6 +33,12 @@
               我的收藏
             </router-link>
 
+            <router-link to="/inventory"
+              class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+              :class="isActive('/inventory') ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:text-indigo-600 hover:bg-gray-50'">
+              庫存管理
+            </router-link>
+
             <!-- Admin Links -->
             <template v-if="isAdmin">
               <div class="border-l border-gray-300 mx-2"></div>
