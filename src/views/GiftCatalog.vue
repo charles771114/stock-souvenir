@@ -111,7 +111,7 @@
                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <input v-model="filters.search" @input="debouncedSearch"
+              <input v-model="filters.search"
                 class="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-shadow shadow-sm"
                 placeholder="搜尋公司、代號或紀念品..." type="search" />
             </div>
@@ -252,7 +252,7 @@ import { useToast } from '@/composables/useToast'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-const { gifts, myCollections, loading, error, fetchAllGifts, fetchMyCollections, addToCollection, removeFromCollection, getCollection } = useGifts()
+const { gifts, myCollections, loading, error, fetchAllGifts, fetchMyCollections, fetchUserInventoryIds, addToCollection, removeFromCollection, getCollection } = useGifts()
 const { categories, fetchCategories, matchCategory } = useCategories() // New composable usage
 const { showToast } = useToast()
 const { openAuthModal } = useAuthModal()
@@ -261,6 +261,7 @@ const router = useRouter()
 // UI State - Default to 'list'
 const viewMode = ref('list') // Changed from 'grid' to 'list'
 const currentView = ref('all') // 'all' | 'collection'
+const userInventoryIds = ref(new Set()) // Track user's inventory items
 
 // Filters
 const filters = ref({
@@ -305,10 +306,25 @@ const filteredGifts = computed(() => {
   // 1. Filter by Collection (if active)
   if (currentView.value === 'collection') {
     const collectionIds = myCollections.value.map(c => c.souvenir_id)
-    result = result.filter(g => collectionIds.includes(g.id))
+    // Only show items that are in collection BUT NOT in inventory
+    result = result.filter(g => {
+      const isInMyCollection = collectionIds.includes(g.id)
+      const isInInventory = userInventoryIds.value.has(g.id)
+      return isInMyCollection && !isInInventory
+    })
   }
 
-  // 2. Filter by Category (moved to client-side logic due to dynamic matching)
+  // 2. Filter by Search Keyword
+  if (filters.value.search) {
+    const keyword = filters.value.search.toLowerCase()
+    result = result.filter(g =>
+      g.name?.toLowerCase().includes(keyword) ||
+      g.code?.toLowerCase().includes(keyword) ||
+      g.souvenir_item?.toLowerCase().includes(keyword)
+    )
+  }
+
+  // 3. Filter by Category (moved to client-side logic due to dynamic matching)
   // Note: useGifts API filter might be removed if we rely on matchCategory
   if (filters.value.category) {
     result = result.filter(g => {
@@ -341,6 +357,7 @@ const mappedGifts = computed(() => {
       lastBuy: g.last_buy_date,
       meeting: g.meeting_date,
       isCollected: isInCollection(g.id),
+      isInInventory: userInventoryIds.value.has(g.id), // NEW: Pass inventory status
       ...g
     }
   })
@@ -399,10 +416,11 @@ const applyFilters = async () => {
 
   // Flatten search params
   const apiParams = { year: filters.value.year }
-  if (filters.value.search) {
-    apiParams.companyName = filters.value.search
-    apiParams.giftName = filters.value.search
-  }
+  // Search is now purely client-side to avoid restrictive AND logic on server
+  // if (filters.value.search) {
+  //   apiParams.companyName = filters.value.search
+  //   apiParams.giftName = filters.value.search
+  // }
   // Remove category from API call since we do it client-side with dynamic rules
   // apiParams.category = filters.value.category 
 
@@ -470,8 +488,9 @@ const debouncedSearch = () => {
 // Init
 onMounted(async () => {
   await fetchCategories() // Fetch dynamic categories first
-  await applyFilters()
+  await fetchAllGifts({ year: filters.value.year })
   await fetchMyCollections()
+  userInventoryIds.value = await fetchUserInventoryIds() // NEW: Load inventory state
 })
 </script>
 

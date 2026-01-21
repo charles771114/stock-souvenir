@@ -30,14 +30,27 @@
         <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
           <tr 
             v-for="item in items" 
-            :key="item.code"
+            :key="item.id"
             class="group hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10 transition-colors duration-200"
+            :class="{ 'bg-green-50/40': item.isInInventory }"
           >
             <!-- 代號 (Code) -->
             <td class="py-4 px-6">
-              <span class="font-mono text-sm font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded">
-                {{ item.code }}
-              </span>
+              <div class="flex items-center gap-2">
+                <span class="font-mono text-sm font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded">
+                  {{ item.code }}
+                </span>
+                <!-- Inventory Badge -->
+                <span v-if="item.isInInventory"
+                  class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-green-500 text-white">
+                  <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clip-rule="evenodd" />
+                  </svg>
+                  已入庫
+                </span>
+              </div>
             </td>
             
             <!-- 名稱 (Name) -->
@@ -88,7 +101,15 @@
 
             <!-- 操作 -->
             <td class="py-4 px-6 text-center">
-              <FavoriteButton 
+              <router-link v-if="item.isInInventory" to="/inventory"
+                class="inline-flex items-center px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 transition-colors">
+                <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                管理
+              </router-link>
+              <FavoriteButton v-else
                 :gift="item" 
                 :is-active="item.isCollected"
                 @toggle="$emit('toggle-collection', item)"

@@ -108,6 +108,27 @@ export function useCollection() {
         }
     }
 
+    const clearAllCollections = async () => {
+        if (!user.value) {
+            return { success: false, error: '請先登入' }
+        }
+
+        try {
+            const { error: deleteError } = await supabase
+                .from('user_collections')
+                .delete()
+                .eq('user_id', user.value.id)
+
+            if (deleteError) throw deleteError
+
+            collection.value = []
+            return { success: true }
+        } catch (err) {
+            console.error('Clear all collections failed:', err)
+            return { success: false, error: err.message }
+        }
+    }
+
     return {
         collection,
         loading,
@@ -115,6 +136,7 @@ export function useCollection() {
         fetchCollection, // Keep for backward compatibility
         fetchAllInventory, // New explicit function
         addToCollection,
-        removeFromCollection
+        removeFromCollection,
+        clearAllCollections
     }
 }

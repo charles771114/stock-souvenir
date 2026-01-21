@@ -17,5 +17,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storageKey: 'stock-souvenir-auth-token-v2',
     storage: window.localStorage,
     debug: false,
+    lock: false, // Fix for "AbortError: signal is aborted without reason"
   },
 })

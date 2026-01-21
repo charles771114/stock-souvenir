@@ -25,13 +25,22 @@
           <p class="text-gray-600 mt-1">管理您所有年份的股東會紀念品庫存</p>
         </div>
 
-        <button @click="isImportModalOpen = true"
-          class="inline-flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl shadow-lg shadow-indigo-200 hover:shadow-xl hover:-translate-y-0.5 transition-all text-sm font-medium">
-          <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          新增庫存
-        </button>
+        <div class="flex gap-3">
+          <button v-if="inventoryItems.length > 0" @click="handleClearAll"
+            class="inline-flex items-center justify-center px-4 py-2.5 bg-red-600 text-white rounded-xl shadow-lg shadow-red-200 hover:shadow-xl hover:bg-red-700 hover:-translate-y-0.5 transition-all text-sm font-medium">
+            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            全部清除
+          </button>
+          <button @click="isImportModalOpen = true"
+            class="inline-flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl shadow-lg shadow-indigo-200 hover:shadow-xl hover:-translate-y-0.5 transition-all text-sm font-medium">
+            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            新增庫存
+          </button>
+        </div>
       </div>
 
       <!-- Loading State -->
@@ -83,59 +92,64 @@
           </div>
         </div>
 
-        <!-- Inventory Groups (By Year) -->
-        <div v-for="(group, year) in groupedInventory" :key="year" class="space-y-4">
-          <div class="flex items-center gap-3 pl-2">
-            <span class="text-xl font-bold text-gray-800">{{ year }} 年</span>
-            <span class="px-2.5 py-0.5 rounded-full bg-gray-100 text-xs font-medium text-gray-600">{{ group.length }}
-              項</span>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div v-for="item in group" :key="item.id"
-              class="group bg-white/70 backdrop-blur-md border border-white/60 rounded-2xl p-5 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-              <!-- Card Header -->
-              <div class="flex justify-between items-start mb-3">
-                <div>
-                  <div class="text-xs font-bold px-2 py-1 rounded bg-indigo-50 text-indigo-600 inline-block mb-1.5">
+        <!-- Inventory Table -->
+        <div class="bg-white/70 backdrop-blur-md border border-white/60 rounded-2xl shadow-sm overflow-hidden">
+          <table class="w-full">
+            <thead class="bg-gray-50/80">
+              <tr class="border-b border-gray-200">
+                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">代號</th>
+                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">公司名稱</th>
+                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">紀念品</th>
+                <th class="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">數量</th>
+                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">加入日期</th>
+                <th class="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">操作</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <tr v-for="item in inventoryItems" :key="item.id"
+                class="hover:bg-indigo-50/30 transition-colors">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="text-xs font-bold px-2 py-1 rounded bg-indigo-50 text-indigo-600">
                     {{ item.souvenir?.code }}
+                  </span>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="text-sm font-bold text-gray-900">{{ item.souvenir?.name }}</div>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="text-sm text-gray-700">{{ item.souvenir?.souvenir_item }}</div>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-indigo-100 to-white shadow-inner font-bold text-indigo-700 text-sm">
+                    {{ item.quantity || 1 }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="text-xs text-gray-500">{{ new Date(item.created_at).toLocaleDateString() }}</span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <div class="flex items-center justify-center gap-2">
+                    <button @click="editItem(item)"
+                      class="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                      title="編輯">
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </button>
+                    <button @click="deleteItem(item)"
+                      class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="刪除">
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                   </div>
-                  <h3 class="font-bold text-gray-900 line-clamp-1">{{ item.souvenir?.name }}</h3>
-                  <p class="text-sm text-gray-500">{{ item.souvenir?.souvenir_item }}</p>
-                </div>
-                <!-- Quantity Badge -->
-                <div
-                  class="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-indigo-100 to-white shadow-inner font-bold text-indigo-700">
-                  {{ item.quantity || 1 }}
-                </div>
-              </div>
-
-              <!-- Actions / Details -->
-              <div class="pt-3 border-t border-gray-100 flex items-center justify-between text-sm">
-                <div class="text-gray-400 text-xs">
-                  加入於 {{ new Date(item.created_at).toLocaleDateString() }}
-                </div>
-                <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button @click="editItem(item)"
-                    class="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                    title="編輯">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                  </button>
-                  <button @click="deleteItem(item)"
-                    class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title="刪除">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -157,7 +171,7 @@ import { useDialog } from '@/composables/useDialog'
 import { useToast } from '@/composables/useToast'
 import { computed, onMounted, ref } from 'vue'
 
-const { collection, loading, fetchAllInventory, removeFromCollection } = useCollection()
+const { collection, loading, fetchAllInventory, removeFromCollection, clearAllCollections } = useCollection()
 const { confirm } = useDialog()
 const { showToast } = useToast()
 
@@ -223,6 +237,22 @@ const editItem = (item) => {
   // For now, maybe just open import modal pre-filled? or separate edit.
   // MVP: Just show toast "Editing coming soon" or allow delete/re-add
   showToast('編輯功能開發中，請先刪除後重新加入', 'info')
+}
+
+const handleClearAll = async () => {
+  const confirmed = await confirm(
+    `確定要清空所有庫存嗎？此操作無法復原。\n目前共有 ${inventoryItems.value.length} 筆資料。`,
+    '確認清空庫存'
+  )
+  
+  if (!confirmed) return
+  
+  const { success, error } = await clearAllCollections()
+  if (success) {
+    showToast('已清空所有庫存', 'success')
+  } else {
+    showToast(error || '清空失敗', 'error')
+  }
 }
 
 onMounted(() => {

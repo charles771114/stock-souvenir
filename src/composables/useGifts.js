@@ -319,6 +319,28 @@ export function useGifts() {
     return myCollections.value.find(c => c.souvenir_id === giftId)
   }
 
+  /**
+   * 取得使用者庫存項目 ID 列表（僅 collected 狀態）
+   * @returns {Promise<Set>} - 庫存項目 ID 的 Set
+   */
+  const fetchUserInventoryIds = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return new Set()
+
+      const { data } = await supabase
+        .from('user_collections')
+        .select('souvenir_id')
+        .eq('user_id', user.id)
+        .eq('status', 'collected')
+
+      return new Set(data?.map(d => d.souvenir_id) || [])
+    } catch (e) {
+      console.error('取得庫存ID失敗:', e)
+      return new Set()
+    }
+  }
+
   return {
     gifts,
     myCollections,
@@ -326,6 +348,7 @@ export function useGifts() {
     error,
     fetchAllGifts,
     fetchMyCollections,
+    fetchUserInventoryIds,
     addToCollection,
     removeFromCollection,
     updateCollectionNote,

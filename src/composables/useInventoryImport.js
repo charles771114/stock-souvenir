@@ -15,16 +15,18 @@ export function useInventoryImport() {
     const parseFile = (file) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader()
-            
+
             reader.onload = (e) => {
                 try {
                     const data = e.target.result
-                    const workbook = XLSX.read(data, { type: 'binary' })
-                    
+                    // Specifying codepage: 65001 (UTF-8) ensures correct parsing of UTF-8 encoded CSVs/Text
+                    // when read as binary string.
+                    const workbook = XLSX.read(data, { type: 'binary', codepage: 65001 })
+
                     // 假設讀取第一個 Sheet
                     const firstSheetName = workbook.SheetNames[0]
                     const worksheet = workbook.Sheets[firstSheetName]
-                    
+
                     // 轉換為 JSON
                     const jsonData = XLSX.utils.sheet_to_json(worksheet)
                     resolve(jsonData)
@@ -32,7 +34,7 @@ export function useInventoryImport() {
                     reject(new Error('檔案解析失敗: ' + err.message))
                 }
             }
-            
+
             reader.onerror = (err) => reject(err)
             reader.readAsBinaryString(file)
         })
@@ -88,13 +90,13 @@ export function useInventoryImport() {
 
             for (let i = 0; i < total; i += BATCH_SIZE) {
                 const chunk = rowsToInsert.slice(i, i + BATCH_SIZE)
-                
+
                 const { error: insertError } = await supabase
                     .from('inventory_staging')
                     .insert(chunk)
-                
+
                 if (insertError) throw insertError
-                
+
                 processed += chunk.length
                 progress.value = Math.round((processed / total) * 100)
             }

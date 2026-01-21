@@ -142,6 +142,23 @@
             class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 shadow-sm transition-colors">
             登入系統
           </button>
+
+          <!-- Mobile Menu Button -->
+          <div class="flex items-center sm:hidden ml-2">
+            <button @click="showMobileMenu = !showMobileMenu" type="button"
+              class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+              aria-controls="mobile-menu" :aria-expanded="showMobileMenu">
+              <span class="sr-only">Open main menu</span>
+              <svg v-if="!showMobileMenu" class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
+              <svg v-else class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -157,6 +174,31 @@
           :class="isActive('/my-collections') ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:bg-gray-50'">
           我的收藏
         </router-link>
+        <router-link to="/inventory" class="block px-4 py-2 text-base font-medium"
+          :class="isActive('/inventory') ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:bg-gray-50'">
+          庫存管理
+        </router-link>
+
+        <!-- Mobile Admin Links -->
+        <template v-if="isAdmin">
+          <div class="border-t border-gray-100 my-2 pt-2">
+            <div class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+              後台管理
+            </div>
+            <router-link to="/admin/panel" class="block px-4 py-2 text-base font-medium"
+              :class="isActive('/admin/panel') ? 'text-purple-600 bg-purple-50' : 'text-gray-700 hover:bg-gray-50'">
+              主控台
+            </router-link>
+            <router-link to="/admin/scraper" class="block px-4 py-2 text-base font-medium"
+              :class="isActive('/admin/scraper') ? 'text-purple-600 bg-purple-50' : 'text-gray-700 hover:bg-gray-50'">
+              爬蟲管理
+            </router-link>
+            <router-link to="/admin/classification" class="block px-4 py-2 text-base font-medium"
+              :class="isActive('/admin/classification') ? 'text-purple-600 bg-purple-50' : 'text-gray-700 hover:bg-gray-50'">
+              分類中心
+            </router-link>
+          </div>
+        </template>
       </div>
     </div>
     <!-- Profile Edit Modal -->
