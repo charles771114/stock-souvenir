@@ -3,14 +3,16 @@
     <Navbar />
 
     <main class="flex-grow max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-      
+
       <!-- Sticky Header & Filter Bar -->
-      <div class="sticky top-0 z-30 pt-4 pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 bg-gray-50/95 backdrop-blur-sm transition-all duration-300">
-        
+      <div
+        class="sticky top-0 z-30 pt-4 pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 bg-gray-50/95 backdrop-blur-sm transition-all duration-300">
+
         <!-- Header Content -->
         <div class="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 tracking-tight">
+            <h1
+              class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 tracking-tight">
               股東會紀念品目錄
             </h1>
             <p class="text-sm text-gray-500 mt-1">
@@ -20,155 +22,137 @@
 
           <!-- View Toggle & Sort (Mobile Optimized) -->
           <div class="flex items-center gap-3 self-end md:self-auto">
-             <!-- View Toggle -->
+            <!-- View Toggle -->
             <div class="bg-white rounded-lg p-1 border border-gray-200 shadow-sm flex items-center">
-              <button 
-                @click="viewMode = 'grid'"
-                class="p-2 rounded-md transition-all duration-200"
+              <button @click="viewMode = 'grid'" class="p-2 rounded-md transition-all duration-200"
                 :class="viewMode === 'grid' ? 'bg-indigo-50 text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'"
-                title="網格視圖"
-              >
+                title="網格視圖">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                 </svg>
               </button>
-              <button 
-                @click="viewMode = 'list'"
-                class="p-2 rounded-md transition-all duration-200"
+              <button @click="viewMode = 'list'" class="p-2 rounded-md transition-all duration-200"
                 :class="viewMode === 'list' ? 'bg-indigo-50 text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'"
-                title="列表視圖"
-              >
+                title="列表視圖">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
             </div>
-            
-             <!-- Sort Dropdown -->
-             <div class="relative">
-                <select
-                  class="pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-lg shadow-sm text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none cursor-pointer hover:bg-gray-50 transition-colors"
-                >
-                  <option value="date_desc">依日期 (新到舊)</option>
-                  <option value="date_asc">依日期 (舊到新)</option>
-                  <option value="code_asc">依代號</option>
-                </select>
-                <div class="absolute right-3 top-3 pointer-events-none">
-                  <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
+
+            <!-- Sort Dropdown -->
+            <div class="relative">
+              <select
+                class="pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-lg shadow-sm text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none cursor-pointer hover:bg-gray-50 transition-colors">
+                <option value="date_desc">依日期 (新到舊)</option>
+                <option value="date_asc">依日期 (舊到新)</option>
+                <option value="code_asc">依代號</option>
+              </select>
+              <div class="absolute right-3 top-3 pointer-events-none">
+                <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Glassmorphic Filter Bar -->
-        <div class="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/50 shadow-lg shadow-indigo-100/50 p-4 md:p-5 mb-2 relative overflow-hidden group">
+        <div
+          class="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/50 shadow-lg shadow-indigo-100/50 p-4 md:p-5 mb-2 relative overflow-hidden group">
           <!-- Decor -->
-          <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-full blur-3xl opacity-50 -z-10 group-hover:scale-110 transition-transform duration-700"></div>
+          <div
+            class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-full blur-3xl opacity-50 -z-10 group-hover:scale-110 transition-transform duration-700">
+          </div>
 
           <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-             <!-- Category Filters (Dynamic) -->
-             <div class="md:col-span-8 flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
-                
-                <!-- All / Collection Toggles -->
-                <div class="flex gap-2 flex-shrink-0">
-                  <button 
-                    @click="setCategory(null)"
-                    class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 border"
-                    :class="!filters.category ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'"
-                  >
-                    全部
-                  </button>
-                  <button 
-                    @click="currentView === 'collection' ? currentView = 'all' : currentView = 'collection'"
-                    class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 border"
-                    :class="currentView === 'collection' ? 'bg-amber-400 text-white border-amber-400 shadow-md shadow-amber-200' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'"
-                  >
-                    <svg class="w-3.5 h-3.5" :class="currentView === 'collection' ? 'fill-current' : 'fill-none'" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                    收藏
-                  </button>
-                </div>
+            <!-- Category Filters (Dynamic) -->
+            <div class="md:col-span-8 flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
 
-                <div class="h-6 w-px bg-gray-200 mx-1 flex-shrink-0"></div>
+              <!-- All / Collection Toggles -->
+              <div class="flex gap-2 flex-shrink-0">
+                <button @click="setCategory(null)"
+                  class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 border"
+                  :class="!filters.category ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">
+                  全部
+                </button>
+                <button @click="currentView === 'collection' ? currentView = 'all' : currentView = 'collection'"
+                  class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 border"
+                  :class="currentView === 'collection' ? 'bg-amber-400 text-white border-amber-400 shadow-md shadow-amber-200' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">
+                  <svg class="w-3.5 h-3.5" :class="currentView === 'collection' ? 'fill-current' : 'fill-none'"
+                    viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  收藏
+                </button>
+              </div>
 
-                <!-- Dynamic Categories -->
-                <div class="flex gap-2">
-                   <button 
-                    v-for="cat in categories" 
-                    :key="cat.id"
-                    @click="setCategory(cat.name)"
-                    class="px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 border whitespace-nowrap flex items-center gap-1.5"
-                    :class="filters.category === cat.name ? getCategoryActiveClasses(cat.color) : 'bg-white text-gray-500 border-gray-100 hover:border-gray-200 hover:text-gray-700'"
-                  >
-                    <span :class="`w-1.5 h-1.5 rounded-full ${getCategoryDotClass(cat.color)}`"></span>
-                    {{ cat.name }}
-                  </button>
-                </div>
-             </div>
+              <div class="h-6 w-px bg-gray-200 mx-1 flex-shrink-0"></div>
 
-             <!-- Search Bar -->
-             <div class="md:col-span-4 relative group/search">
-               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                 <svg class="h-5 w-5 text-gray-400 group-focus-within/search:text-indigo-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                 </svg>
-               </div>
-               <input 
-                 v-model="filters.search"
-                 @input="debouncedSearch"
-                 class="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-shadow shadow-sm"
-                 placeholder="搜尋公司、代號或紀念品..." 
-                 type="search" 
-               />
-             </div>
+              <!-- Dynamic Categories -->
+              <div class="flex gap-2">
+                <button v-for="cat in categories" :key="cat.id" @click="setCategory(cat.name)"
+                  class="px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 border whitespace-nowrap flex items-center gap-1.5"
+                  :class="filters.category === cat.name ? getCategoryActiveClasses(cat.color) : 'bg-white text-gray-500 border-gray-100 hover:border-gray-200 hover:text-gray-700'">
+                  <span :class="`w-1.5 h-1.5 rounded-full ${getCategoryDotClass(cat.color)}`"></span>
+                  {{ cat.name }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="md:col-span-4 relative group/search">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-5 w-5 text-gray-400 group-focus-within/search:text-indigo-500 transition-colors"
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input v-model="filters.search" @input="debouncedSearch"
+                class="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-shadow shadow-sm"
+                placeholder="搜尋公司、代號或紀念品..." type="search" />
+            </div>
           </div>
         </div>
 
         <!-- Active Context Bar -->
         <div class="flex justify-between items-center px-2 mt-2">
-           <div class="flex items-center gap-3">
-             <!-- Year Selector (Compact) -->
-             <div class="flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg">
-                <button 
-                  v-for="year in ['2026', '2025', '2024']" 
-                  :key="year"
-                  @click="setYear(year)"
-                  class="px-3 py-1 rounded-md text-[10px] font-bold transition-all"
-                  :class="filters.year === year ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'"
-                >
-                  {{ year }}
-                </button>
-             </div>
-             
-             <!-- Active Filters Text -->
-             <span v-if="hasActiveFilters" class="text-xs text-gray-500 flex items-center gap-2">
-               <span v-if="filters.category" class="font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
-                 分類: {{ filters.category }}
-               </span>
-               <button @click="clearFilters" class="hover:text-red-500 underline decoration-red-200 transition-colors">
-                 清除全部
-               </button>
-             </span>
-           </div>
-           
-           <div class="flex items-center gap-4">
-              <p class="text-xs text-gray-400">
-                共 {{ paginatedMappedGifts.length }} 筆
-              </p>
-              <!-- Page Size -->
-              <div class="flex items-center gap-2">
-                 <select
-                    v-model="pageSize"
-                    @change="handlePageSizeChange"
-                    class="block w-full pl-2 pr-6 py-1 text-[10px] border-none bg-transparent focus:ring-0 text-gray-500 font-medium cursor-pointer"
-                  >
-                    <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }} 筆/頁</option>
-                  </select>
-              </div>
-           </div>
+          <div class="flex items-center gap-3">
+            <!-- Year Selector (Compact) -->
+            <div class="flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg">
+              <button v-for="year in ['2026', '2025', '2024']" :key="year" @click="setYear(year)"
+                class="px-3 py-1 rounded-md text-[10px] font-bold transition-all"
+                :class="filters.year === year ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'">
+                {{ year }}
+              </button>
+            </div>
+
+            <!-- Active Filters Text -->
+            <span v-if="hasActiveFilters" class="text-xs text-gray-500 flex items-center gap-2">
+              <span v-if="filters.category" class="font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                分類: {{ filters.category }}
+              </span>
+              <button @click="clearFilters" class="hover:text-red-500 underline decoration-red-200 transition-colors">
+                清除全部
+              </button>
+            </span>
+          </div>
+
+          <div class="flex items-center gap-4">
+            <p class="text-xs text-gray-400">
+              共 {{ paginatedMappedGifts.length }} 筆
+            </p>
+            <!-- Page Size -->
+            <div class="flex items-center gap-2">
+              <select v-model="pageSize" @change="handlePageSizeChange"
+                class="block w-full pl-2 pr-6 py-1 text-[10px] border-none bg-transparent focus:ring-0 text-gray-500 font-medium cursor-pointer">
+                <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }} 筆/頁</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -179,81 +163,69 @@
           <LoadingSpinner />
           <p class="mt-4 text-gray-500 font-medium animate-pulse">正在為您準備紀念品清單...</p>
         </div>
-  
+
         <!-- Error -->
         <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-2xl p-8 text-center mx-auto max-w-2xl">
           <svg class="mx-auto h-12 w-12 text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <h3 class="text-lg font-bold text-red-800 mb-2">無法載入資料</h3>
           <p class="text-red-600">{{ error }}</p>
-          <button @click="window.location.reload()" class="mt-4 px-4 py-2 bg-white border border-red-300 text-red-700 rounded-lg hover:bg-red-50">重新整理</button>
+          <button @click="window.location.reload()"
+            class="mt-4 px-4 py-2 bg-white border border-red-300 text-red-700 rounded-lg hover:bg-red-50">重新整理</button>
         </div>
-  
+
         <!-- Empty -->
-        <div v-else-if="paginatedMappedGifts.length === 0" class="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+        <div v-else-if="paginatedMappedGifts.length === 0"
+          class="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
           <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
           <h3 class="text-xl font-bold text-gray-900 mb-2">沒有找到相關紀念品</h3>
           <p class="text-gray-500 max-w-sm mx-auto mb-6">試試看調整關鍵字或年份，或清除篩選條件重新搜尋</p>
-          <button @click="clearFilters" class="px-6 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200">
+          <button @click="clearFilters"
+            class="px-6 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200">
             清除所有篩選
           </button>
         </div>
-  
+
         <!-- Content List/Grid -->
         <div v-else>
-           <!-- Grid View -->
-           <GiftGridView 
-             v-if="viewMode === 'grid'"
-             :items="paginatedMappedGifts" 
-             :isExpired="isExpired" 
-             @toggle-collection="handleToggleCollection" 
-           />
+          <!-- Grid View -->
+          <GiftGridView v-if="viewMode === 'grid'" :items="paginatedMappedGifts" :isExpired="isExpired"
+            @toggle-collection="handleToggleCollection" />
 
-           <!-- List View -->
-           <TableView 
-             v-else
-             :items="paginatedMappedGifts" 
-             :isExpired="isExpired" 
-             @toggle-collection="handleToggleCollection" 
-           />
-  
+          <!-- List View -->
+          <TableView v-else :items="paginatedMappedGifts" :isExpired="isExpired"
+            @toggle-collection="handleToggleCollection" />
+
           <!-- Pagination -->
           <div v-if="totalPages > 1" class="mt-12 flex items-center justify-center gap-4">
-            <button
-              @click="prevPage"
-              :disabled="!hasPrevPage"
-              class="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-2"
-            >
+            <button @click="prevPage" :disabled="!hasPrevPage"
+              class="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-2">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
               </svg>
               上一頁
             </button>
-  
+
             <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
               <span class="text-sm text-gray-600 font-medium">
                 第 <span class="font-bold text-indigo-600">{{ currentPage }}</span> / {{ totalPages }} 頁
               </span>
               <div class="h-4 w-px bg-gray-200"></div>
-              <select
-                :value="currentPage"
-                @change="goToPage($event.target.value)"
-                class="text-sm border-none bg-transparent focus:ring-0 cursor-pointer text-gray-600 font-medium p-0"
-              >
+              <select :value="currentPage" @change="goToPage($event.target.value)"
+                class="text-sm border-none bg-transparent focus:ring-0 cursor-pointer text-gray-600 font-medium p-0">
                 <option v-for="page in totalPages" :key="page" :value="page">跳至第 {{ page }} 頁</option>
               </select>
             </div>
-  
-            <button
-              @click="nextPage"
-              :disabled="!hasNextPage"
-              class="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-2"
-            >
+
+            <button @click="nextPage" :disabled="!hasNextPage"
+              class="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-2">
               下一頁
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -268,17 +240,17 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import Navbar from '@/components/Navbar.vue'
-import TableView from '@/components/TableView.vue'
 import GiftGridView from '@/components/GiftGridView.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import Navbar from '@/components/Navbar.vue'
+import TableView from '@/components/TableView.vue'
 import { useAuthModal } from '@/composables/useAuthModal'
+import { useCategories } from '@/composables/useCategories'; // New import
 import { useGifts } from '@/composables/useGifts'
 import { usePagination } from '@/composables/usePagination'
-import { useCategories } from '@/composables/useCategories' // New import
 import { useToast } from '@/composables/useToast'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
 const { gifts, myCollections, loading, error, fetchAllGifts, fetchMyCollections, addToCollection, removeFromCollection, getCollection } = useGifts()
 const { categories, fetchCategories, matchCategory } = useCategories() // New composable usage
@@ -347,7 +319,7 @@ const filteredGifts = computed(() => {
       return cat && cat.name === filters.value.category
     })
   }
-  
+
   return result
 })
 
@@ -357,14 +329,14 @@ const mappedGifts = computed(() => {
     // Dynamic Category Matching
     const match = matchCategory(g.souvenir_item)
     const categoryObj = categories.value.find(c => c.id === match.id)
-    
+
     return {
       id: g.id,
       code: g.company_code,
       name: g.company_name,
       souvenir: g.souvenir_item,
       // Use dynamic data
-      category: categoryObj ? categoryObj.name : '其他', 
+      category: categoryObj ? categoryObj.name : '其他',
       categoryColor: categoryObj ? categoryObj.color : 'gray',
       lastBuy: g.last_buy_date,
       meeting: g.meeting_date,
@@ -372,6 +344,11 @@ const mappedGifts = computed(() => {
       ...g
     }
   })
+})
+
+// Pagination
+const hasActiveFilters = computed(() => {
+  return !!filters.value.search || !!filters.value.category
 })
 
 // Pagination
@@ -413,18 +390,18 @@ const setCategory = (catName) => {
 const applyFilters = async () => {
   const filterParams = {
     year: filters.value.year,
-    search: filters.value.search 
+    search: filters.value.search
       ? { companyName: filters.value.search, giftName: filters.value.search }  // API helper supports this? 
       // Actually useGifts.js expects flat params:
       // companyName: ..., giftName: ...
-    : undefined
+      : undefined
   }
-  
+
   // Flatten search params
   const apiParams = { year: filters.value.year }
   if (filters.value.search) {
-     apiParams.companyName = filters.value.search
-     apiParams.giftName = filters.value.search
+    apiParams.companyName = filters.value.search
+    apiParams.giftName = filters.value.search
   }
   // Remove category from API call since we do it client-side with dynamic rules
   // apiParams.category = filters.value.category 
@@ -476,8 +453,8 @@ watch(filters, (newVal, oldVal) => {
   // Only apply API filters if Year or Search changed
   // Category is client-side, so just reset pagination
   if (newVal.year !== oldVal.year || newVal.search !== oldVal.search) {
-     // debounced handled separately for search input events
-     if (newVal.year !== oldVal.year) applyFilters()
+    // debounced handled separately for search input events
+    if (newVal.year !== oldVal.year) applyFilters()
   }
   reset()
 }, { deep: true })
@@ -501,10 +478,11 @@ onMounted(async () => {
 <style scoped>
 /* Hide scrollbar for tabs */
 .scrollbar-hide::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
+
 .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 </style>

@@ -69,6 +69,8 @@ export interface Database {
           full_name: string | null
           role: 'admin' | 'user' | null
           created_at: string | null
+          is_primary_admin: boolean | null
+          added_at: string | null
         }
         Insert: {
           id: string
@@ -76,6 +78,8 @@ export interface Database {
           full_name?: string | null
           role?: 'admin' | 'user' | null
           created_at?: string | null
+          is_primary_admin?: boolean | null
+          added_at?: string | null
         }
         Update: {
           id?: string
@@ -83,6 +87,8 @@ export interface Database {
           full_name?: string | null
           role?: 'admin' | 'user' | null
           created_at?: string | null
+          is_primary_admin?: boolean | null
+          added_at?: string | null
         }
       }
       user_collections: {

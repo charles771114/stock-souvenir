@@ -83,7 +83,8 @@
                 class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors"
                 :class="isActive('/admin/classification') ? 'text-purple-600 bg-purple-50' : 'text-gray-700 hover:text-purple-600 hover:bg-gray-50'">
                 <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
                 分類中心
               </router-link>
@@ -95,24 +96,29 @@
         <div class="flex items-center">
           <!-- Logged In State -->
           <div v-if="user" class="flex items-center space-x-3">
-            <!-- User Info -->
-            <div class="hidden sm:block text-right">
-              <div class="text-sm font-medium text-gray-900">
-                {{ user.email }}
+            <!-- User Info (Clickable) -->
+            <button @click="isProfileModalOpen = true"
+              class="hidden sm:block text-right group/user hover:opacity-80 transition-opacity">
+              <div class="text-sm font-medium text-gray-900 group-hover/user:text-indigo-600 transition-colors">
+                {{ displayName }}
               </div>
               <div v-if="isAdmin" class="text-xs text-purple-600 font-medium">
                 管理員
               </div>
-            </div>
+              <div v-else class="text-xs text-gray-400 font-medium">
+                設定個人資料
+              </div>
+            </button>
 
-            <!-- User Avatar -->
-            <div class="flex-shrink-0">
-              <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                <span class="text-sm font-medium text-indigo-600">
-                  {{ user.email?.charAt(0).toUpperCase() }}
+            <!-- User Avatar (Clickable) -->
+            <button @click="isProfileModalOpen = true" class="flex-shrink-0 relative group/avatar">
+              <div
+                class="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-100 to-white border border-indigo-200 flex items-center justify-center shadow-sm group-hover/avatar:ring-2 group-hover/avatar:ring-indigo-200 transition-all">
+                <span class="text-sm font-bold text-indigo-600">
+                  {{ userInitials }}
                 </span>
               </div>
-            </div>
+            </button>
 
             <!-- Logout Button -->
             <button @click="handleLogout"
@@ -147,29 +153,44 @@
         </router-link>
       </div>
     </div>
+    <!-- Profile Edit Modal -->
+    <UserProfileModal :is-open="isProfileModalOpen" @close="isProfileModalOpen = false" />
   </nav>
 </template>
 
 <script setup>
+import UserProfileModal from '@/components/UserProfileModal.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useAuthModal } from '@/composables/useAuthModal'
 import { useDialog } from '@/composables/useDialog'
 import { useToast } from '@/composables/useToast'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const router = useRouter()
 const route = useRoute()
-const { user, isAdmin, signOut } = useAuth()
+const { user, profile, isAdmin, signOut } = useAuth()
 const { confirm } = useDialog()
 const { showToast } = useToast()
 const { openAuthModal } = useAuthModal()
 
 const showMobileMenu = ref(false)
+const isProfileModalOpen = ref(false)
 
 const isActive = (path) => {
   return route.path.startsWith(path)
 }
+
+// Display Name Logic: Nickname > Full Name > Email
+const displayName = computed(() => {
+  if (profile.value?.nickname) return profile.value.nickname
+  if (profile.value?.full_name) return profile.value.full_name
+  return user.value?.email || 'Guest'
+})
+
+const userInitials = computed(() => {
+  return displayName.value.charAt(0).toUpperCase()
+})
 
 const handleLogout = async () => {
   const isConfirmed = await confirm('您確定要登出系統嗎？', '登出確認')

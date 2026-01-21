@@ -1,6 +1,6 @@
 
-import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
+import { computed, ref } from 'vue'
 
 export function useAdmin() {
   const users = ref([])
@@ -8,19 +8,35 @@ export function useAdmin() {
   const error = ref(null)
 
   const fetchAllUsers = async () => {
+    console.log('🔄 Fetching all users...')
     loading.value = true
     error.value = null
     try {
+      // Fetch profiles with collection counts
+      // Note: added_at is optional - if column doesn't exist, will use created_at as fallback
       const { data, error: err } = await supabase
         .from('profiles')
-        .select('id, email, role, created_at, is_primary_admin')
+        .select(`
+          id, 
+          email, 
+          full_name,
+          role, 
+          created_at, 
+          is_primary_admin,
+          user_collections(count)
+        `)
         .order('created_at', { ascending: false })
 
       if (err) throw err
+      
+      console.log('✅ Loaded profiles:', data.length)
+      console.table(data.map(u => ({ email: u.email, role: u.role, is_primary: u.is_primary_admin })))
 
       users.value = data.map(profile => ({
         ...profile,
-        is_admin: profile.role === 'admin'
+        is_admin: profile.role === 'admin',
+        collection_count: profile.user_collections?.[0]?.count || 0,
+        added_at: profile.added_at || profile.created_at // Fallback to created_at
       }))
     } catch (err) {
       console.error('Fetch users error:', err)
@@ -57,7 +73,16 @@ export function useAdmin() {
     }
   }
 
-  const adminEmails = computed(() => users.value.filter(u => u.is_admin))
+  const adminEmails = computed(() => {
+    return users.value
+      .filter(u => u.role === 'admin')
+      .map(u => ({
+        ...u,
+        email: u.email,
+        is_primary_admin: u.is_primary_admin || false,
+        added_at: u.added_at || u.created_at
+      }))
+  })
 
   return {
     users,
@@ -69,31 +94,62 @@ export function useAdmin() {
     fetchAdminEmails: fetchAllUsers, // Alias for backward compatibility if needed
     fetchGiftStats,
     addAdminEmail: async (email) => {
+      console.log('➕ Adding admin:', email)
       loading.value = true
-      // 1. Find user by email
-      const { data: profiles, error: findError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', email)
-        .maybeSingle()
+      error.value = null
+      
+      try {
+        // 1. Find user by email
+        const { data: profiles, error: findError } = await supabase
+          .from('profiles')
+          .select('id, role')
+          .eq('email', email)
+          .maybeSingle()
 
-      if (findError || !profiles) {
+        if (findError) {
+          error.value = findError.message
+          loading.value = false
+          return { error: findError }
+        }
+        
+        if (!profiles) {
+          const notFoundError = new Error('找不到該用戶。請確認 Email 正確且用戶已註冊。')
+          error.value = notFoundError.message
+          loading.value = false
+          return { error: notFoundError }
+        }
+
+        if (profiles.role === 'admin') {
+          const alreadyAdminError = new Error('該用戶已經是管理員')
+          error.value = alreadyAdminError.message
+          loading.value = false
+          return { error: alreadyAdminError }
+        }
+
+        // 2. Update role to admin
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ role: 'admin' })
+          .eq('id', profiles.id)
+
+        if (updateError) {
+          error.value = updateError.message
+          loading.value = false
+          return { error: updateError }
+        }
+
+        // 3. Force refresh the list
+        console.log('✅ Admin added. Refreshing list...')
+        await fetchAllUsers()
+        
         loading.value = false
-        return { error: findError || new Error('找不到該用戶') }
+        return { error: null }
+      } catch (err) {
+        console.error('Add admin error:', err)
+        error.value = err.message
+        loading.value = false
+        return { error: err }
       }
-
-      // 2. Update role
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ role: 'admin' })
-        .eq('id', profiles.id)
-
-      if (!updateError) {
-        await fetchAllUsers() // Refresh list
-      }
-
-      loading.value = false
-      return { error: updateError }
     },
     removeAdminEmail: async (email) => {
       loading.value = true
@@ -147,6 +203,22 @@ export function useAdmin() {
         .eq('id', profiles.id)
 
       if (!updateError) await fetchAllUsers()
+
+      loading.value = false
+      return { error: updateError }
+    },
+    toggleUserRole: async (userId, newRole) => {
+      loading.value = true
+      
+      // Only update role (added_at column may not exist yet)
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('id', userId)
+
+      if (!updateError) {
+        await fetchAllUsers() // Refresh list
+      }
 
       loading.value = false
       return { error: updateError }

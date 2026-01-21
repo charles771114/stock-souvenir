@@ -41,9 +41,7 @@ const routes = [
   },
   {
     path: '/admin/settings',
-    name: 'AdminSettings',
-    component: () => import('@/views/AdminSettings.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true }
+    redirect: '/admin/users'
   },
   {
     path: '/admin/panel',

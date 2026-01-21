@@ -162,6 +162,48 @@ export function useAuth() {
     }
   }
 
+  /**
+   * 更新用戶資料
+   * @param {Object} updates - { full_name, nickname }
+   */
+  const updateProfile = async (updates) => {
+    if (!user.value?.id) return { error: new Error('User not authenticated') }
+
+    loading.value = true
+    error.value = null
+
+    try {
+      const { data, error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          ...updates
+        })
+        .eq('id', user.value.id)
+        .select()
+        .single()
+
+      if (updateError) throw updateError
+
+      // Update local state
+      if (data) {
+        // Preserve virtual properties like is_admin
+        const isAdminVal = profile.value?.is_admin
+        profile.value = {
+          ...data,
+          is_admin: isAdminVal // Keep is_admin flag
+        }
+      }
+
+      return { data, error: null }
+    } catch (e) {
+      console.error('更新用戶資料失敗:', e)
+      error.value = e.message
+      return { error: e }
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     user,
     profile,
@@ -174,5 +216,6 @@ export function useAuth() {
     fetchProfile,
     initAuth,
     refreshProfile,
+    updateProfile,
   }
 }
