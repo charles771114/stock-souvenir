@@ -1,5 +1,5 @@
 <template>
-  <nav class="sticky top-0 z-50 glass transition-all duration-300">
+  <nav class="sticky top-0 z-50 glass transition-all duration-500 hover:bg-white/80">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between h-16">
         <!-- Logo and Nav Links -->

@@ -14,20 +14,20 @@ export function useInventoryImport() {
      */
     const parseFile = (file) => {
         return new Promise((resolve, reject) => {
+            const isCsv = file.name.toLowerCase().endsWith('.csv')
             const reader = new FileReader()
 
             reader.onload = (e) => {
                 try {
                     const data = e.target.result
-                    // Specifying codepage: 65001 (UTF-8) ensures correct parsing of UTF-8 encoded CSVs/Text
-                    // when read as binary string.
-                    const workbook = XLSX.read(data, { type: 'binary', codepage: 65001 })
+                    // For CSV, we read as text (string) to let the browser handle UTF-8/BOM.
+                    // For others (XLSX), we read as ArrayBuffer.
+                    const readOptions = isCsv ? { type: 'string' } : { type: 'array' }
+                    const workbook = XLSX.read(data, readOptions)
 
-                    // 假設讀取第一個 Sheet
                     const firstSheetName = workbook.SheetNames[0]
                     const worksheet = workbook.Sheets[firstSheetName]
 
-                    // 轉換為 JSON
                     const jsonData = XLSX.utils.sheet_to_json(worksheet)
                     resolve(jsonData)
                 } catch (err) {
@@ -36,7 +36,12 @@ export function useInventoryImport() {
             }
 
             reader.onerror = (err) => reject(err)
-            reader.readAsBinaryString(file)
+            
+            if (isCsv) {
+                reader.readAsText(file)
+            } else {
+                reader.readAsArrayBuffer(file)
+            }
         })
     }
 
@@ -82,6 +87,18 @@ export function useInventoryImport() {
             const rowsToInsert = parsedData.map(mapRow).filter(r => r !== null)
 
             if (rowsToInsert.length === 0) throw new Error('找不到有效的資料欄位 (需包含「姓名」)')
+
+            // 2.5 覆蓋模式：刪除該年度原本存在的 PENDING 資料
+            const { error: deleteError } = await supabase
+                .from('inventory_staging')
+                .delete()
+                .eq('year', parseInt(year))
+                .eq('status', 'PENDING')
+
+            if (deleteError) {
+                console.error('清除舊資料失敗:', deleteError)
+                throw new Error('無法清除舊的暫存資料: ' + deleteError.message)
+            }
 
             // 3. 批次寫入 (Supabase 建議每次不要超過 1000 筆)
             const BATCH_SIZE = 500

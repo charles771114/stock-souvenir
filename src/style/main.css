@@ -28,67 +28,49 @@ body {
 
 /* Animations */
 @keyframes blob {
-  0% {
-    transform: translate(0px, 0px) scale(1);
-  }
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
 
-  33% {
-    transform: translate(30px, -50px) scale(1.1);
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
-  }
-
-  100% {
-    transform: translate(0px, 0px) scale(1);
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-.animate-blob {
-  animation: blob 7s infinite;
-}
+.animate-blob { animation: blob 7s infinite; }
+.animate-fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
-.animation-delay-2000 {
-  animation-delay: 2s;
-}
+.animation-delay-2000 { animation-delay: 2s; }
+.animation-delay-4000 { animation-delay: 4s; }
 
-.animation-delay-4000 {
-  animation-delay: 4s;
-}
+/* Staggered items */
+.stagger-item-1 { animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both; }
+.stagger-item-2 { animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both; }
+.stagger-item-3 { animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both; }
+.stagger-item-4 { animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both; }
+.stagger-item-5 { animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both; }
 
-@keyframes shake {
-
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-
-  10%,
-  30%,
-  50%,
-  70%,
-  90% {
-    transform: translateX(-4px);
-  }
-
-  20%,
-  40%,
-  60%,
-  80% {
-    transform: translateX(4px);
-  }
-}
-
-.animate-shake {
-  animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
-}
-
-/* Glassmorphism Utilities */
+/* Glassmorphism Pro Max */
 .glass {
-  @apply bg-white/70 backdrop-blur-lg border border-white/50 shadow-xl;
+  @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-2xl;
+}
+
+.glass-dark {
+  @apply bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 shadow-2xl;
+}
+
+.glass-card {
+  @apply bg-white/60 backdrop-blur-2xl border border-white/50 shadow-xl hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-500;
 }
 
 .text-gradient {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600;
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 font-black;
 }

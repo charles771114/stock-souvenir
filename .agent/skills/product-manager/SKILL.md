@@ -52,10 +52,8 @@ description: 擔任資深技術產品經理 (TPM)，負責將模糊的使用者�
 ```
 
 #### 2. 建立/更新 `02_architecture.md` (技術架構)
-*這部分你可以切換為「架構師」視角撰寫，或請求使用者確認後再由開發 Agent 填寫。*
-- 資料庫 Schema 設計 (Supabase Table)
-- API / Edge Function 設計
-- 前端 Component 結構
+*這部分你可以切換為「架構師 (system-design skill)」視角撰寫，或請求使用者確認後再由開發 Agent 填寫。*
+- 呼叫 `system-design` 技能來定義複雜功能的架構、圖表與 Schema。
 
 #### 3. 建立/更新 `03_task_plan.md` (實作計畫)
 - 將功能拆解為可執行的細項任務 (Checklist)。
@@ -64,10 +62,11 @@ description: 擔任資深技術產品經理 (TPM)，負責將模糊的使用者�
 ## 指令與觸發
 
 使用者可以明確要求：「請用 PM 模式幫我規劃...」
-或者當你發現需求過於龐大且模糊時，主動建議：「這個功能比較複雜，建議我們先用 PM 模式產出規格書，您覺得如何？」
+或者當你發現需求過於龐大且模糊時，主動建議：「這個功能比較複雜，建議我們先用 PM 模式產出規格書，並由系統設計師進行架構規劃，您覺得如何？」
 
 ## 與其他 Skills 的協作
 
 - **spec-kit**: 你產出的文件必須符合 `spec-kit` 的結構。
+- **system-design**: 當需求明確後，將技術細節交由 `system-design` 處理。
 - **ui-ux**: 在定義 UI 需求時，請參考 `ui-ux` skill 的 Pro Max 原則。
 - **supabase-commander**: 在定義資料庫時，請考慮 Supabase 的特性。

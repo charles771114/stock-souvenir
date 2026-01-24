@@ -26,8 +26,9 @@ description: 實作 GitHub Spec Kit 方法論，推動規格驅動開發 (Spec-D
 
 ### Phase 2: 規劃 (Plan)
 **目標**: 定義 *HOW* (如何) 技術性地建構此功能。
-**行動**: 建立或更新 `.specs/02_architecture.md`。
+**行動**: 呼叫 `system-design` 技能，建立或更新 `.specs/02_architecture.md`。
 **內容**:
+-    Mermaid 架構圖與流程圖
 -   資料模型 (Data Models / Schema changes)
 -   API 端點 (API Endpoints)
 -   元件階層 (Component Hierarchy)
@@ -46,7 +47,7 @@ description: 實作 GitHub Spec Kit 方法論，推動規格驅動開發 (Spec-D
 **目標**: 根據任務撰寫程式碼。
 **行動**:
 1.  閱讀 Phase 3 的任務。
-2.  撰寫程式碼。
+2.  撰寫程式碼（利用 **Sandbox** 進行安全的終端操作）。
 3.  驗證/測試。
 4.  標記任務為完成。
 5.  重複上述步驟。
@@ -80,6 +81,13 @@ description: 實作 GitHub Spec Kit 方法論，推動規格驅動開發 (Spec-D
 ### 02_architecture.md 範本
 ```markdown
 # 系統架構: [功能名稱]
+
+## 系統流程 (System Flow)
+```mermaid
+graph LR
+    A[Start] --> B[Process]
+    B --> C[End]
+```
 
 ## 資料庫變更 (Database Changes)
 ```sql

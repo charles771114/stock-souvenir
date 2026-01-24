@@ -12,7 +12,7 @@
         <div class="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <h1
-              class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 tracking-tight">
+              class="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 tracking-tighter animate-fade-in-up">
               股東會紀念品目錄
             </h1>
             <p class="text-sm text-gray-500 mt-1">
@@ -60,7 +60,7 @@
 
         <!-- Glassmorphic Filter Bar -->
         <div
-          class="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/50 shadow-lg shadow-indigo-100/50 p-4 md:p-5 mb-2 relative overflow-hidden group">
+          class="bg-white/80 backdrop-blur-2xl rounded-[2rem] border border-white/50 shadow-2xl shadow-indigo-500/10 p-4 md:p-6 mb-2 relative overflow-hidden group animate-fade-in-up delay-150">
           <!-- Decor -->
           <div
             class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-full blur-3xl opacity-50 -z-10 group-hover:scale-110 transition-transform duration-700">
@@ -267,7 +267,7 @@ const userInventoryIds = ref(new Set()) // Track user's inventory items
 const filters = ref({
   search: '',
   year: '2025',
-  category: null,
+  category: '超商商品卡',
 })
 
 // Color Helpers for Category Buttons
