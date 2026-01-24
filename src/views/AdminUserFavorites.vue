@@ -5,7 +5,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">使用者收藏總覽</h1>
+        <h1 class="text-3xl font-black text-gray-900 mb-2 tracking-tighter">使用者收藏總覽</h1>
         <p class="text-gray-600">查看全站使用者的收藏統計與明細</p>
       </div>
 
@@ -106,7 +106,7 @@
         </div>
 
         <div v-else class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
+          <table class="min-w-[800px] md:min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用戶</th>

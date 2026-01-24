@@ -22,7 +22,7 @@
       </div>
 
       <!-- Stats -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 mb-12">
         <div class="stat-card animate-fade-in-up glass-card relative group" style="animation-delay: 0.1s">
           <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
              <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -86,8 +86,8 @@
       </div>
 
       <!-- Staging Table -->
-      <div class="glass border-none rounded-[3rem] shadow-2xl overflow-hidden animate-fade-in-up transition-all hover:shadow-indigo-500/20">
-        <table class="w-full">
+      <div class="glass border-none rounded-2xl md:rounded-[3rem] shadow-2xl overflow-x-auto animate-fade-in-up transition-all hover:shadow-indigo-500/20">
+        <table class="w-full min-w-[800px] md:min-w-full">
           <thead>
             <tr class="bg-indigo-50/50 backdrop-blur-sm border-b border-indigo-100/50">
               <th class="px-10 py-6 text-left text-xs font-black text-indigo-900/60 uppercase tracking-[0.2em]">待歸戶對象</th>

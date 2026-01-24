@@ -13,10 +13,10 @@
       <!-- Header -->
       <div class="mb-10 flex items-center justify-between">
         <div>
-          <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 tracking-tight mb-2">
+          <h1 class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 tracking-tighter mb-2">
             用戶管理
           </h1>
-          <p class="text-lg text-gray-600 font-light">
+          <p class="text-base sm:text-lg text-gray-600 font-light">
             User Management & Permissions
           </p>
         </div>
@@ -66,8 +66,8 @@
       <!-- All Users Tab Content -->
       <div v-show="activeTab === 'all'" class="space-y-6">
         <!-- Search & Filter Bar -->
-        <div class="bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-gray-100 p-6">
-          <div class="flex gap-4">
+        <div class="bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
+          <div class="flex flex-col sm:flex-row gap-4">
             <div class="flex-1 relative">
               <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />

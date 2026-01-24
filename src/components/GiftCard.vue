@@ -43,7 +43,7 @@
       </div>
 
       <!-- Company Name -->
-      <h3 class="text-lg font-bold text-gray-900 mb-1 pl-2 truncate" :title="gift.name">
+      <h3 class="text-base sm:text-lg font-black text-gray-900 mb-1 pl-2 truncate" :title="gift.name">
         {{ gift.name }}
       </h3>
 

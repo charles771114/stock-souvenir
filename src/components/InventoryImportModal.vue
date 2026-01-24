@@ -81,19 +81,12 @@
                 </div>
 
                 <!-- Input Fields (Only show if item selected) -->
-                <div v-if="selectedItem" class="pt-4 border-t border-gray-100 space-y-4 animate-fade-in">
-                  <div class="flex gap-4">
-                    <div class="w-1/3">
-                      <label class="block text-sm font-medium text-gray-700 mb-1">數量</label>
-                      <input v-model.number="form.quantity" type="number" min="1"
-                        class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2 bg-gray-50" />
-                    </div>
-                    <div class="flex-1">
-                      <label class="block text-sm font-medium text-gray-700 mb-1">備註 (選填)</label>
-                      <input v-model="form.note" type="text"
-                        class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2 bg-gray-50 bg-white"
-                        placeholder="購買於..." />
-                    </div>
+                <div v-if="selectedItem" class="pt-6 border-t border-gray-100 animate-fade-in flex justify-center">
+                  <div class="glass-card px-6 py-3 rounded-2xl bg-indigo-50 border-indigo-100 flex items-center gap-3">
+                     <svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                     </svg>
+                     <span class="text-xs font-black text-indigo-700 uppercase tracking-widest">已選擇「{{ selectedItem.name }}」</span>
                   </div>
                 </div>
 
@@ -147,8 +140,7 @@ const selectedItem = ref(null)
 const submitting = ref(false)
 
 const form = ref({
-  quantity: 1,
-  note: ''
+  // Empty
 })
 
 // Debounced search
@@ -190,7 +182,7 @@ const close = () => {
     searchQuery.value = ''
     searchResults.value = []
     selectedItem.value = null
-    form.value = { quantity: 1, note: '' }
+    form.value = {}
   }, 300)
 }
 
@@ -202,8 +194,8 @@ const handleSubmit = async () => {
   try {
     const { success, error } = await addToCollection(
       selectedItem.value.id,
-      form.value.quantity,
-      form.value.note
+      1, // Always default to 1
+      '' // No notes
     )
 
     if (!success) throw new Error(error)

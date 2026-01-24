@@ -5,6 +5,7 @@ const user = ref(null)
 const profile = ref(null)
 const loading = ref(false)
 const error = ref(null)
+let initAuthPromise = null
 
 export function useAuth() {
   const isAdmin = computed(() => profile.value?.is_admin || false)
@@ -122,35 +123,46 @@ export function useAuth() {
    * 初始化認證狀態
    */
   const initAuth = async () => {
-    loading.value = true
+    if (initAuthPromise) return initAuthPromise
 
-    try {
-      // 取得當前 session
-      const { data: { session } } = await supabase.auth.getSession()
-
-      if (session?.user) {
-        user.value = session.user
-        await fetchProfile(session.user.id)
-      }
-
-      // 監聽認證狀態變化
-      supabase.auth.onAuthStateChange(async (event, session) => {
-        console.log('Auth state changed:', event)
+    initAuthPromise = (async () => {
+      loading.value = true
+      try {
+        // 取得當前 session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        if (sessionError) throw sessionError
 
         if (session?.user) {
           user.value = session.user
           await fetchProfile(session.user.id)
-        } else {
-          user.value = null
-          profile.value = null
         }
-      })
-    } catch (e) {
-      console.error('初始化認證失敗:', e)
-      error.value = e.message
-    } finally {
-      loading.value = false
-    }
+
+        // 監聽認證狀態變化
+        supabase.auth.onAuthStateChange(async (event, session) => {
+          console.log('Auth state changed:', event)
+
+          if (session?.user) {
+            // 避免重複 fetch 同一用戶的 profile
+            if (user.value?.id !== session.user.id) {
+              user.value = session.user
+              await fetchProfile(session.user.id)
+            }
+          } else {
+            user.value = null
+            profile.value = null
+          }
+        })
+      } catch (e) {
+        if (e.name !== 'AbortError') {
+          console.error('初始化認證失敗:', e)
+          error.value = e.message
+        }
+      } finally {
+        loading.value = false
+      }
+    })()
+
+    return initAuthPromise
   }
 
   /**

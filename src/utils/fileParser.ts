@@ -1,5 +1,6 @@
 import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
+// XLSX is lazy loaded to reduce initial bundle size (~1MB savings)
+// import * as XLSX from 'xlsx';
 
 export interface ParsedSouvenir {
     code: string;
@@ -160,7 +161,10 @@ const parseCSV = (file: File, encoding: string = 'UTF-8'): Promise<any[]> => {
     });
 };
 
-const parseExcel = (file: File): Promise<any[]> => {
+const parseExcel = async (file: File): Promise<any[]> => {
+    // Lazy load xlsx library - reduces initial bundle by ~1MB
+    const XLSX = await import('xlsx');
+    
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => {

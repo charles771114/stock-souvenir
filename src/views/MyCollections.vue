@@ -1,173 +1,142 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <Navbar />
+  <div class="min-h-screen bg-gray-50 relative overflow-hidden">
+    <!-- Animated Background Mesh -->
+    <div class="fixed inset-0 pointer-events-none z-0">
+      <div class="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-200/30 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
+      <div class="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-200/30 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
+    </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <Navbar class="relative z-10" />
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10 min-h-[80vh]">
       <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">我的收藏</h1>
-        <p class="text-gray-600">管理您收藏的股東會紀念品</p>
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6 animate-fade-in">
+        <div>
+          <h1 class="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-gray-800 to-gray-600 tracking-tighter mb-2 uppercase">
+            我的收藏
+          </h1>
+          <p class="text-lg text-gray-400 font-black uppercase tracking-[0.2em]">
+            Wishlist & Favorites
+          </p>
+        </div>
+        
+        <div v-if="myCollections.length > 0" class="flex items-center gap-6 bg-white/40 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/60 shadow-lg">
+           <div class="flex flex-col items-center">
+              <span class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Total</span>
+              <span class="text-xl font-black text-indigo-600 tracking-tighter">{{ myCollections.length }}</span>
+           </div>
+           <div class="w-px h-6 bg-gray-200"></div>
+           <div class="flex flex-col items-center">
+              <span class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Companies</span>
+              <span class="text-xl font-black text-purple-600 tracking-tighter">{{ uniqueCompanies }}</span>
+           </div>
+           <div class="w-px h-6 bg-gray-200"></div>
+           <div class="flex flex-col items-center">
+              <span class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Years</span>
+              <span class="text-xl font-black text-pink-600 tracking-tighter">{{ uniqueYears }}</span>
+           </div>
+        </div>
       </div>
 
       <!-- Loading State -->
-      <div v-if="loading" class="flex justify-center items-center py-12">
+      <div v-if="loading" class="flex flex-col justify-center items-center py-32 space-y-4">
         <LoadingSpinner />
+        <span class="text-xs font-black text-gray-400 animate-pulse uppercase tracking-[0.3em]">Loading Assets...</span>
       </div>
 
       <!-- Error State -->
-      <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p class="text-red-800">{{ error }}</p>
+      <div v-else-if="error" class="glass-card border-red-100 bg-red-50/50 p-8 rounded-[2rem] text-center">
+        <p class="text-red-500 font-black uppercase tracking-widest">{{ error }}</p>
       </div>
 
       <!-- Empty State -->
-      <div v-else-if="myCollections.length === 0" class="text-center py-12">
-        <svg class="mx-auto h-24 w-24 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-        </svg>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">還沒有收藏</h3>
-        <p class="text-gray-600 mb-4">開始收藏您感興趣的股東會紀念品吧！</p>
-        <router-link
-          to="/gifts"
-          class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-        >
-          瀏覽紀念品
+      <div v-else-if="myCollections.length === 0" class="flex flex-col items-center justify-center py-32 text-center animate-fade-in">
+        <div class="w-24 h-24 bg-white rounded-[2rem] shadow-2xl flex items-center justify-center mb-8 rotate-3 border border-gray-50">
+          <svg class="h-12 w-12 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+        </div>
+        <h3 class="text-2xl font-black text-gray-900 tracking-tighter mb-3">收藏清單空空如也</h3>
+        <p class="text-gray-400 font-medium mb-8 max-w-xs mx-auto">點擊目錄中的心形圖示，將感興趣的紀念品加入清單。</p>
+        <router-link to="/gifts" class="h-12 px-10 bg-indigo-600 text-white rounded-2xl shadow-xl shadow-indigo-100 hover:scale-105 transition-transform flex items-center gap-2 font-black uppercase text-xs tracking-widest">
+           探索紀念品
         </router-link>
       </div>
 
-      <!-- Collections List -->
-      <div v-else class="space-y-4">
+      <!-- Collections Grid/List -->
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up">
         <div
-          v-for="collection in myCollections"
-          :key="collection.id"
-          class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          v-for="item in myCollections"
+          :key="item.id"
+          class="glass-card group rounded-[2.5rem] p-6 border border-white/60 shadow-xl hover:shadow-2xl hover:-translate-y-1.5 transition-all flex flex-col h-full overflow-hidden relative"
         >
-          <div class="p-6">
-            <div class="flex items-start justify-between">
-              <!-- Gift Info -->
-              <div class="flex-1">
-                <div class="flex items-center mb-2">
-                  <h3 class="text-lg font-semibold text-gray-900">
-                    {{ collection.gift?.company_name }}
-                    <span class="text-gray-500 text-sm ml-2">
-                      ({{ collection.gift?.company_code }})
-                    </span>
-                  </h3>
-                </div>
-                
-                <p class="text-indigo-600 font-medium mb-2 flex items-center gap-1.5">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-                  {{ collection.gift?.gift_name }}
-                </p>
+          <!-- Accent Gradient Bubble -->
+          <div class="absolute -top-12 -right-12 w-32 h-32 bg-indigo-50/50 rounded-full blur-2xl group-hover:bg-indigo-100/50 transition-colors"></div>
 
-                <div class="flex items-center space-x-4 text-sm text-gray-600 mb-3">
-                  <span class="flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                    {{ collection.gift?.gift_year }} 年
-                  </span>
-                  <span v-if="collection.gift?.gift_category" class="flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
-                    {{ collection.gift?.gift_category }}
-                  </span>
-                </div>
+          <!-- Header Section -->
+          <div class="flex justify-between items-start mb-6 relative">
+             <div class="flex-1 min-w-0">
+               <div class="flex items-center gap-2 mb-2">
+                 <span class="text-[10px] font-black px-2.5 py-1 rounded-xl bg-indigo-50 text-indigo-600 font-mono tracking-tighter">
+                   {{ item.gift?.code }}
+                 </span>
+                 <span class="text-[8px] font-black text-gray-400 uppercase tracking-widest">
+                   {{ item.gift?.meeting_date ? new Date(item.gift.meeting_date).getFullYear() : 'N/A' }}
+                 </span>
+               </div>
+               <h3 class="text-xl font-black text-gray-900 tracking-tighter line-clamp-1 group-hover:text-indigo-600 transition-colors">
+                 {{ item.gift?.name }}
+               </h3>
+             </div>
+             
+             <button
+                @click="confirmRemove(item)"
+                class="p-3 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all shrink-0"
+                title="移除收藏"
+              >
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+          </div>
 
-                <!-- Collected Date -->
-                <div class="mb-3">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
-                    收藏日期
-                  </label>
-                  <input
-                    :value="collection.collected_date"
-                    type="date"
-                    class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    @change="updateDate(collection.id, $event.target.value)"
-                  />
-                </div>
+          <!-- Item Content -->
+          <div class="mb-8 flex-1">
+             <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">紀念品項目 / Asset</div>
+             <p class="text-sm font-bold text-gray-700 leading-relaxed">
+                {{ item.gift?.souvenir_item }}
+             </p>
+          </div>
 
-                <!-- Notes -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
-                    備註
-                  </label>
-                  <textarea
-                    :value="collection.notes"
-                    rows="2"
-                    placeholder="新增備註..."
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
-                    @blur="updateNote(collection.id, $event.target.value)"
-                  ></textarea>
-                </div>
-              </div>
-
-              <!-- Actions -->
-              <div class="ml-4 flex flex-col space-y-2">
-                <button
-                  v-if="collection.gift?.source_url"
-                  @click="openUrl(collection.gift.source_url)"
-                  class="p-2 text-gray-400 hover:text-indigo-600 transition-colors"
-                  title="查看來源"
-                >
-                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </button>
-                
-                <button
-                  @click="confirmRemove(collection)"
-                  class="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                  title="移除收藏"
-                >
-                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              </div>
-            </div>
+          <!-- Footer Action -->
+          <div v-if="item.gift?.source_url" class="pt-6 border-t border-gray-100/50">
+             <button @click="openUrl(item.gift.source_url)" class="w-full py-3 px-4 bg-gray-50 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 rounded-2xl transition-all text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+                查看官方來源
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+             </button>
           </div>
         </div>
       </div>
-
-      <!-- Stats -->
-      <div v-if="myCollections.length > 0" class="mt-8 bg-white rounded-lg shadow-sm p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">收藏統計</h3>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="text-center">
-            <div class="text-3xl font-bold text-indigo-600">{{ myCollections.length }}</div>
-            <div class="text-sm text-gray-600 mt-1">總收藏數</div>
-          </div>
-          <div class="text-center">
-            <div class="text-3xl font-bold text-green-600">{{ collectedCount }}</div>
-            <div class="text-sm text-gray-600 mt-1">已標記日期</div>
-          </div>
-          <div class="text-center">
-            <div class="text-3xl font-bold text-blue-600">{{ uniqueCompanies }}</div>
-            <div class="text-sm text-gray-600 mt-1">不同公司</div>
-          </div>
-          <div class="text-center">
-            <div class="text-3xl font-bold text-purple-600">{{ uniqueYears }}</div>
-            <div class="text-sm text-gray-600 mt-1">不同年份</div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </main>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
-import { useGifts } from '@/composables/useGifts'
-import Navbar from '@/components/Navbar.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import Navbar from '@/components/Navbar.vue'
+import { useDialog } from '@/composables/useDialog'
+import { useGifts } from '@/composables/useGifts'
+import { computed, onMounted } from 'vue'
 
-const { myCollections, loading, error, fetchMyCollections, removeFromCollection, updateCollectionNote, updateCollectionDate } = useGifts()
-
-const collectedCount = computed(() => {
-  return myCollections.value.filter(c => c.collected_date).length
-})
+const { myCollections, loading, error, fetchMyCollections, removeFromCollection, updateCollectionNote } = useGifts()
+const { confirm } = useDialog()
 
 const uniqueCompanies = computed(() => {
   const companies = new Set()
   myCollections.value.forEach(c => {
-    if (c.gift?.company_code) companies.add(c.gift.company_code)
+    if (c.gift?.code) companies.add(c.gift.code)
   })
   return companies.size
 })
@@ -175,21 +144,18 @@ const uniqueCompanies = computed(() => {
 const uniqueYears = computed(() => {
   const years = new Set()
   myCollections.value.forEach(c => {
-    if (c.gift?.gift_year) years.add(c.gift.gift_year)
+    const year = c.gift?.meeting_date ? new Date(c.gift.meeting_date).getFullYear() : null
+    if (year) years.add(year)
   })
   return years.size
 })
 
 const updateNote = async (collectionId, note) => {
-  await updateCollectionNote(collectionId, note)
-}
-
-const updateDate = async (collectionId, date) => {
-  await updateCollectionDate(collectionId, date)
+  // Logic removed
 }
 
 const confirmRemove = async (collection) => {
-  if (confirm(`確定要移除「${collection.gift?.gift_name}」嗎？`)) {
+  if (await confirm(`確定要移除「${collection.gift?.name}」的收藏嗎？`, '移除收藏')) {
     await removeFromCollection(collection.id)
   }
 }
@@ -202,3 +168,20 @@ onMounted(async () => {
   await fetchMyCollections()
 })
 </script>
+
+<style scoped>
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+@keyframes blob {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+</style>

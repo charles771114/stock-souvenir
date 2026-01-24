@@ -1,4 +1,4 @@
-# 專案技能使用指南 (Expert Skills Guide)
+ㄉㄢ# 專案技能使用指南 (Expert Skills Guide)
 
 本專案配置了一系列專屬技能，旨在透過「規格驅動開發 (SDD)」模式，確保程式碼品質與架構穩健性。
 

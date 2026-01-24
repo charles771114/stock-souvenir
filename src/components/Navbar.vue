@@ -15,7 +15,7 @@
                 </svg>
               </div>
               <span
-                class="ml-3 text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-700 tracking-tight">股東會紀念品</span>
+                class="hidden min-[400px]:block ml-3 text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-700 tracking-tighter">股東會紀念品</span>
             </div>
           </router-link>
 
@@ -101,7 +101,7 @@
         <!-- User Menu -->
         <div class="flex items-center">
           <!-- Logged In State -->
-          <div v-if="user" class="flex items-center space-x-3">
+          <div v-if="user" class="flex items-center space-x-1.5 sm:space-x-3">
             <!-- User Info (Clickable) -->
             <button @click="isProfileModalOpen = true"
               class="hidden sm:block text-right group/user hover:opacity-80 transition-opacity">
@@ -128,12 +128,13 @@
 
             <!-- Logout Button -->
             <button @click="handleLogout"
-              class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-              <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              class="inline-flex items-center px-2 sm:px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title="登出系統">
+              <svg class="w-4 h-4 sm:mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
-              登出
+              <span class="hidden sm:inline">登出</span>
             </button>
           </div>
 

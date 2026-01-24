@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { ref } from 'vue'
-import * as XLSX from 'xlsx'
+// XLSX is lazy loaded to reduce initial bundle size (~1MB savings)
+// import * as XLSX from 'xlsx'
 
 export function useInventoryImport() {
     const uploading = ref(false)
@@ -8,13 +9,17 @@ export function useInventoryImport() {
     const progress = ref(0) // 0-100
 
     /**
-     * 解析 Excel/CSV 檔案
+     * 解析 Excel/CSV 檔案 (xlsx 採用 Lazy Load)
      * @param {File} file 
      * @returns {Promise<Array>}
      */
-    const parseFile = (file) => {
+    const parseFile = async (file) => {
+        // Lazy load xlsx library - reduces initial bundle by ~1MB
+        const XLSX = await import('xlsx')
+        
+        const isCsv = file.name.toLowerCase().endsWith('.csv')
+
         return new Promise((resolve, reject) => {
-            const isCsv = file.name.toLowerCase().endsWith('.csv')
             const reader = new FileReader()
 
             reader.onload = (e) => {

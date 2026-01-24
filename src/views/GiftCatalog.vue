@@ -60,7 +60,7 @@
 
         <!-- Glassmorphic Filter Bar -->
         <div
-          class="bg-white/80 backdrop-blur-2xl rounded-[2rem] border border-white/50 shadow-2xl shadow-indigo-500/10 p-4 md:p-6 mb-2 relative overflow-hidden group animate-fade-in-up delay-150">
+          class="bg-white/80 backdrop-blur-2xl rounded-2xl md:rounded-[2rem] border border-white/50 shadow-2xl shadow-indigo-500/10 p-3 md:p-6 mb-2 relative overflow-hidden group animate-fade-in-up delay-150">
           <!-- Decor -->
           <div
             class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-full blur-3xl opacity-50 -z-10 group-hover:scale-110 transition-transform duration-700">
@@ -118,38 +118,38 @@
           </div>
         </div>
 
-        <!-- Active Context Bar -->
-        <div class="flex justify-between items-center px-2 mt-2">
-          <div class="flex items-center gap-3">
+        <!-- Active Context Bar (Filters & Pagination Stats) -->
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center px-2 mt-4 gap-4">
+          <div class="flex flex-wrap items-center gap-3">
             <!-- Year Selector (Compact) -->
-            <div class="flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg">
+            <div class="flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg flex-shrink-0">
               <button v-for="year in ['2026', '2025', '2024']" :key="year" @click="setYear(year)"
-                class="px-3 py-1 rounded-md text-[10px] font-bold transition-all"
+                class="px-2.5 py-1 rounded-md text-[10px] font-black transition-all"
                 :class="filters.year === year ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'">
                 {{ year }}
               </button>
             </div>
 
             <!-- Active Filters Text -->
-            <span v-if="hasActiveFilters" class="text-xs text-gray-500 flex items-center gap-2">
-              <span v-if="filters.category" class="font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
-                分類: {{ filters.category }}
+            <div v-if="hasActiveFilters" class="flex flex-wrap items-center gap-2">
+              <span v-if="filters.category" class="text-[10px] font-black text-indigo-600 bg-indigo-50/80 border border-indigo-100 px-2 py-0.5 rounded-lg">
+                {{ filters.category }}
               </span>
-              <button @click="clearFilters" class="hover:text-red-500 underline decoration-red-200 transition-colors">
+              <button @click="clearFilters" class="text-[10px] font-black text-gray-400 hover:text-red-500 underline decoration-gray-200 transition-colors">
                 清除全部
               </button>
-            </span>
+            </div>
           </div>
 
-          <div class="flex items-center gap-4">
-            <p class="text-xs text-gray-400">
-              共 {{ paginatedMappedGifts.length }} 筆
+          <div class="flex items-center justify-between sm:justify-end gap-6 border-t border-gray-100 sm:border-none pt-3 sm:pt-0">
+            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              Total {{ paginatedMappedGifts.length }} Items
             </p>
             <!-- Page Size -->
             <div class="flex items-center gap-2">
               <select v-model="pageSize" @change="handlePageSizeChange"
-                class="block w-full pl-2 pr-6 py-1 text-[10px] border-none bg-transparent focus:ring-0 text-gray-500 font-medium cursor-pointer">
-                <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }} 筆/頁</option>
+                class="block w-full pl-1 pr-6 py-1 text-[10px] border-none bg-transparent focus:ring-0 text-gray-800 font-black cursor-pointer uppercase">
+                <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }} / Page</option>
               </select>
             </div>
           </div>
@@ -203,34 +203,44 @@
           <TableView v-else :items="paginatedMappedGifts" :isExpired="isExpired"
             @toggle-collection="handleToggleCollection" />
 
-          <!-- Pagination -->
-          <div v-if="totalPages > 1" class="mt-12 flex items-center justify-center gap-4">
-            <button @click="prevPage" :disabled="!hasPrevPage"
-              class="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-              </svg>
-              上一頁
-            </button>
+          <!-- Pagination (Pro Max Focused) -->
+          <div v-if="totalPages > 1" class="mt-16 flex flex-col items-center justify-center gap-6">
+            <div class="flex items-center bg-white/60 backdrop-blur-xl border border-gray-100 p-1.5 rounded-[1.25rem] shadow-xl shadow-indigo-100/50">
+              <button @click="prevPage" :disabled="!hasPrevPage"
+                class="h-10 px-3 sm:px-4 rounded-xl border border-transparent text-xs font-black text-gray-700 hover:bg-white hover:shadow-md disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-2 group">
+                <svg class="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7" />
+                </svg>
+                <span class="hidden min-[400px]:inline">上一頁</span>
+              </button>
 
-            <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
-              <span class="text-sm text-gray-600 font-medium">
-                第 <span class="font-bold text-indigo-600">{{ currentPage }}</span> / {{ totalPages }} 頁
-              </span>
-              <div class="h-4 w-px bg-gray-200"></div>
-              <select :value="currentPage" @change="goToPage($event.target.value)"
-                class="text-sm border-none bg-transparent focus:ring-0 cursor-pointer text-gray-600 font-medium p-0">
-                <option v-for="page in totalPages" :key="page" :value="page">跳至第 {{ page }} 頁</option>
-              </select>
+              <div class="h-6 w-px bg-gray-200 mx-1"></div>
+
+              <div class="px-2 sm:px-4 flex items-center gap-2 sm:gap-3">
+                <span class="text-[10px] sm:text-xs text-gray-400 font-bold uppercase tracking-tight whitespace-nowrap">
+                  <span class="hidden min-[450px]:inline">第</span> <span class="text-indigo-600 font-black">{{ currentPage }}</span> / {{ totalPages }} <span class="hidden min-[450px]:inline">頁</span>
+                </span>
+                <div class="relative group/select">
+                  <select :value="currentPage" @change="goToPage($event.target.value)"
+                    class="appearance-none bg-indigo-50 text-indigo-700 text-[10px] font-black pl-2 pr-6 sm:pl-3 sm:pr-8 py-1.5 rounded-lg border-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                    <option v-for="page in totalPages" :key="page" :value="page">跳至 {{ page }}</option>
+                  </select>
+                  <svg class="absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-indigo-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+
+              <div class="h-6 w-px bg-gray-200 mx-1"></div>
+
+              <button @click="nextPage" :disabled="!hasNextPage"
+                class="h-10 px-3 sm:px-4 rounded-xl border border-transparent text-xs font-black text-gray-700 hover:bg-white hover:shadow-md disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-2 group">
+                <span class="hidden min-[400px]:inline">下一頁</span>
+                <svg class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
-
-            <button @click="nextPage" :disabled="!hasNextPage"
-              class="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-2">
-              下一頁
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
-import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
+import { ref } from 'vue'
+import { useAuth } from './useAuth'
 import { useLocalStorageCache } from './useLocalStorageCache'
 
 export function useGifts() {
@@ -127,16 +128,18 @@ export function useGifts() {
    * 取得我的收藏
    */
   const fetchMyCollections = async () => {
+    const { user: currentUser } = useAuth()
+    
     loading.value = true
     error.value = null
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        // Not logged in, clear collections locally and return
+      if (!currentUser.value) {
         myCollections.value = []
         return { data: [], error: null }
       }
+      
+      const userId = currentUser.value.id
 
       const { data, error: fetchError } = await supabase
         .from('user_collections')
@@ -144,7 +147,7 @@ export function useGifts() {
           *,
           gift:souvenirs (*)
         `)
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false })
 
       if (fetchError) throw fetchError
@@ -324,14 +327,14 @@ export function useGifts() {
    * @returns {Promise<Set>} - 庫存項目 ID 的 Set
    */
   const fetchUserInventoryIds = async () => {
+    const { user: currentUser } = useAuth()
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return new Set()
+      if (!currentUser.value) return new Set()
 
       const { data } = await supabase
         .from('user_collections')
         .select('souvenir_id')
-        .eq('user_id', user.id)
+        .eq('user_id', currentUser.value.id)
         .eq('status', 'collected')
 
       return new Set(data?.map(d => d.souvenir_id) || [])

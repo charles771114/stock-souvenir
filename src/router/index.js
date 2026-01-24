@@ -1,3 +1,4 @@
+import { useAuth } from '@/composables/useAuth'
 import { supabase } from '@/lib/supabase'
 import { createRouter, createWebHistory } from 'vue-router'
 
@@ -115,11 +116,19 @@ const router = createRouter({
 // 路由守衛
 router.beforeEach(async (to, from, next) => {
   let session = null
+  // Ensure auth is initialized
+  const { initAuth, user: authUser } = useAuth()
   try {
-    const { data } = await supabase.auth.getSession()
-    session = data.session
+    await initAuth()
+    // If authUser is populated, we have a session
+    if (authUser.value) {
+      const { data } = await supabase.auth.getSession()
+      session = data.session
+    }
   } catch (e) {
-    console.warn('Router checking session failed:', e)
+    if (e.name !== 'AbortError') {
+      console.warn('Router checking session failed:', e)
+    }
   }
 
   // 1. 處理需要 Auth 的頁面
