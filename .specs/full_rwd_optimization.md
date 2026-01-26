@@ -20,18 +20,18 @@
 
 ## 3. 重點優化視圖
 ### 3.1 Navbar (全域)
-- [ ] 360px - 768px: 僅顯示漢堡選單與 Logo。
-- [ ] 1024px+: 顯示完整橫向選單。
+- [x] 360px - 768px: 僅顯示漢堡選單與 Logo。
+- [x] 1024px+: 顯示完整橫向選單。
 
 ### 3.2 紀念品目錄 ([GiftCatalog.vue](file:///Users/uniza/WorkSpace/github/stock-souvenir/src/views/GiftCatalog.vue))
-- [ ] 篩選列在 360px 需為橫向捲軸或多行折疊。
-- [ ] 卡片寬度需自適應填充。
+- [x] 篩選列在 360px 需為橫向捲軸或多行折疊。
+- [x] 卡片寬度需自適應填充。
 
 ### 3.3 管理端表格
-- [ ] 針對 360px 提供 `Table-Wrapper` 產生的橫向捲軸。
-- [ ] 窄屏下隱藏次要欄位 (如 ID 或 備註)。
+- [x] 針對 360px 提供 `Table-Wrapper` 產生的橫向捲軸。
+- [x] 窄屏下隱藏次要欄位 (如 ID 或 備註)。
 
 ## 4. 實作任務 (SDD Phase 3 預覽)
-- [ ] 修復 `main.css` 全域容器斷點。
-- [ ] 更新 `GiftCatalog` 響應式 Grid。
-- [ ] 優化 `InventoryStaging` 表格滾動容器。
+- [x] 修復 `main.css` 全域容器斷點。
+- [x] 更新 `GiftCatalog` 響應式 Grid。
+- [x] 優化 `InventoryStaging` 表格滾動容器。

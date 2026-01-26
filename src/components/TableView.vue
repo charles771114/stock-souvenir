@@ -52,7 +52,9 @@
             v-if="!item.isInInventory"
             :gift="item" 
             :is-active="item.isCollected"
+            :disabled="disabled"
             @toggle="$emit('toggle-collection', item)"
+            :class="{ 'opacity-30 grayscale pointer-events-none': disabled }"
           />
           <router-link v-else to="/inventory" class="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -101,7 +103,18 @@
                 </span>
               </td>
               <td class="py-5 px-6">
-                <div class="text-sm text-slate-600 font-medium line-clamp-1" :title="item.souvenir">{{ item.souvenir }}</div>
+                <div class="text-sm text-slate-800 font-medium line-clamp-1" :title="item.souvenir">
+                  {{ item.souvenir || '尚未公布' }}
+                </div>
+                <!-- Previous Year Reference -->
+                <div v-if="item.previousYearSouvenir" 
+                  class="text-[10px] text-slate-400 italic mt-0.5 flex items-center gap-1"
+                  :title="`去年紀念品：${item.previousYearSouvenir}`">
+                  <svg class="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span class="truncate">去年：{{ item.previousYearSouvenir }}</span>
+                </div>
               </td>
               <td class="py-5 px-6 text-right">
                 <div class="flex flex-col items-end">
@@ -117,7 +130,11 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                 </router-link>
-                <FavoriteButton v-else :gift="item" :is-active="item.isCollected" @toggle="$emit('toggle-collection', item)" />
+                <FavoriteButton v-else :gift="item" :is-active="item.isCollected" 
+                  :disabled="disabled"
+                  @toggle="$emit('toggle-collection', item)" 
+                  :class="{ 'opacity-30 grayscale pointer-events-none': disabled }"
+                />
               </td>
             </tr>
           </tbody>
@@ -133,6 +150,7 @@ import FavoriteButton from './FavoriteButton.vue'
 defineProps({
   items: Array,
   isExpired: Function,
+  disabled: Boolean
 })
 
 defineEmits(['toggle-collection'])

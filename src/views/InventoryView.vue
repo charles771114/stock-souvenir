@@ -1,15 +1,12 @@
 <template>
-  <div class="min-h-screen bg-gray-50 relative overflow-hidden">
+  <div class="min-h-screen bg-gradient-to-br from-indigo-50/50 via-white to-pink-50/50 relative overflow-hidden pb-20">
     <!-- Animated Background Mesh -->
     <div class="fixed inset-0 pointer-events-none z-0">
       <div
-        class="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-200/40 rounded-full mix-blend-multiply filter blur-3xl animate-blob">
+        class="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-indigo-200/30 rounded-full mix-blend-multiply filter blur-3xl animate-blob">
       </div>
       <div
-        class="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-200/40 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000">
-      </div>
-      <div
-        class="absolute bottom-[-10%] left-[20%] w-[500px] h-[500px] bg-pink-200/40 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000">
+        class="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-200/30 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000">
       </div>
     </div>
 
@@ -17,287 +14,624 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
       <!-- Header -->
-      <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6 animate-fade-in">
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6 animate-fade-in-up">
         <div>
-          <h1 class="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 tracking-tighter mb-2">
+          <h1
+            class="text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-900 via-purple-800 to-indigo-900 tracking-tighter mb-2">
             我的庫存
           </h1>
-          <p class="text-lg text-gray-400 font-black uppercase tracking-widest">
-            Personal Inventory Assets
+          <p class="text-sm text-gray-400 font-bold uppercase tracking-[0.3em] ml-1">
+            Security Inventory & Scraper
           </p>
         </div>
 
-        <div class="flex gap-4">
+        <div class="flex gap-3">
           <button v-if="inventoryItems.length > 0" @click="handleClearAll"
-            class="h-12 px-6 bg-white/50 text-red-500 rounded-2xl border border-red-100 hover:bg-red-50 transition-all text-xs font-black uppercase tracking-widest">
-            <span class="flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              全部清除
-            </span>
+            class="h-12 px-6 glass-button text-red-500 rounded-2xl border border-red-100/50 hover:bg-red-50 transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            全部清除
           </button>
           <button @click="isImportModalOpen = true"
-            class="h-12 px-8 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white rounded-2xl shadow-xl shadow-indigo-200 hover:shadow-2xl hover:scale-[1.02] active:scale-95 transition-all text-xs font-black uppercase tracking-widest">
-            <span class="flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-              </svg>
-              新增庫存
-            </span>
+            class="h-12 px-8 bg-indigo-600 text-white rounded-2xl shadow-xl shadow-indigo-200 hover:shadow-2xl hover:bg-indigo-700 transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+            </svg>
+            手動新增
           </button>
         </div>
       </div>
 
-      <!-- Loading State -->
-      <div v-if="loading" class="flex justify-center items-center py-20">
-        <div class="relative w-16 h-16">
-          <div class="absolute top-0 left-0 w-full h-full border-4 border-indigo-200 rounded-full opacity-25"></div>
-          <div
-            class="absolute top-0 left-0 w-full h-full border-4 border-indigo-600 rounded-full border-t-transparent animate-spin">
-          </div>
-        </div>
-      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- PDF Scraper Section (Left) -->
+        <div class="lg:col-span-4 space-y-6">
+          <div class="glass-card p-8 animate-fade-in-up delay-100">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+              <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              PDF 檔案抓取
+            </h2>
 
-      <!-- Empty State -->
-      <div v-else-if="inventoryItems.length === 0"
-        class="flex flex-col items-center justify-center py-20 bg-white/60 backdrop-blur-xl border border-white/40 rounded-2xl shadow-sm mx-auto max-w-2xl text-center">
-        <div class="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
-          <svg class="w-10 h-10 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-          </svg>
-        </div>
-        <h3 class="text-xl font-bold text-gray-900 mb-2">您的庫存是空的</h3>
-        <p class="text-gray-500 max-w-sm mb-8">您可以點擊右上角的「新增庫存」手動加入紀念品，或是在紀念品目錄中收藏。</p>
-        <button @click="isImportModalOpen = true"
-          class="inline-flex items-center px-6 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-indigo-300 transition-all shadow-sm font-medium">
-          立即新增
-        </button>
-      </div>
-
-      <!-- Inventory List -->
-      <div v-else class="space-y-6">
-        <!-- Stats Cards (Pro Max) -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
-          <div class="glass-card p-6 rounded-[2rem] border border-white/60 shadow-xl shadow-indigo-100/20">
-            <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">持有品項 / Total Assets</div>
-            <div class="text-3xl font-black text-indigo-600 tracking-tighter">{{ inventoryItems.length }}</div>
-          </div>
-          <div class="glass-card p-6 rounded-[2rem] border border-white/60 shadow-xl shadow-indigo-100/20">
-            <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">投資公司 / Companies</div>
-            <div class="text-3xl font-black text-purple-600 tracking-tighter">{{ uniqueCompanies }}</div>
-          </div>
-          <div class="glass-card p-6 rounded-[2rem] border border-white/60 shadow-xl shadow-indigo-100/20">
-            <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">年份分佈 / In Years</div>
-            <div class="text-3xl font-black text-pink-600 tracking-tighter">{{ uniqueYears }}</div>
-          </div>
-        </div>
-
-        <!-- Inventory Table (Pro Max) -->
-        <div class="w-full">
-          <!-- Mobile Cards -->
-          <div class="sm:hidden space-y-4">
-            <div v-for="item in inventoryItems" :key="item.id" 
-              class="glass-card p-5 rounded-[1.5rem] border border-white/60 shadow-lg animate-fade-in-up">
-              <div class="flex justify-between items-start mb-4">
-                <div class="flex items-center gap-2">
-                  <span class="text-[10px] font-black px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-600 font-mono tracking-tighter">
-                    {{ item.souvenir?.code }}
-                  </span>
-                  <div class="text-sm font-black text-gray-900">{{ item.souvenir?.name }}</div>
-                </div>
-                <button @click="deleteItem(item)" class="p-2 text-gray-300 hover:text-red-500 transition-colors">
-                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            <!-- Uploader Area -->
+            <div class="relative group cursor-pointer mb-6" @dragover.prevent="isDragging = true"
+              @dragleave.prevent="isDragging = false" @drop.prevent="handleDrop" @click="$refs.fileInput.click()">
+              <div class="border-2 border-dashed rounded-[2rem] p-10 text-center transition-all duration-300" :class="[
+                isDragging ? 'border-indigo-500 bg-indigo-50/50 scale-102' : 'border-gray-200 group-hover:border-indigo-400 group-hover:bg-indigo-50/30'
+              ]">
+                <input type="file" ref="fileInput" class="hidden" accept="application/pdf" @change="handleFileChange" />
+                <div
+                  class="w-16 h-16 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                  <svg class="w-8 h-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0L8 8m4-4v12" />
                   </svg>
+                </div>
+                <p class="text-sm font-bold text-gray-700">
+                  {{ selectedFile ? selectedFile.name : '將 PDF 拖曳至此' }}
+                </p>
+                <p class="text-xs text-gray-400 mt-2">自動擷取代號與名稱</p>
+              </div>
+            </div>
+
+            <!-- Password Field (Conditional) -->
+            <div v-if="scraperError === 'PASSWORD_REQUIRED'" class="mb-6 space-y-2 animate-bounce-in">
+              <label class="text-xs font-black text-amber-600 uppercase tracking-widest flex items-center gap-1 ml-1">
+                此檔案受密碼保護
+              </label>
+              <div class="flex gap-2">
+                <input v-model="pdfPassword" type="password" placeholder="輸入密碼"
+                  class="flex-1 px-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500 transition-all outline-none"
+                  @keyup.enter="runScraper" />
+                <button @click="runScraper"
+                  class="px-6 py-3 bg-amber-500 text-white rounded-2xl text-sm font-bold hover:bg-amber-600 transition-all">
+                  解鎖
                 </button>
               </div>
-              <div class="text-xs font-black text-gray-500 tracking-widest uppercase mb-1">紀念品</div>
-              <div class="text-sm font-medium text-gray-800 mb-4">{{ item.souvenir?.souvenir_item }}</div>
-              <div class="flex justify-between items-center pt-4 border-t border-gray-100/50">
-                <div class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                  {{ new Date(item.created_at).toLocaleDateString() }}
+            </div>
+
+            <button v-if="selectedFile && scraperError !== 'PASSWORD_REQUIRED'" @click="runScraper"
+              :disabled="scraperLoading"
+              class="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-200 hover:bg-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-3">
+              <div v-if="scraperLoading"
+                class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              {{ scraperLoading ? '解析中...' : '開始抓取' }}
+            </button>
+          </div>
+
+          <!-- Quick Tips (Enhanced with User Steps) -->
+          <div class="glass-card p-8 border-indigo-100/50 animate-fade-in-up delay-200">
+            <h3 class="text-xs font-black text-indigo-400 uppercase tracking-[0.3em] mb-6">匯出教學 / Usage Guide</h3>
+
+            <div class="space-y-6">
+              <div class="space-y-4">
+                <div class="flex items-start gap-4">
+                  <div
+                    class="w-6 h-6 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0 text-indigo-600 font-mono text-[10px] font-black">
+                    01</div>
+                  <p class="text-[13px] text-gray-600 leading-relaxed font-bold">登入 **「集保e手掌握」** App</p>
                 </div>
+                <div class="flex items-start gap-4">
+                  <div
+                    class="w-6 h-6 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0 text-indigo-600 font-mono text-[10px] font-black">
+                    02</div>
+                  <p class="text-[13px] text-gray-600 leading-relaxed font-bold">於首頁下方點擊 **「匯出證券交易明細」**</p>
+                </div>
+                <div class="flex items-start gap-4">
+                  <div
+                    class="w-6 h-6 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0 text-indigo-600 font-mono text-[10px] font-black">
+                    03</div>
+                  <p class="text-[13px] text-gray-600 leading-relaxed font-bold">選擇您的證券帳戶，日期區間可設定為 **短天數**</p>
+                </div>
+                <div class="flex items-start gap-4">
+                  <div
+                    class="w-6 h-6 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0 text-indigo-600 font-mono text-[10px] font-black">
+                    04</div>
+                  <p class="text-[13px] text-gray-600 leading-relaxed font-bold">至右上方 **「通知中心」** 點擊明細匯出通知</p>
+                </div>
+                <div class="flex items-start gap-4">
+                  <div
+                    class="w-6 h-6 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0 text-indigo-600 font-mono text-[10px] font-black">
+                    05</div>
+                  <p class="text-[13px] text-gray-600 leading-relaxed font-bold">下載 **「庫存明細」** PDF 並上傳至本系統</p>
+                </div>
+              </div>
+
+              <div class="p-4 bg-amber-50/50 rounded-2xl border border-amber-100/50 space-y-2">
+                <div class="flex items-center gap-2 text-amber-600">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <span class="text-[10px] font-black uppercase tracking-widest">密碼提醒</span>
+                </div>
+                <p class="text-[11px] text-amber-700 font-bold">PDF 預設解碼密碼為您的 **身分證字號**。</p>
+              </div>
+
+              <div class="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50 space-y-2">
+                <div class="flex items-center gap-2 text-indigo-600">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span class="text-[10px] font-black uppercase tracking-widest">庫存管理</span>
+                </div>
+                <p class="text-[11px] text-indigo-700 font-bold leading-relaxed">建議先 **「全部清除」**
+                  舊有年度資料再匯入。系統會自動過濾重複項目，確保資料精確。</p>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Desktop Table -->
-          <div class="hidden sm:block overflow-hidden rounded-[2rem] border border-white/60 shadow-2xl bg-white/40 backdrop-blur-xl">
-            <table class="w-full text-left">
-              <thead>
-                <tr class="border-b border-gray-100 bg-gray-50/30">
-                  <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">代號</th>
-                  <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">公司名稱</th>
-                  <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest w-1/2">紀念品項目</th>
-                  <th class="px-8 py-6 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">操作</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100/50">
-                <tr v-for="item in inventoryItems" :key="item.id"
-                  class="hover:bg-indigo-50/20 transition-all group">
-                  <td class="px-8 py-6">
-                    <span class="text-xs font-black px-2.5 py-1.5 rounded-xl bg-indigo-50 text-indigo-600 font-mono tracking-tighter">
-                      {{ item.souvenir?.code }}
-                    </span>
-                  </td>
-                  <td class="px-8 py-6">
-                    <div class="text-sm font-black text-gray-900 group-hover:text-indigo-600 transition-colors">{{ item.souvenir?.name }}</div>
-                  </td>
-                  <td class="px-8 py-6">
-                    <div class="text-sm font-medium text-gray-700 leading-relaxed">{{ item.souvenir?.souvenir_item }}</div>
-                  </td>
-                  <td class="px-8 py-6 text-right">
-                    <div class="flex items-center justify-end gap-2">
-                       <button @click="deleteItem(item)"
-                        class="p-2.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                        title="移除此項">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+        <!-- Inventory List (Right) -->
+        <div class="lg:col-span-8 space-y-6">
+          <!-- Scraper Results (if any) -->
+          <div v-if="scraperResults.length > 0" class="glass-card overflow-hidden animate-fade-in-up">
+            <div class="px-8 py-5 bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-between">
+              <h3 class="text-white font-black text-sm uppercase tracking-widest flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                </svg>
+                抓取結果 ({{ scraperResults.length }})
+              </h3>
+              <div class="flex gap-2">
+                <button @click="addAllToInventory"
+                  class="px-3 py-1.5 bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-900/20">
+                  全部新增至庫存
+                </button>
+                <button @click="scraperResults = []"
+                  class="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">
+                  清除
+                </button>
+              </div>
+            </div>
+            <div class="max-h-[300px] overflow-auto custom-scrollbar">
+              <table v-if="scraperResults.length > 0" class="w-full">
+                <tbody class="divide-y divide-gray-100">
+                  <tr v-for="(item, idx) in scraperResults" :key="idx" class="hover:bg-indigo-50/30 transition-colors">
+                    <td class="px-8 py-4">
+                      <span class="text-[11px] font-bold px-2 py-1 rounded bg-indigo-50 text-indigo-600 font-mono">{{
+                        item.code }}</span>
+                    </td>
+                    <td class="px-8 py-4 text-sm font-bold text-gray-700">{{ item.name }}</td>
+                    <td class="px-8 py-4 text-right">
+                      <button @click="scraperResults.splice(idx, 1)"
+                        class="text-gray-400 hover:text-red-500 transition-colors">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Main Inventory Table -->
+          <div class="glass-card overflow-hidden animate-fade-in-up delay-300">
+            <div class="px-8 py-6 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-black text-gray-900 uppercase tracking-widest">歸戶庫存清單</h3>
+                <p class="text-xs text-gray-400 mt-1">目前共歸戶 {{ inventoryItems.length }} 筆持有證券</p>
+              </div>
+            </div>
+
+            <!-- Loading State -->
+            <div v-if="loading" class="py-20 flex flex-col items-center gap-4">
+              <div class="w-12 h-12 border-4 border-indigo-100 border-t-indigo-500 rounded-full animate-spin"></div>
+              <p class="text-xs font-black text-indigo-300 uppercase tracking-widest">Loading Catalog...</p>
+            </div>
+
+            <!-- List Content -->
+            <div v-else-if="inventoryItems.length > 0" class="overflow-x-auto">
+              <table class="w-full">
+                <thead>
+                  <tr class="bg-gray-50/50 border-b border-gray-100">
+                    <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-left">證券代號
+                    </th>
+                    <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-left">公司名稱
+                    </th>
+                    <th class="px-8 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">操作
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50/50">
+                  <tr v-for="item in inventoryItems" :key="item.id" class="group hover:bg-indigo-50/20 transition-all">
+                    <td class="px-8 py-6">
+                      <span
+                        class="text-xs font-black px-3 py-1.5 rounded-xl bg-white border border-gray-100 text-indigo-600 font-mono shadow-sm group-hover:border-indigo-200 transition-colors">
+                        {{ item.souvenir?.code || '-' }}
+                      </span>
+                    </td>
+                    <td class="px-8 py-6">
+                      <div class="text-sm font-black text-gray-700 group-hover:text-indigo-900 transition-colors">
+                        {{ item.souvenir?.name || '未知公司' }}
+                      </div>
+                    </td>
+                    <td class="px-8 py-6 text-right">
+                      <div class="flex items-center justify-end gap-2">
+                        <FavoriteButton v-if="!isInCollections(item.souvenir_id)" :gift="item.souvenir"
+                          :is-active="false" @toggle="addToYearlyCollection(item.souvenir_id)" />
+                        <button @click="deleteItem(item)"
+                          class="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                          title="移除持股">
+                          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Empty State -->
+            <div v-else class="py-32 flex flex-col items-center justify-center text-center px-8">
+              <div
+                class="w-20 h-20 bg-gray-50 rounded-[2.5rem] flex items-center justify-center mb-8 border border-gray-100 shadow-inner">
+                <svg class="w-8 h-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              </div>
+              <h4 class="text-lg font-bold text-gray-900 mb-2">庫存清單尚無資料</h4>
+              <p class="text-sm text-gray-400 max-w-xs mb-8">您可以手動新增或是從左側 PDF 檔案抓取您的持股資料。</p>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Import Modal -->
+    <!-- Modals -->
     <InventoryImportModal :is-open="isImportModalOpen" @close="closeImportModal" />
-
-    <!-- Edit Modal (Simple Note/Quantity) -->
-    <!-- Could reuse ImportModal or create a small specific one. For MVP, reusing logic or separate small edit is fine. -->
-
   </div>
 </template>
 
 <script setup>
+import FavoriteButton from '@/components/FavoriteButton.vue'
 import InventoryImportModal from '@/components/InventoryImportModal.vue'
 import Navbar from '@/components/Navbar.vue'
+import { useAuth } from '@/composables/useAuth'
 import { useCollection } from '@/composables/useCollection'
 import { useDialog } from '@/composables/useDialog'
+import { useGifts } from '@/composables/useGifts'
+import { usePDFScraper } from '@/composables/usePDFScraper'
 import { useToast } from '@/composables/useToast'
-import { computed, onMounted, ref } from 'vue'
+import { supabase } from '@/lib/supabase'
+import { onMounted, ref, watch } from 'vue'
 
-const { collection, loading, fetchAllInventory, removeFromCollection, clearAllCollections } = useCollection()
+// Composables
+const { collection, loading, fetchAllInventory, removeFromCollection, clearAllCollections, addToCollection } = useCollection()
+const { loading: scraperLoading, results: scraperResults, error: scraperError, processPDF } = usePDFScraper()
+const { myCollections, fetchMyCollections, addToCollection: addToGiftCollection } = useGifts()
 const { confirm } = useDialog()
 const { showToast } = useToast()
+const { user } = useAuth()
 
+// Watch for user auth state to fetch data
+watch(user, async (val) => {
+  if (val) {
+    console.log('[DEBUG] User available, fetching inventory...')
+    await fetchAllInventory()
+    await fetchMyCollections()
+  }
+}, { immediate: true })
+
+// State
 const isImportModalOpen = ref(false)
+const selectedFile = ref(null)
+const isDragging = ref(false)
+const pdfPassword = ref('')
 
-// Alias for clarity
+// Aliases
 const inventoryItems = collection
 
-const uniqueCompanies = computed(() => {
-  const codes = new Set(inventoryItems.value.map(i => i.souvenir?.code).filter(Boolean))
-  return codes.size
-})
+// Helper - Consolidation (歸戶)
+const isInCollections = (souvenirId) => {
+  return myCollections.value.some(c => c.souvenir_id === souvenirId)
+}
 
-const uniqueYears = computed(() => {
-  const years = new Set(inventoryItems.value.map(i => i.souvenir?.meeting_date ? new Date(i.souvenir.meeting_date).getFullYear() : '未知'))
-  return years.size
-})
-
-// Group by Year
-const groupedInventory = computed(() => {
-  const groups = {}
-  inventoryItems.value.forEach(item => {
-    const year = item.souvenir?.meeting_date
-      ? new Date(item.souvenir.meeting_date).getFullYear()
-      : '未知年份'
-
-    if (!groups[year]) groups[year] = []
-    groups[year].push(item)
-  })
-
-  // Sort years descending
-  return Object.keys(groups)
-    .sort((a, b) => b - a)
-    .reduce((obj, key) => {
-      obj[key] = groups[key]
-      return obj
-    }, {})
-})
-
-const closeImportModal = async (shouldRefresh) => {
-  isImportModalOpen.value = false
-  if (shouldRefresh) {
-    await fetchAllInventory()
+const addToYearlyCollection = async (souvenirId) => {
+  const { error } = await addToGiftCollection(souvenirId)
+  if (!error) {
+    showToast('已加入領取清單', 'success')
+  } else {
+    showToast('操作失敗', 'error')
   }
 }
 
+// Methods - Scraper
+const handleFileChange = (e) => {
+  const file = e.target.files[0]
+  if (file && file.type === 'application/pdf') {
+    selectedFile.value = file
+    pdfPassword.value = ''
+  } else {
+    showToast('請上傳有效的 PDF 檔案', 'error')
+  }
+}
+
+const handleDrop = (e) => {
+  isDragging.value = false
+  const file = e.dataTransfer.files[0]
+  if (file && file.type === 'application/pdf') {
+    selectedFile.value = file
+    pdfPassword.value = ''
+  } else {
+    showToast('請上傳有效的 PDF 檔案', 'error')
+  }
+}
+
+const runScraper = async () => {
+  if (!selectedFile.value) return
+
+  try {
+    const data = await processPDF(selectedFile.value, pdfPassword.value)
+
+    // Log to Supabase
+    await logExtraction(selectedFile.value.name, data.length, 'success')
+
+    if (data.length === 0) {
+      showToast('解析完成，但未發現證券資料', 'info')
+    } else {
+      showToast(`成功抓取 ${data.length} 筆資料`, 'success')
+    }
+  } catch (err) {
+    if (err.name === 'PasswordException') {
+      showToast('此檔案需要密碼', 'warning')
+    } else {
+      await logExtraction(selectedFile.value.name, 0, 'failed')
+      showToast(err.message || '抓取失敗', 'error')
+    }
+  }
+}
+
+const logExtraction = async (filename, count, status) => {
+  try {
+    const { error: dbError } = await supabase
+      .from('scraper_logs')
+      .insert({
+        items_scraped: count,
+        status: status === 'failed' ? 'failed' : 'success',
+        error_message: status === 'failed' ? `解析失敗: ${filename}` : `PDF 抓取檔案: ${filename}`,
+        completed_at: new Date().toISOString()
+      })
+    if (dbError) console.error('Logging failed:', dbError)
+  } catch (e) {
+    console.error('Logging failed:', e)
+  }
+}
+
+const addAllToInventory = async () => {
+  if (scraperResults.value.length === 0) return
+
+  const confirmed = await confirm(`確定要將這 ${scraperResults.value.length} 筆資料新增至庫存嗎？`, '批次新增庫存')
+  if (!confirmed) return
+
+  loading.value = true
+  let successCount = 0
+  let skipCount = 0
+
+  // Get existing codes to check for duplicates
+  const existingCodes = new Set(inventoryItems.value.map(i => i.souvenir?.code).filter(Boolean))
+
+  try {
+    for (const item of scraperResults.value) {
+      // 0. Skip if already in inventory
+      if (existingCodes.has(item.code)) {
+        skipCount++
+        continue
+      }
+
+      // 1. Try to find souvenir by code
+      const { data: souvenir, error: findError } = await supabase
+        .from('souvenirs')
+        .select('id')
+        .eq('code', item.code)
+        .order('meeting_date', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      let souvenirId
+      if (souvenir) {
+        souvenirId = souvenir.id
+      } else {
+        // Create placeholder souvenir if not found (needed to link collection)
+        const { data: newSouvenir, error: insertError } = await supabase
+          .from('souvenirs')
+          .insert({
+            code: item.code,
+            name: item.name,
+            doc_id: `${item.code}_${new Date().getFullYear()}_auto`,
+            meeting_date: `${new Date().getFullYear()}-06-01` // Default placeholder
+          })
+          .select()
+          .single()
+
+        if (insertError) {
+          console.warn(`Failed to create souvenir for ${item.code}:`, insertError)
+          skipCount++
+          continue
+        }
+        souvenirId = newSouvenir.id
+      }
+
+      // 2. Add to collection
+      const { success } = await addToCollection(souvenirId)
+      if (success) successCount++
+      else skipCount++
+    }
+
+    showToast(`成功新增 ${successCount} 筆，${skipCount} 筆失敗`, successCount > 0 ? 'success' : 'error')
+    if (successCount > 0) scraperResults.value = []
+    await fetchAllInventory()
+  } catch (err) {
+    console.error('Batch add failed:', err)
+    showToast('批次新增失敗', 'error')
+  } finally {
+    loading.value = false
+  }
+}
+
+// Methods - Inventory
+const closeImportModal = async (shouldRefresh) => {
+  isImportModalOpen.value = false
+  if (shouldRefresh) await fetchAllInventory()
+}
+
 const deleteItem = async (item) => {
-  if (await confirm(`確定要刪除「${item.souvenir?.name}」嗎？`, '刪除庫存')) {
+  if (!item) return
+  if (await confirm(`確定要移除「${item.souvenir?.name} (${item.souvenir?.code})」嗎？`, '移除庫存')) {
     const { success, error } = await removeFromCollection(item.id)
     if (success) {
-      showToast('已刪除', 'success')
+      showToast('已移除', 'success')
+      await fetchAllInventory()
     } else {
       showToast(error, 'error')
     }
   }
 }
 
-const editItem = (item) => {
-  // For now, maybe just open import modal pre-filled? or separate edit.
-  // MVP: Just show toast "Editing coming soon" or allow delete/re-add
-  showToast('編輯功能開發中，請先刪除後重新加入', 'info')
-}
-
 const handleClearAll = async () => {
-  const confirmed = await confirm(
-    `確定要清空所有庫存嗎？此操作無法復原。\n目前共有 ${inventoryItems.value.length} 筆資料。`,
-    '確認清空庫存'
-  )
-  
-  if (!confirmed) return
-  
-  const { success, error } = await clearAllCollections()
-  if (success) {
-    showToast('已清空所有庫存', 'success')
-  } else {
-    showToast(error || '清空失敗', 'error')
+  if (await confirm(`確定要清空所有庫存嗎？此操作無法復原。`, '清空庫存')) {
+    const { success, error } = await clearAllCollections()
+    if (success) {
+      showToast('已清空', 'success')
+      await fetchAllInventory()
+    } else {
+      showToast(error || '清空失敗', 'error')
+    }
   }
 }
 
-onMounted(() => {
-  fetchAllInventory()
+onMounted(async () => {
+  if (user.value) {
+    await fetchAllInventory()
+    await fetchMyCollections()
+  }
 })
 </script>
 
 <style scoped>
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 2.5rem;
+  box-shadow: 0 10px 40px -10px rgba(31, 38, 135, 0.08);
+}
+
+.glass-button {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.2);
+}
+
 .animate-blob {
-  animation: blob 7s infinite;
+  animation: blob 8s infinite cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .animation-delay-2000 {
   animation-delay: 2s;
 }
 
-.animation-delay-4000 {
-  animation-delay: 4s;
-}
-
 @keyframes blob {
-  0% {
+
+  0%,
+  100% {
     transform: translate(0px, 0px) scale(1);
   }
 
   33% {
-    transform: translate(30px, -50px) scale(1.1);
+    transform: translate(40px, -60px) scale(1.1);
   }
 
   66% {
-    transform: translate(-20px, 20px) scale(0.9);
+    transform: translate(-30px, 30px) scale(0.9);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-300 {
+  animation-delay: 0.3s;
+}
+
+.scale-102 {
+  transform: scale(1.02);
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scale(1.02);
   }
 
   100% {
-    transform: translate(0px, 0px) scale(1);
+    transform: scale(1);
+    opacity: 1;
   }
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 </style>

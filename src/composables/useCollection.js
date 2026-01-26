@@ -23,7 +23,7 @@ export function useCollection() {
           souvenir: souvenirs (*)
         `)
                 .eq('user_id', user.value.id)
-                .eq('status', 'collected') // Specifically for inventory (owned items)
+                .eq('status', 'holding') // Specifically for inventory (owned items)
                 .order('created_at', { ascending: false })
 
             if (fetchError) throw fetchError
@@ -78,8 +78,8 @@ export function useCollection() {
                     souvenir_id: souvenirId,
                     quantity,
                     note,
-                    status: 'collected'
-                }, { onConflict: 'user_id, souvenir_id' })
+                    status: 'holding'
+                }, { onConflict: 'user_id,souvenir_id,status' })
 
             if (insertError) throw insertError
 
@@ -118,6 +118,7 @@ export function useCollection() {
                 .from('user_collections')
                 .delete()
                 .eq('user_id', user.value.id)
+                .eq('status', 'holding') // ONLY clear inventory holdings
 
             if (deleteError) throw deleteError
 

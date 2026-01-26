@@ -102,6 +102,18 @@ const routes = [
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
+    path: '/admin/souvenirs',
+    name: 'SouvenirManagement',
+    component: () => import('@/views/admin/SouvenirManagementView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/import/souvenirs',
+    name: 'SouvenirBulkImport',
+    component: () => import('@/views/admin/SouvenirImportView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     redirect: '/gifts'

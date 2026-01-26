@@ -125,6 +125,23 @@
             <p class="text-sm text-gray-600">分析全站紀念品收藏熱門程度與趨勢。</p>
           </router-link>
 
+          <!-- Souvenir Data Management (NEW) -->
+          <router-link to="/admin/souvenirs"
+            class="group bg-gradient-to-br from-cyan-50 to-white p-6 rounded-xl border border-cyan-100 hover:shadow-lg hover:border-cyan-300 transition-all duration-300">
+            <div class="flex items-center justify-between mb-4">
+              <div
+                class="p-3 bg-cyan-100 text-cyan-600 rounded-lg group-hover:bg-cyan-600 group-hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </div>
+              <span class="text-2xl font-bold text-gray-400 group-hover:text-cyan-200 transition-colors">07</span>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-cyan-700">紀念品資料</h3>
+            <p class="text-sm text-gray-600">手動新增、編輯與管理各年度紀念品資料。</p>
+          </router-link>
+
         </div>
       </div>
     </div>
@@ -132,5 +149,5 @@
 </template>
 
 <script setup>
-import Navbar from '@/components/Navbar.vue'
+import Navbar from '@/components/Navbar.vue';
 </script>

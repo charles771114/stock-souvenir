@@ -197,11 +197,17 @@
         <div v-else>
           <!-- Grid View -->
           <GiftGridView v-if="viewMode === 'grid'" :items="paginatedMappedGifts" :isExpired="isExpired"
+            :disabled="!isCurrentYear"
             @toggle-collection="handleToggleCollection" />
 
           <!-- List View -->
           <TableView v-else :items="paginatedMappedGifts" :isExpired="isExpired"
+            :disabled="!isCurrentYear"
             @toggle-collection="handleToggleCollection" />
+
+          <div v-if="!isCurrentYear" class="mt-8 p-4 bg-amber-50 rounded-2xl border border-amber-100 text-center">
+            <p class="text-xs font-bold text-amber-700">⚠️ 非當年度資料僅供參考，無法執行收藏或領取操作。</p>
+          </div>
 
           <!-- Pagination (Pro Max Focused) -->
           <div v-if="totalPages > 1" class="mt-16 flex flex-col items-center justify-center gap-6">
@@ -262,7 +268,7 @@ import { useToast } from '@/composables/useToast'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-const { gifts, myCollections, loading, error, fetchAllGifts, fetchMyCollections, fetchUserInventoryIds, addToCollection, removeFromCollection, getCollection } = useGifts()
+const { gifts, myCollections, loading, error, fetchAllGifts, fetchMyCollections, fetchUserInventoryIds, fetchPreviousYearSouvenirs, enrichWithPreviousYear, addToCollection, removeFromCollection, getCollection } = useGifts()
 const { categories, fetchCategories, matchCategory } = useCategories() // New composable usage
 const { showToast } = useToast()
 const { openAuthModal } = useAuthModal()
@@ -272,13 +278,16 @@ const router = useRouter()
 const viewMode = ref('list') // Changed from 'grid' to 'list'
 const currentView = ref('all') // 'all' | 'collection'
 const userInventoryIds = ref(new Set()) // Track user's inventory items
+const previousYearSouvenirs = ref(new Map()) // Track previous year souvenirs for reference
 
 // Filters
 const filters = ref({
   search: '',
-  year: '2025',
+  year: new Date().getFullYear().toString(),
   category: '超商商品卡',
 })
+
+const isCurrentYear = computed(() => filters.value.year === new Date().getFullYear().toString())
 
 // Color Helpers for Category Buttons
 const getCategoryActiveClasses = (color) => {
@@ -309,6 +318,13 @@ const getCategoryDotClass = (color) => {
   return map[color] || 'bg-gray-300'
 }
 
+// Helper to check if a souvenir string is a placeholder
+const isPlaceholder = (val) => {
+  if (!val) return true
+  const s = String(val).trim()
+  return s === '' || s === '尚未公布' || s.includes('再行公告') || s === '尚未公告'
+}
+
 // Data Filtering
 const filteredGifts = computed(() => {
   let result = gifts.value
@@ -334,15 +350,24 @@ const filteredGifts = computed(() => {
     )
   }
 
-  // 3. Filter by Category (moved to client-side logic due to dynamic matching)
-  // Note: useGifts API filter might be removed if we rely on matchCategory
+  // 3. Filter by Category
   if (filters.value.category) {
     result = result.filter(g => {
-      const match = matchCategory(g.souvenir_item)
-      // We need to compare specific category name
-      // Find the cat object
-      const cat = categories.value.find(c => c.id === match.id)
-      return cat && cat.name === filters.value.category
+      // Check current year match
+      const currentMatch = matchCategory(g.souvenir_item)
+      const currentCat = categories.value.find(c => c.id === currentMatch.id)
+      if (currentCat && currentCat.name === filters.value.category) return true
+
+      // If current year is placeholder, check previous year match
+      if (isPlaceholder(g.souvenir_item)) {
+        const prevSouvenir = previousYearSouvenirs.value.get(g.code)
+        if (prevSouvenir) {
+          const prevMatch = matchCategory(prevSouvenir)
+          const prevCat = categories.value.find(c => c.id === prevMatch.id)
+          return prevCat && prevCat.name === filters.value.category
+        }
+      }
+      return false
     })
   }
 
@@ -353,22 +378,30 @@ const filteredGifts = computed(() => {
 const mappedGifts = computed(() => {
   return filteredGifts.value.map(g => {
     // Dynamic Category Matching
-    const match = matchCategory(g.souvenir_item)
+    // If current is placeholder, try to match by previous year to give it a "likely" category
+    let souvenirToMatch = g.souvenir_item
+    const prevSouvenir = previousYearSouvenirs.value.get(g.code)
+    
+    if (isPlaceholder(souvenirToMatch) && prevSouvenir) {
+      souvenirToMatch = prevSouvenir
+    }
+
+    const match = matchCategory(souvenirToMatch)
     const categoryObj = categories.value.find(c => c.id === match.id)
 
     return {
+      ...g, // Spread first to ensure no properties are lost
       id: g.id,
-      code: g.company_code,
-      name: g.company_name,
+      code: g.code, 
+      name: g.name, 
       souvenir: g.souvenir_item,
-      // Use dynamic data
       category: categoryObj ? categoryObj.name : '其他',
       categoryColor: categoryObj ? categoryObj.color : 'gray',
       lastBuy: g.last_buy_date,
       meeting: g.meeting_date,
       isCollected: isInCollection(g.id),
-      isInInventory: userInventoryIds.value.has(g.id), // NEW: Pass inventory status
-      ...g
+      isInInventory: userInventoryIds.value.has(g.id),
+      previousYearSouvenir: isPlaceholder(g.souvenir_item) ? prevSouvenir : null
     }
   })
 })
@@ -477,12 +510,16 @@ const isExpired = (dateString) => {
 }
 
 // Watchers
-watch(filters, (newVal, oldVal) => {
+watch(filters, async (newVal, oldVal) => {
   // Only apply API filters if Year or Search changed
   // Category is client-side, so just reset pagination
   if (newVal.year !== oldVal.year || newVal.search !== oldVal.search) {
     // debounced handled separately for search input events
-    if (newVal.year !== oldVal.year) applyFilters()
+    if (newVal.year !== oldVal.year) {
+      applyFilters()
+      // Also fetch previous year data for reference
+      previousYearSouvenirs.value = await fetchPreviousYearSouvenirs(newVal.year)
+    }
   }
   reset()
 }, { deep: true })
@@ -501,6 +538,8 @@ onMounted(async () => {
   await fetchAllGifts({ year: filters.value.year })
   await fetchMyCollections()
   userInventoryIds.value = await fetchUserInventoryIds() // NEW: Load inventory state
+  // Fetch previous year souvenirs for reference
+  previousYearSouvenirs.value = await fetchPreviousYearSouvenirs(filters.value.year)
 })
 </script>
 

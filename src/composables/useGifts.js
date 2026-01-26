@@ -148,14 +148,10 @@ export function useGifts() {
           gift:souvenirs (*)
         `)
         .eq('user_id', userId)
+        .eq('status', 'collected') // ONLY get gift collections
         .order('created_at', { ascending: false })
 
       if (fetchError) throw fetchError
-
-      // Transform the data structure if necessary to match frontend expectations
-      // Since 'gift' object structure changed (e.g. name instead of company_name), 
-      // we might need frontend adjustments or map it here.
-      // For now, let's keep it raw but point to 'souvenirs' table.
 
       myCollections.value = data || []
       return { data, error: null }
@@ -183,12 +179,12 @@ export function useGifts() {
 
       const { data, error: insertError } = await supabase
         .from('user_collections')
-        .insert({
+        .upsert({
           user_id: user.id,
           souvenir_id: giftId,
           // collected_date: collectedDate, // Removed from new schema or handled via 'created_at' or 'status'
           status: 'collected'
-        })
+        }, { onConflict: 'user_id,souvenir_id,status' })
         .select()
         .single()
 
@@ -335,13 +331,88 @@ export function useGifts() {
         .from('user_collections')
         .select('souvenir_id')
         .eq('user_id', currentUser.value.id)
-        .eq('status', 'collected')
+        .eq('status', 'holding') // Now tracking inventory as 'holding'
 
       return new Set(data?.map(d => d.souvenir_id) || [])
     } catch (e) {
       console.error('取得庫存ID失敗:', e)
       return new Set()
     }
+  }
+
+  /**
+   * 取得上一年度紀念品資料（用於參考顯示）
+   * @param {number|string} currentYear - 當前年度
+   * @returns {Promise<Map<string, object>>} - 以股票代號為 key 的 Map
+   */
+  const fetchPreviousYearSouvenirs = async (currentYear) => {
+    // Guard: ensure year is valid
+    if (!currentYear) {
+      return new Map()
+    }
+    const previousYear = parseInt(currentYear, 10) - 1
+    if (isNaN(previousYear)) {
+      console.warn('Invalid year for previous year lookup:', currentYear)
+      return new Map()
+    }
+    const cacheKey = `gifts:${previousYear}`
+    
+    // 嘗試從快取取得
+    const cachedEntry = cache.getWithMetadata(cacheKey)
+    if (cachedEntry?.data) {
+      const souvenirMap = new Map()
+      cachedEntry.data.forEach(item => {
+        if (item.souvenir_item) {
+          souvenirMap.set(item.code, item.souvenir_item)
+        }
+      })
+      return souvenirMap
+    }
+
+    // 沒有快取，從 API 取得
+    try {
+      const startDate = `${previousYear}-01-01`
+      const endDate = `${previousYear}-12-31`
+      
+      const { data } = await supabase
+        .from('souvenirs')
+        .select('code, souvenir_item')
+        .gte('meeting_date', startDate)
+        .lte('meeting_date', endDate)
+
+      const souvenirMap = new Map()
+      data?.forEach(item => {
+        if (item.souvenir_item) {
+          souvenirMap.set(item.code, item.souvenir_item)
+        }
+      })
+      return souvenirMap
+    } catch (e) {
+      console.error('取得上年度資料失敗:', e)
+      return new Map()
+    }
+  }
+
+  /**
+   * 為禮品列表加入上年度參考資料
+   * @param {Array} currentGifts - 當前年度禮品列表
+   * @param {Map} previousYearMap - 上年度資料 Map
+   * @returns {Array} - 加入 previousYearSouvenir 欄位的列表
+   */
+  const enrichWithPreviousYear = (currentGifts, previousYearMap) => {
+    return currentGifts.map(gift => {
+      const needsReference = !gift.souvenir_item || 
+        gift.souvenir_item === '尚未公布' || 
+        gift.souvenir_item.trim() === ''
+      
+      if (needsReference && previousYearMap.has(gift.code)) {
+        return {
+          ...gift,
+          previousYearSouvenir: previousYearMap.get(gift.code)
+        }
+      }
+      return gift
+    })
   }
 
   return {
@@ -352,6 +423,8 @@ export function useGifts() {
     fetchAllGifts,
     fetchMyCollections,
     fetchUserInventoryIds,
+    fetchPreviousYearSouvenirs,
+    enrichWithPreviousYear,
     addToCollection,
     removeFromCollection,
     updateCollectionNote,

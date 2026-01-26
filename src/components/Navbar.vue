@@ -30,7 +30,7 @@
             <router-link to="/my-collections"
               class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors"
               :class="isActive('/my-collections') ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:text-indigo-600 hover:bg-gray-50'">
-              我的收藏
+              領取清單
             </router-link>
 
             <router-link to="/inventory"
@@ -122,36 +122,52 @@
       </div>
     </div>
 
-    <!-- Mobile Menu (Optional) -->
-    <div v-if="showMobileMenu" class="sm:hidden border-t border-gray-200">
-      <div class="pt-2 pb-3 space-y-1">
-        <router-link to="/gifts" class="block px-4 py-2 text-base font-medium"
-          :class="isActive('/gifts') ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:bg-gray-50'">
-          紀念品目錄
-        </router-link>
-        <router-link to="/my-collections" class="block px-4 py-2 text-base font-medium"
-          :class="isActive('/my-collections') ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:bg-gray-50'">
-          我的收藏
-        </router-link>
-        <router-link to="/inventory" class="block px-4 py-2 text-base font-medium"
-          :class="isActive('/inventory') ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:bg-gray-50'">
-          庫存管理
-        </router-link>
+    <!-- Mobile Menu with Slide Animation -->
+    <Transition
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 -translate-y-2 max-h-0"
+      enter-to-class="opacity-100 translate-y-0 max-h-96"
+      leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="opacity-100 translate-y-0 max-h-96"
+      leave-to-class="opacity-0 -translate-y-2 max-h-0"
+    >
+      <div v-if="showMobileMenu" class="sm:hidden border-t border-gray-200/50 bg-white/95 backdrop-blur-lg overflow-hidden">
+        <div class="pt-2 pb-3 space-y-1">
+          <router-link to="/gifts" 
+            class="block px-4 py-2.5 text-base font-medium transition-all duration-200 animate-slide-in"
+            style="animation-delay: 0.05s"
+            :class="isActive('/gifts') ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600'">
+            紀念品目錄
+          </router-link>
+          <router-link to="/my-collections" 
+            class="block px-4 py-2.5 text-base font-medium transition-all duration-200 animate-slide-in"
+            style="animation-delay: 0.1s"
+            :class="isActive('/my-collections') ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600'">
+            領取清單
+          </router-link>
+          <router-link to="/inventory" 
+            class="block px-4 py-2.5 text-base font-medium transition-all duration-200 animate-slide-in"
+            style="animation-delay: 0.15s"
+            :class="isActive('/inventory') ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600'">
+            庫存管理
+          </router-link>
 
-        <!-- Mobile Admin Links -->
-        <template v-if="isAdmin">
-          <div class="border-t border-gray-100 my-2 pt-2">
-            <div class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-              後台管理
+          <!-- Mobile Admin Links -->
+          <template v-if="isAdmin">
+            <div class="border-t border-gray-100 my-2 pt-2 animate-slide-in" style="animation-delay: 0.2s">
+              <div class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                後台管理
+              </div>
+              <router-link to="/admin/panel" 
+                class="block px-4 py-2.5 text-base font-medium transition-all duration-200"
+                :class="isActive('/admin') ? 'text-purple-600 bg-purple-50' : 'text-gray-700 hover:bg-gray-50 hover:text-purple-600'">
+                主控台
+              </router-link>
             </div>
-            <router-link to="/admin/panel" class="block px-4 py-2 text-base font-medium"
-              :class="isActive('/admin') ? 'text-purple-600 bg-purple-50' : 'text-gray-700 hover:bg-gray-50'">
-              主控台
-            </router-link>
-          </div>
-        </template>
+          </template>
+        </div>
       </div>
-    </div>
+    </Transition>
     <!-- Profile Edit Modal -->
     <UserProfileModal :is-open="isProfileModalOpen" @close="isProfileModalOpen = false" />
   </nav>
@@ -205,3 +221,20 @@ const handleLogout = async () => {
   }
 }
 </script>
+
+<style scoped>
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out both;
+}
+</style>

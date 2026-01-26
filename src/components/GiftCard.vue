@@ -32,7 +32,9 @@
 
         <!-- Favorite Button (Hidden for inventory items) -->
         <button v-if="!gift.isInInventory" @click.stop="$emit('toggle-collection', gift)"
-          class="relative p-2 rounded-full transition-colors hover:bg-gray-50 focus:outline-none group/btn">
+          :disabled="disabled"
+          class="relative p-2 rounded-full transition-colors hover:bg-gray-50 focus:outline-none group/btn disabled:opacity-30 disabled:grayscale disabled:pointer-events-none"
+        >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transition-all duration-300"
             :class="gift.isCollected ? 'text-rose-500 fill-current transform scale-110' : 'text-gray-300 hover:text-rose-400 group-hover/btn:scale-110'"
             viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -50,7 +52,17 @@
       <!-- Souvenir Name (Main Focus) -->
       <div class="pl-2 mb-4 flex-1">
         <p class="text-sm text-gray-600 font-medium line-clamp-2 leading-relaxed" :title="gift.souvenir">
-          {{ gift.souvenir }}
+          {{ gift.souvenir || '尚未公布' }}
+        </p>
+        <!-- Previous Year Reference -->
+        <p v-if="gift.previousYearSouvenir" 
+          class="text-xs text-gray-400 italic mt-1 flex items-center gap-1"
+          :title="`去年紀念品：${gift.previousYearSouvenir}`">
+          <svg class="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="truncate">去年：{{ gift.previousYearSouvenir }}</span>
         </p>
       </div>
 
@@ -108,6 +120,10 @@ const props = defineProps({
   isExpired: {
     type: Function,
     default: () => false
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   }
 })
 

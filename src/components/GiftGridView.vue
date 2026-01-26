@@ -9,6 +9,7 @@
         <GiftCard 
           :gift="item" 
           :isExpired="isExpired"
+          :disabled="disabled"
           @toggle-collection="$emit('toggle-collection', item)"
         />
       </div>
@@ -17,7 +18,7 @@
 </template>
 
 <script setup>
-import GiftCard from './GiftCard.vue'
+import GiftCard from './GiftCard.vue';
 
 defineProps({
   items: {
@@ -27,6 +28,10 @@ defineProps({
   isExpired: {
     type: Function,
     required: true
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   }
 })
 
