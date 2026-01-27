@@ -324,7 +324,10 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import Navbar from '@/components/Navbar.vue'
 import { useAdmin } from '@/composables/useAdmin'
 import { useAuth } from '@/composables/useAuth'
+import { useToast } from '@/composables/useToast'
 import { computed, onMounted, ref } from 'vue'
+
+const { showToast } = useToast()
 
 const { users, adminEmails, loading, error, fetchAllUsers, addAdminEmail, removeAdminEmail, promoteToPrimary, toggleUserRole } = useAdmin()
 const { user } = useAuth()
@@ -375,8 +378,7 @@ const handleAddAdmin = async () => {
   
   if (!addError) {
     newAdminEmail.value = ''
-    // Modern toast notification would be better, but using alert for now
-    alert('✅ Admin 新增成功')
+    showToast('Admin 新增成功', 'success')
   }
 }
 
@@ -393,9 +395,9 @@ const toggleRole = async (targetUser) => {
   const { error: toggleError } = await toggleUserRole(targetUser.id, newRole)
   
   if (!toggleError) {
-    alert(`✅ 已成功${action}`)
+    showToast(`已成功${action}`, 'success')
   } else {
-    alert(`❌ 操作失敗: ${toggleError.message}`)
+    showToast(`操作失敗: ${toggleError.message}`, 'error')
   }
 }
 
@@ -405,9 +407,9 @@ const confirmRemove = async (email) => {
   const { error: removeError } = await removeAdminEmail(email)
   
   if (!removeError) {
-    alert('✅ Admin 移除成功')
+    showToast('Admin 移除成功', 'success')
   } else {
-    alert(`❌ ${removeError.message}`)
+    showToast(removeError.message, 'error')
   }
 }
 
@@ -417,9 +419,9 @@ const confirmPromote = async (email) => {
   const { error: promoteError } = await promoteToPrimary(email)
   
   if (!promoteError) {
-    alert('✅ 已成功設為主管理員')
+    showToast('已成功設為主管理員', 'success')
   } else {
-    alert(`❌ ${promoteError.message}`)
+    showToast(promoteError.message, 'error')
   }
 }
 

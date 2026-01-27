@@ -13,14 +13,28 @@ export function useGifts() {
   const cache = useLocalStorageCache()
 
   /**
-   * 取得紀念品列表（支援篩選）
-   * @param {Object} filters - 篩選條件
-   * @param {number} filters.year - 年份
-   * @param {string} filters.companyCode - 公司代號
-   * @param {string} filters.companyName - 公司名稱（模糊搜尋）
-   * @param {string} filters.giftName - 紀念品名稱（模糊搜尋）
-   * @param {string} filters.category - 分類
+   * 取得指定年度紀念品的指紋（最後更新時間）
    */
+  const getSouvenirFingerprint = async (year) => {
+    try {
+      const startDate = `${year}-01-01`
+      const endDate = `${year}-12-31`
+      const { data } = await supabase
+        .from('souvenirs')
+        .select('updated_at')
+        .gte('meeting_date', startDate)
+        .lte('meeting_date', endDate)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      
+      return data?.updated_at || null
+    } catch (e) {
+      console.warn('Get fingerprint failed:', e)
+      return null
+    }
+  }
+
   const fetchAllGifts = async (filters = {}) => {
     loading.value = true
     error.value = null
@@ -43,8 +57,9 @@ export function useGifts() {
             return { data: cachedEntry.data, error: null, fromCache: true }
           }
 
-          // 當年度：檢查是否為今天的快取
-          if (cachedEntry.date === today) {
+          // 當年度：指紋檢查
+          const fingerprint = await getSouvenirFingerprint(requestYear)
+          if (fingerprint && cachedEntry.fingerprint === fingerprint) {
             gifts.value = cachedEntry.data
             loading.value = false
             return { data: cachedEntry.data, error: null, fromCache: true }
@@ -94,9 +109,9 @@ export function useGifts() {
           year: parseInt(requestYear, 10)
         }
 
-        // 當年度加入日期標記
+        // 當年度加入指紋標記
         if (requestYear === currentYear.toString()) {
-          metadata.date = today
+          metadata.fingerprint = await getSouvenirFingerprint(requestYear)
         }
 
         cache.set(cacheKey, data, metadata)
@@ -126,8 +141,9 @@ export function useGifts() {
 
   /**
    * 取得我的收藏
+   * @param {string|number} year - 指定年度（選填）
    */
-  const fetchMyCollections = async () => {
+  const fetchMyCollections = async (year = null) => {
     const { user: currentUser } = useAuth()
     
     loading.value = true
@@ -140,8 +156,33 @@ export function useGifts() {
       }
       
       const userId = currentUser.value.id
+      const currentYear = new Date().getFullYear().toString()
+      const requestYear = year?.toString()
 
-      const { data, error: fetchError } = await supabase
+      // 1. 檢查快取
+      if (requestYear) {
+        const cacheKey = `collections:${userId}:${requestYear}`
+        const cachedEntry = cache.getWithMetadata(cacheKey)
+        if (cachedEntry) {
+          // 過去年度：永久快取
+          if (requestYear !== currentYear) {
+            myCollections.value = cachedEntry.data
+            loading.value = false
+            return { data: cachedEntry.data, error: null, fromCache: true }
+          }
+
+          // 當年度：指紋檢查（確保禮品資訊更新能即時反映）
+          const fingerprint = await getSouvenirFingerprint(requestYear)
+          if (fingerprint && cachedEntry.fingerprint === fingerprint) {
+            myCollections.value = cachedEntry.data
+            loading.value = false
+            return { data: cachedEntry.data, error: null, fromCache: true }
+          }
+        }
+      }
+
+      // 2. 呼叫 API
+      let query = supabase
         .from('user_collections')
         .select(`
           *,
@@ -149,12 +190,39 @@ export function useGifts() {
         `)
         .eq('user_id', userId)
         .eq('status', 'collected') // ONLY get gift collections
+
+      // 套用年份篩選（如果指定）
+      if (requestYear) {
+        const startDate = `${requestYear}-01-01`
+        const endDate = `${requestYear}-12-31`
+        // 篩選關聯表 souvenirs 的 meeting_date
+        query = query.gte('gift.meeting_date', startDate).lte('gift.meeting_date', endDate)
+      }
+
+      const { data, error: fetchError } = await query
         .order('created_at', { ascending: false })
 
       if (fetchError) throw fetchError
 
-      myCollections.value = data || []
-      return { data, error: null }
+      // 因為有些資料可能因為 inner join 或 outer join 邏輯需要過濾 null gift (如果 API 沒濾掉)
+      const filteredData = (data || []).filter(item => item.gift)
+
+      myCollections.value = filteredData
+
+      // 3. 儲存快取
+      if (requestYear && filteredData.length > 0) {
+        const cacheKey = `collections:${userId}:${requestYear}`
+        const metadata = { year: requestYear }
+        
+        // 當年度加入指紋
+        if (requestYear === currentYear) {
+          metadata.fingerprint = await getSouvenirFingerprint(requestYear)
+        }
+        
+        cache.set(cacheKey, filteredData, metadata)
+      }
+
+      return { data: filteredData, error: null, fromCache: false }
     } catch (e) {
       console.error('取得收藏列表失敗:', e)
       error.value = e.message
@@ -191,6 +259,17 @@ export function useGifts() {
       if (insertError) throw insertError
 
       // 重新載入收藏列表
+      const { user: currentUser } = useAuth()
+      if (currentUser.value) {
+        const userId = currentUser.value.id
+        const cacheKeyPattern = `collections:${userId}:`
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i)
+          if (key && key.includes(cacheKeyPattern)) {
+            localStorage.removeItem(key)
+          }
+        }
+      }
       await fetchMyCollections()
 
       return { data, error: null }
@@ -219,7 +298,18 @@ export function useGifts() {
 
       if (deleteError) throw deleteError
 
-      // 重新載入收藏列表
+      // 重新載入收藏列表並清除快取
+      const { user: currentUser } = useAuth()
+      if (currentUser.value) {
+        const userId = currentUser.value.id
+        const cacheKeyPattern = `collections:${userId}:`
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i)
+          if (key && key.includes(cacheKeyPattern)) {
+            localStorage.removeItem(key)
+          }
+        }
+      }
       await fetchMyCollections()
 
       return { error: null }

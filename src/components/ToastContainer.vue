@@ -12,7 +12,7 @@
       <div
         v-for="toast in toasts"
         :key="toast.id"
-        class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+        class="pointer-events-auto w-full max-w-sm min-w-[300px] overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5"
       >
         <div class="p-4">
           <div class="flex items-start">
@@ -30,9 +30,9 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
               </svg>
             </div>
-            <div class="ml-3 w-0 flex-1 pt-0.5">
+            <div class="ml-3 flex-1 pt-0.5 min-w-0">
               <p class="text-sm font-medium text-gray-900">{{ getTitle(toast.type) }}</p>
-              <p class="mt-1 text-sm text-gray-500">{{ toast.message }}</p>
+              <p class="mt-1 text-sm text-gray-500 break-words">{{ toast.message }}</p>
             </div>
             <div class="ml-4 flex flex-shrink-0">
               <button type="button" @click="removeToast(toast.id)" class="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">

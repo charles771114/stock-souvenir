@@ -96,9 +96,7 @@ export interface Database {
           id: number
           user_id: string
           souvenir_id: number
-          status: 'pending' | 'collected' | 'missed' | null
-          quantity: number | null
-          note: string | null
+          status: 'pending' | 'collected' | 'missed' | 'holding' | null
           created_at: string | null
           updated_at: string | null
         }
@@ -106,9 +104,7 @@ export interface Database {
           id?: number
           user_id: string
           souvenir_id: number
-          status?: 'pending' | 'collected' | 'missed' | null
-          quantity?: number | null
-          note?: string | null
+          status?: 'pending' | 'collected' | 'missed' | 'holding' | null
           created_at?: string | null
           updated_at?: string | null
         }
@@ -116,9 +112,7 @@ export interface Database {
           id?: number
           user_id?: string
           souvenir_id?: number
-          status?: 'pending' | 'collected' | 'missed' | null
-          quantity?: number | null
-          note?: string | null
+          status?: 'pending' | 'collected' | 'missed' | 'holding' | null
           created_at?: string | null
           updated_at?: string | null
         }

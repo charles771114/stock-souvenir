@@ -102,6 +102,12 @@ const routes = [
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
+    path: '/admin/inventory',
+    name: 'AdminInventoryManagement',
+    component: () => import('@/views/admin/AdminInventoryManagementView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
     path: '/admin/souvenirs',
     name: 'SouvenirManagement',
     component: () => import('@/views/admin/SouvenirManagementView.vue'),

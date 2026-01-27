@@ -66,7 +66,7 @@
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
               <option value="">全部用戶</option>
               <option v-for="user in users" :key="user.id" :value="user.email">
-                {{ user.email }}
+                {{ user.full_name || user.email }}
               </option>
             </select>
           </div>
@@ -119,7 +119,7 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               <tr v-for="fav in favorites" :key="fav.collection_id" class="hover:bg-gray-50">
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ fav.email }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ fav.full_name || fav.email }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ fav.stock_code }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fav.company_name }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fav.souvenir_item }}</td>
@@ -128,6 +128,46 @@
               </tr>
             </tbody>
           </table>
+
+          <!-- Summary Section -->
+          <div class="bg-gradient-to-r from-indigo-50 to-purple-50 px-6 py-4 border-t border-gray-200">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                <span class="text-sm font-semibold text-gray-700">查詢結果統計</span>
+              </div>
+              <div class="flex items-center gap-6">
+                <div class="text-right">
+                  <p class="text-xs text-gray-500">總筆數</p>
+                  <p class="text-lg font-bold text-indigo-600">{{ favorites.length }}</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-xs text-gray-500">涉及用戶</p>
+                  <p class="text-lg font-bold text-purple-600">{{ uniqueUsersInResults }}</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-xs text-gray-500">不同公司</p>
+                  <p class="text-lg font-bold text-pink-600">{{ uniqueCompaniesInResults }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Souvenir Item Breakdown -->
+            <div v-if="souvenirSummary.length > 0" class="mt-4 pt-4 border-t border-indigo-100">
+              <p class="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-3">紀念品彙整</p>
+              <div class="flex flex-wrap gap-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                <div v-for="item in souvenirSummary" :key="item.name"
+                  class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-indigo-100 shadow-sm transition-all hover:border-indigo-200">
+                  <span class="text-sm text-gray-700 font-medium whitespace-nowrap">{{ item.name }}</span>
+                  <span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-xs font-black rounded-md whitespace-nowrap">
+                    {{ item.count }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -137,14 +177,17 @@
 <script setup>
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import Navbar from '@/components/Navbar.vue'
+import { useToast } from '@/composables/useToast'
 import { supabase } from '@/lib/supabase'
 import { computed, onMounted, ref, watch } from 'vue'
+
+const { showToast } = useToast()
 
 const favorites = ref([])
 const users = ref([])
 const loading = ref(false)
 const selectedUser = ref('')
-const selectedYear = ref('')
+const selectedYear = ref(new Date().getFullYear().toString())  // 預設為當前年度
 
 const stats = computed(() => {
   const totalCollections = favorites.value.length
@@ -163,10 +206,31 @@ const avgCollections = computed(() => {
     : '0'
 })
 
+// 查詢結果統計
+const uniqueUsersInResults = computed(() => {
+  return new Set(favorites.value.map(f => f.user_id)).size
+})
+
+const uniqueCompaniesInResults = computed(() => {
+  return new Set(favorites.value.map(f => f.stock_code)).size
+})
+
+const souvenirSummary = computed(() => {
+  const summary = {}
+  favorites.value.forEach(f => {
+    const item = f.souvenir_item || '未指定紀念品'
+    summary[item] = (summary[item] || 0) + 1
+  })
+  // 轉為陣列並排序（數量多到少）
+  return Object.entries(summary)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+})
+
 const fetchUsers = async () => {
   const { data } = await supabase
     .from('profiles')
-    .select('id, email')
+    .select('id, email, full_name')
     .order('email')
 
   if (data) users.value = data
@@ -175,47 +239,55 @@ const fetchUsers = async () => {
 const fetchFavorites = async () => {
   loading.value = true
 
-  let query = supabase
-    .from('user_collections')
-    .select(`
-      id,
-      user_id,
-      souvenir_id,
-      created_at,
-      profiles!inner(email),
-      souvenirs!inner(code, name, souvenir_item, meeting_date)
-    `)
-    .order('created_at', { ascending: false })
+  try {
+    let query = supabase
+      .from('user_collections')
+      .select(`
+        id,
+        user_id,
+        souvenir_id,
+        created_at,
+        profiles!inner(email, full_name),
+        souvenirs!inner(code, name, souvenir_item, meeting_date)
+      `)
+      .order('created_at', { ascending: false })
 
-  // Filter by user
-  if (selectedUser.value) {
-    query = query.eq('profiles.email', selectedUser.value)
-  }
-
-  const { data, error } = await query
-
-  if (!error && data) {
-    favorites.value = data.map(item => ({
-      collection_id: item.id,
-      user_id: item.user_id,
-      email: item.profiles.email,
-      stock_code: item.souvenirs.code,
-      company_name: item.souvenirs.name,
-      souvenir_item: item.souvenirs.souvenir_item,
-      meeting_date: item.souvenirs.meeting_date,
-      collected_at: item.created_at
-    }))
-
-    // Year filtering (client-side since it's based on meeting_date)
-    if (selectedYear.value) {
-      favorites.value = favorites.value.filter(f => {
-        const year = new Date(f.meeting_date).getFullYear().toString()
-        return year === selectedYear.value
-      })
+    // Filter by user
+    if (selectedUser.value) {
+      query = query.eq('profiles.email', selectedUser.value)
     }
-  }
 
-  loading.value = false
+    const { data, error } = await query
+
+    if (error) throw error
+
+    if (data) {
+      favorites.value = data.map(item => ({
+        collection_id: item.id,
+        user_id: item.user_id,
+        email: item.profiles.email,
+        full_name: item.profiles.full_name,
+        stock_code: item.souvenirs.code,
+        company_name: item.souvenirs.name,
+        souvenir_item: item.souvenirs.souvenir_item,
+        meeting_date: item.souvenirs.meeting_date,
+        collected_at: item.created_at
+      }))
+
+      // Year filtering (client-side since it's based on meeting_date)
+      if (selectedYear.value) {
+        favorites.value = favorites.value.filter(f => {
+          const year = new Date(f.meeting_date).getFullYear().toString()
+          return year === selectedYear.value
+        })
+      }
+    }
+  } catch (e) {
+    console.error('Fetch favorites error:', e)
+    showToast('載入資料失敗', 'error')
+  } finally {
+    loading.value = false
+  }
 }
 
 const formatDate = (dateString) => {
@@ -245,6 +317,7 @@ const exportCSV = () => {
   link.href = URL.createObjectURL(blob)
   link.download = `user_favorites_${new Date().toISOString().slice(0, 10)}.csv`
   link.click()
+  showToast('已匯出 CSV', 'success')
 }
 
 watch([selectedUser, selectedYear], () => {

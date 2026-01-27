@@ -26,7 +26,8 @@
 
                 <!-- Search Box -->
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">搜尋紀念品</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">搜尋股票或紀念品</label>
+                  <p class="text-xs text-gray-500 mb-2">輸入代號或名稱，系統會自動新增到庫存</p>
                   <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -36,7 +37,7 @@
                     </div>
                     <input v-model="searchQuery" @input="handleSearch" type="text"
                       class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
-                      placeholder="輸入公司名稱、股票代號或紀念品名稱..." />
+                      placeholder="輸入股票代號（如：2330）或公司名稱（如：台積電）..." />
                   </div>
                 </div>
 
@@ -53,6 +54,11 @@
 
                 <div v-else-if="searchResults.length > 0"
                   class="max-h-60 overflow-y-auto border border-gray-100 rounded-lg divide-y divide-gray-100 bg-gray-50">
+                  <!-- 現有紀念品標題 -->
+                  <div class="px-3 py-2 bg-indigo-50 border-b border-indigo-100">
+                    <span class="text-[10px] font-black text-indigo-600 uppercase tracking-widest">現有紀念品 ({{ searchResults.length }})</span>
+                  </div>
+                  
                   <div v-for="item in searchResults" :key="item.id" @click="selectItem(item)"
                     class="p-3 hover:bg-indigo-50 cursor-pointer transition-colors flex justify-between items-center group"
                     :class="{ 'bg-indigo-50 ring-1 ring-indigo-500': selectedItem?.id === item.id }">
@@ -76,8 +82,45 @@
                   </div>
                 </div>
 
-                <div v-else-if="searchQuery && !loadingSearch" class="text-center py-4 text-gray-500 text-sm">
-                  找不到相關紀念品
+                <!-- 股票搜尋結果 -->
+                <div v-if="stockResults.length > 0"
+                  class="mt-3 max-h-60 overflow-y-auto border border-gray-100 rounded-lg divide-y divide-gray-100 bg-gray-50">
+                  <!-- 上市櫃公司標題 -->
+                  <div class="px-3 py-2 bg-emerald-50 border-b border-emerald-100">
+                    <span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-1.5">
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      上市櫃公司 ({{ stockResults.length }})
+                    </span>
+                  </div>
+                  
+                  <div v-for="stock in stockResults" :key="stock.code" @click="selectItem(stock)"
+                    class="p-3 hover:bg-emerald-50 cursor-pointer transition-colors flex justify-between items-center group"
+                    :class="{ 'bg-emerald-50 ring-1 ring-emerald-500': selectedItem?.code === stock.code && selectedItem?.isFromAPI }">
+                    <div>
+                      <div class="font-bold text-gray-900 text-sm">
+                        <span
+                          class="inline-block px-1.5 py-0.5 rounded bg-white border border-emerald-200 text-xs text-emerald-600 mr-2">{{
+                            stock.code }}</span>
+                        {{ stock.name }}
+                      </div>
+                      <div class="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+                        <span class="text-emerald-600">{{ stock.industry }}</span>
+                        <span class="text-gray-300">•</span>
+                        <span class="text-[10px] text-amber-600 font-bold">將自動建立庫存記錄</span>
+                      </div>
+                    </div>
+                    <div v-if="selectedItem?.code === stock.code && selectedItem?.isFromAPI" class="text-emerald-600">
+                      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else-if="searchQuery && !loadingSearch && searchResults.length === 0 && stockResults.length === 0" class="text-center py-4 text-gray-500 text-sm">
+                  找不到相關股票或紀念品
                 </div>
 
                 <!-- Input Fields (Only show if item selected) -->
@@ -120,6 +163,7 @@
 
 <script setup>
 import { useCollection } from '@/composables/useCollection'
+import { useStockAPI } from '@/composables/useStockAPI'
 import { useToast } from '@/composables/useToast'
 import { supabase } from '@/lib/supabase'
 import { ref, watch } from 'vue'
@@ -131,10 +175,12 @@ const props = defineProps({
 const emit = defineEmits(['close'])
 
 const { addToCollection } = useCollection()
+const { searchStock } = useStockAPI()
 const { showToast } = useToast()
 
 const searchQuery = ref('')
 const searchResults = ref([])
+const stockResults = ref([])
 const loadingSearch = ref(false)
 const selectedItem = ref(null)
 const submitting = ref(false)
@@ -149,12 +195,14 @@ const handleSearch = () => {
   clearTimeout(debounceTimer)
   if (!searchQuery.value || searchQuery.value.length < 2) {
     searchResults.value = []
+    stockResults.value = []
     return
   }
 
   loadingSearch.value = true
   debounceTimer = setTimeout(async () => {
     try {
+      // 1. 優先搜尋現有紀念品
       const { data, error } = await supabase
         .from('souvenirs')
         .select('id, name, souvenir_item, code, meeting_date')
@@ -162,13 +210,81 @@ const handleSearch = () => {
         .limit(10)
 
       if (error) throw error
-      searchResults.value = data
+      
+      if (data && data.length > 0) {
+        // 找到現有紀念品，直接顯示
+        searchResults.value = data
+        stockResults.value = []
+      } else {
+        // 沒找到，才去查詢上市櫃 API
+        searchResults.value = []
+        const stocks = await searchStock(searchQuery.value)
+        
+        if (stocks.length === 1) {
+          // 只找到一筆，自動建立並新增
+          await autoAddStock(stocks[0])
+        } else if (stocks.length > 1) {
+          // 找到多筆，讓使用者選擇
+          stockResults.value = stocks.slice(0, 10)
+        } else {
+          // 完全找不到
+          stockResults.value = []
+        }
+      }
     } catch (e) {
       console.error(e)
+      searchResults.value = []
+      stockResults.value = []
     } finally {
       loadingSearch.value = false
     }
   }, 500)
+}
+
+// 自動新增股票到庫存
+const autoAddStock = async (stock) => {
+  submitting.value = true
+  try {
+    // 先檢查是否已經存在相同代號的記錄
+    const { data: existing } = await supabase
+      .from('souvenirs')
+      .select('id')
+      .eq('code', stock.code)
+      .maybeSingle()
+
+    let souvenirId
+    if (existing) {
+      souvenirId = existing.id
+    } else {
+      // 建立新的 souvenir 記錄
+      const { data: newSouvenir, error: insertError } = await supabase
+        .from('souvenirs')
+        .insert({
+          code: stock.code,
+          name: stock.name,
+          doc_id: `${stock.code}_manual_${Date.now()}`,
+          souvenir_item: null,
+          meeting_date: null,
+          status: 'active'
+        })
+        .select()
+        .single()
+
+      if (insertError) throw insertError
+      souvenirId = newSouvenir.id
+    }
+
+    // 加入庫存
+    const { success, error } = await addToCollection(souvenirId)
+    if (!success) throw new Error(error)
+
+    showToast(`已自動新增「${stock.name} (${stock.code})」到庫存`, 'success')
+    emit('close', true)
+  } catch (e) {
+    showToast(e.message || '自動新增失敗', 'error')
+  } finally {
+    submitting.value = false
+  }
 }
 
 const selectItem = (item) => {
@@ -181,6 +297,7 @@ const close = () => {
   setTimeout(() => {
     searchQuery.value = ''
     searchResults.value = []
+    stockResults.value = []
     selectedItem.value = null
     form.value = {}
   }, 300)
@@ -192,11 +309,42 @@ const handleSubmit = async () => {
   submitting.value = true
 
   try {
-    const { success, error } = await addToCollection(
-      selectedItem.value.id,
-      1, // Always default to 1
-      '' // No notes
-    )
+    let souvenirId = selectedItem.value.id
+
+    // 如果選擇的是從 API 來的股票（沒有 id），需要先建立 souvenir 記錄
+    if (selectedItem.value.isFromAPI) {
+      // 先檢查是否已經存在相同代號的記錄
+      const { data: existing } = await supabase
+        .from('souvenirs')
+        .select('id')
+        .eq('code', selectedItem.value.code)
+        .maybeSingle()
+
+      if (existing) {
+        // 如果已存在，直接使用
+        souvenirId = existing.id
+      } else {
+        // 建立新的 souvenir 記錄
+        const { data: newSouvenir, error: insertError } = await supabase
+          .from('souvenirs')
+          .insert({
+            code: selectedItem.value.code,
+            name: selectedItem.value.name,
+            doc_id: `${selectedItem.value.code}_manual_${Date.now()}`,
+            souvenir_item: null, // 標記為純股票記錄
+            meeting_date: null,
+            status: 'active'
+          })
+          .select()
+          .single()
+
+        if (insertError) throw insertError
+        souvenirId = newSouvenir.id
+      }
+    }
+
+    // 加入庫存（status = 'holding'）
+    const { success, error } = await addToCollection(souvenirId)
 
     if (!success) throw new Error(error)
 

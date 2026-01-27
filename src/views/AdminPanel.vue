@@ -24,22 +24,6 @@
         <!-- Quick Actions Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-          <!-- Scraper Management -->
-          <router-link to="/admin/scraper"
-            class="group bg-gradient-to-br from-blue-50 to-white p-6 rounded-xl border border-blue-100 hover:shadow-lg hover:border-blue-300 transition-all duration-300">
-            <div class="flex items-center justify-between mb-4">
-              <div
-                class="p-3 bg-blue-100 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-              </div>
-              <span class="text-2xl font-bold text-gray-400 group-hover:text-blue-200 transition-colors">01</span>
-            </div>
-            <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-700">爬蟲管理</h3>
-            <p class="text-sm text-gray-600">管理資料抓取、更新紀念品資料庫與爬蟲狀態監控。</p>
-          </router-link>
 
           <!-- Classification Center -->
           <router-link to="/admin/classification"
@@ -52,7 +36,7 @@
                     d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
               </div>
-              <span class="text-2xl font-bold text-gray-400 group-hover:text-purple-200 transition-colors">02</span>
+              <span class="text-2xl font-bold text-gray-400 group-hover:text-purple-200 transition-colors">01</span>
             </div>
             <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-purple-700">分類中心</h3>
             <p class="text-sm text-gray-600">紀念品分類管理、關鍵字過濾與人工審核。</p>
@@ -69,10 +53,27 @@
                     d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               </div>
-              <span class="text-2xl font-bold text-gray-400 group-hover:text-green-200 transition-colors">03</span>
+              <span class="text-2xl font-bold text-gray-400 group-hover:text-green-200 transition-colors">02</span>
             </div>
             <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-green-700">用戶管理</h3>
             <p class="text-sm text-gray-600">檢視用戶列表、權限設定與用戶收藏統計。</p>
+          </router-link>
+
+          <!-- Inventory Management (NEW) -->
+          <router-link to="/admin/inventory"
+            class="group bg-gradient-to-br from-indigo-50 to-white p-6 rounded-xl border border-indigo-100 hover:shadow-lg hover:border-indigo-300 transition-all duration-300">
+            <div class="flex items-center justify-between mb-4">
+              <div
+                class="p-3 bg-indigo-100 text-indigo-600 rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              </div>
+              <span class="text-2xl font-bold text-gray-400 group-hover:text-indigo-200 transition-colors">03</span>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-indigo-700">庫存管理</h3>
+            <p class="text-sm text-gray-600">管理使用者持有項目，協助手動刪除或修正錯誤記錄。</p>
           </router-link>
 
           <!-- Inventory Import (NEW) -->
@@ -142,6 +143,22 @@
             <p class="text-sm text-gray-600">手動新增、編輯與管理各年度紀念品資料。</p>
           </router-link>
 
+          <!-- Scraper Management (Moved to end) -->
+          <router-link to="/admin/scraper"
+            class="group bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl border border-gray-100 hover:shadow-lg hover:border-gray-300 transition-all duration-300">
+            <div class="flex items-center justify-between mb-4">
+              <div
+                class="p-3 bg-gray-100 text-gray-600 rounded-lg group-hover:bg-gray-600 group-hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 01-2-2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <span class="text-2xl font-bold text-gray-400 group-hover:text-gray-200 transition-colors">08</span>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-gray-700">爬蟲管理</h3>
+            <p class="text-sm text-gray-600">管理資料抓取、更新紀念品資料庫與爬蟲狀態監控。</p>
+          </router-link>
         </div>
       </div>
     </div>

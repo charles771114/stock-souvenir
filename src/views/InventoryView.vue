@@ -256,18 +256,14 @@
                       </div>
                     </td>
                     <td class="px-8 py-6 text-right">
-                      <div class="flex items-center justify-end gap-2">
-                        <FavoriteButton v-if="!isInCollections(item.souvenir_id)" :gift="item.souvenir"
-                          :is-active="false" @toggle="addToYearlyCollection(item.souvenir_id)" />
-                        <button @click="deleteItem(item)"
-                          class="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                          title="移除持股">
-                          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
+                      <button @click="deleteItem(item)"
+                        class="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                        title="移除持股">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
                     </td>
                   </tr>
                 </tbody>
@@ -297,13 +293,11 @@
 </template>
 
 <script setup>
-import FavoriteButton from '@/components/FavoriteButton.vue'
 import InventoryImportModal from '@/components/InventoryImportModal.vue'
 import Navbar from '@/components/Navbar.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useCollection } from '@/composables/useCollection'
 import { useDialog } from '@/composables/useDialog'
-import { useGifts } from '@/composables/useGifts'
 import { usePDFScraper } from '@/composables/usePDFScraper'
 import { useToast } from '@/composables/useToast'
 import { supabase } from '@/lib/supabase'
@@ -312,7 +306,6 @@ import { onMounted, ref, watch } from 'vue'
 // Composables
 const { collection, loading, fetchAllInventory, removeFromCollection, clearAllCollections, addToCollection } = useCollection()
 const { loading: scraperLoading, results: scraperResults, error: scraperError, processPDF } = usePDFScraper()
-const { myCollections, fetchMyCollections, addToCollection: addToGiftCollection } = useGifts()
 const { confirm } = useDialog()
 const { showToast } = useToast()
 const { user } = useAuth()
@@ -322,7 +315,6 @@ watch(user, async (val) => {
   if (val) {
     console.log('[DEBUG] User available, fetching inventory...')
     await fetchAllInventory()
-    await fetchMyCollections()
   }
 }, { immediate: true })
 
@@ -334,20 +326,6 @@ const pdfPassword = ref('')
 
 // Aliases
 const inventoryItems = collection
-
-// Helper - Consolidation (歸戶)
-const isInCollections = (souvenirId) => {
-  return myCollections.value.some(c => c.souvenir_id === souvenirId)
-}
-
-const addToYearlyCollection = async (souvenirId) => {
-  const { error } = await addToGiftCollection(souvenirId)
-  if (!error) {
-    showToast('已加入領取清單', 'success')
-  } else {
-    showToast('操作失敗', 'error')
-  }
-}
 
 // Methods - Scraper
 const handleFileChange = (e) => {
@@ -516,7 +494,6 @@ const handleClearAll = async () => {
 onMounted(async () => {
   if (user.value) {
     await fetchAllInventory()
-    await fetchMyCollections()
   }
 })
 </script>

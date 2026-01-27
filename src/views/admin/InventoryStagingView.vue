@@ -1,21 +1,20 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-indigo-50/30 flex flex-col">
+  <div class="min-h-screen bg-gray-50 flex flex-col">
     <Navbar />
 
     <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
       <!-- Header -->
-      <div class="mb-8 flex items-center justify-between animate-fade-in-up">
+      <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in-up">
         <div>
           <h1
-            class="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600">
+            class="text-2xl sm:text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600">
             庫存歸戶管理
           </h1>
-          <p class="text-gray-500 mt-2 font-medium">連結暫存庫存資料與使用者帳號 • <span class="text-indigo-600">PRIME ACCESS</span>
-          </p>
+          <p class="text-gray-400 mt-1 font-bold text-xs sm:text-sm uppercase tracking-wider">連結暫存庫存資料與使用者帳號</p>
         </div>
         <router-link to="/admin/import/inventory"
-          class="inline-flex items-center px-6 py-3 bg-white border border-indigo-100 rounded-2xl text-indigo-600 font-bold hover:bg-indigo-50 transition-all shadow-xl shadow-indigo-100/20">
-          <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          class="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 bg-white/80 backdrop-blur-md border border-indigo-100 rounded-xl sm:rounded-2xl text-indigo-600 font-black hover:bg-indigo-50 hover:shadow-2xl hover:shadow-indigo-500/20 transition-all duration-300 text-sm sm:text-base">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
           </svg>
@@ -23,15 +22,8 @@
         </router-link>
       </div>
 
-      <!-- Stats -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 mb-12">
         <div class="stat-card animate-fade-in-up glass-card relative group" style="animation-delay: 0.1s">
-          <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24">
-              <path
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
           <div class="stat-icon bg-orange-100/50 text-orange-600 shadow-orange-100/50">
             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
@@ -39,38 +31,36 @@
             </svg>
           </div>
           <div>
-            <div class="text-5xl font-black text-gray-900 tracking-tighter">{{ stats.pendingCount }}</div>
-            <div class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-2">Pending Items</div>
+            <div class="text-3xl sm:text-5xl font-black text-gray-900 tracking-tighter">{{ stats.pendingCount }}</div>
+            <div class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1 sm:mt-2">待處理總量</div>
           </div>
         </div>
 
-        <div
-          class="stat-card animate-fade-in-up bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl overflow-hidden relative group"
+        <div class="stat-card animate-fade-in-up glass-card border border-white/40 overflow-hidden relative group"
           style="animation-delay: 0.2s">
-          <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24">
-              <path
-                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-          </div>
-          <div class="stat-icon bg-indigo-100 text-indigo-600">
+          <div class="stat-icon bg-indigo-50 text-indigo-600">
             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           </div>
           <div>
-            <div class="text-4xl font-black text-gray-900">{{ stats.uniqueOwners }}</div>
-            <div class="text-sm font-bold text-gray-400 uppercase tracking-widest mt-1">不同姓名數</div>
+            <div class="text-3xl sm:text-4xl font-black text-gray-900 leading-none">{{ stats.uniqueOwners }}</div>
+            <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">不同姓名數</div>
           </div>
         </div>
 
-        <div
-          class="glass-card animate-fade-in-up bg-indigo-900 p-8 flex items-center shadow-2xl relative overflow-hidden"
+        <div class="glass-card animate-fade-in-up p-2 sm:p-3 flex items-center relative overflow-hidden group/search"
           style="animation-delay: 0.3s">
-          <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 pointer-events-none"></div>
-          <input v-model="searchOwner" type="text" placeholder="🔍 快速搜尋姓名..."
-            class="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-indigo-200 focus:outline-none focus:ring-4 focus:ring-indigo-500/50 focus:bg-white/20 transition-all font-bold" />
+          <div class="absolute inset-y-0 left-6 sm:left-10 flex items-center pointer-events-none z-10">
+            <svg class="h-5 w-5 text-indigo-400 group-focus-within/search:scale-110 transition-transform" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input v-model="searchOwner" type="text" placeholder="快速搜尋對象姓名..."
+            class="w-full pl-12 sm:pl-16 pr-6 py-4 sm:py-6 bg-indigo-50/50 border-none rounded-2xl sm:rounded-[1.5rem] text-gray-900 placeholder-indigo-300 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:bg-white transition-all duration-300 font-bold text-sm sm:text-base" />
         </div>
       </div>
 
@@ -82,7 +72,7 @@
             <div class="w-8 h-8 bg-indigo-600 rounded-full animate-pulse"></div>
           </div>
         </div>
-        <div class="text-indigo-900 font-black tracking-widest animate-pulse">LOADING STAGING DATA...</div>
+        <div class="text-indigo-900 font-black tracking-widest animate-pulse">正在載入暫存資料...</div>
       </div>
 
       <!-- Empty State -->
@@ -97,80 +87,113 @@
         <p class="text-gray-500 text-lg font-medium">目前沒有待處理的庫存資料，休息一下吧！</p>
       </div>
 
-      <!-- Staging Table -->
-      <div
-        class="glass border-none rounded-2xl md:rounded-[3rem] shadow-2xl overflow-x-auto animate-fade-in-up transition-all hover:shadow-indigo-500/20">
-        <table class="w-full min-w-[800px] md:min-w-full">
-          <thead>
-            <tr class="bg-indigo-50/50 backdrop-blur-sm border-b border-indigo-100/50">
-              <th class="px-10 py-6 text-left text-xs font-black text-indigo-900/60 uppercase tracking-[0.2em]">待歸戶對象
-              </th>
-              <th class="px-10 py-6 text-left text-xs font-black text-indigo-900/60 uppercase tracking-[0.2em]">待處理項目集
-              </th>
-              <th class="px-10 py-6 text-center text-xs font-black text-indigo-900/60 uppercase tracking-[0.2em]">總量
-              </th>
-              <th class="px-10 py-6 text-center text-xs font-black text-indigo-900/60 uppercase tracking-[0.2em]">操作
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-indigo-50/30">
-            <tr v-for="(group, gIdx) in filteredGroups" :key="group.owner_name"
-              class="hover:bg-indigo-50/40 transition-all duration-300 group"
-              :style="{ animationDelay: `${gIdx * 0.05}s` }">
-              <!-- Owner Name -->
-              <td class="px-10 py-8">
-                <div class="flex items-center gap-5">
-                  <div
-                    class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-700 flex items-center justify-center text-white font-black text-2xl shadow-xl transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                    {{ group.owner_name.charAt(0) }}
+      <!-- Staging Table (Desktop) / Cards (Mobile) -->
+      <div class="animate-fade-in-up" style="animation-delay: 0.4s">
+        <!-- Desktop Table: Visible on md and up -->
+        <div class="hidden md:block glass-card border-none overflow-hidden hover:shadow-indigo-500/20">
+          <table class="w-full">
+            <thead>
+              <tr class="bg-indigo-50/50 backdrop-blur-sm border-b border-indigo-100/50">
+                <th class="px-10 py-6 text-left text-xs font-black text-indigo-900/60 uppercase tracking-[0.2em]">待歸戶對象
+                </th>
+                <th class="px-10 py-6 text-left text-xs font-black text-indigo-900/60 uppercase tracking-[0.2em]">待處理項目集
+                </th>
+                <th class="px-10 py-6 text-center text-xs font-black text-indigo-900/60 uppercase tracking-[0.2em]">總量
+                </th>
+                <th class="px-10 py-6 text-center text-xs font-black text-indigo-900/60 uppercase tracking-[0.2em]">操作
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-indigo-50/30">
+              <tr v-for="(group, gIdx) in filteredGroups" :key="group.owner_name"
+                class="hover:bg-indigo-50/40 transition-all duration-300 group"
+                :style="{ animationDelay: `${gIdx * 0.05}s` }">
+                <!-- Owner Name -->
+                <td class="px-10 py-8">
+                  <div class="flex items-center gap-5">
+                    <div>
+                      <span
+                        class="font-black text-gray-900 text-xl block group-hover:text-indigo-600 transition-colors">{{
+                          group.owner_name }}</span>
+                    </div>
                   </div>
-                  <div>
-                    <span
-                      class="font-black text-gray-900 text-xl block group-hover:text-indigo-600 transition-colors">{{
-                        group.owner_name }}</span>
-                    <span
-                      class="text-[10px] text-indigo-500/70 font-black uppercase tracking-widest mt-1 block">Verified
-                      Account</span>
-                  </div>
-                </div>
-              </td>
+                </td>
 
-              <!-- Items Preview -->
-              <td class="px-10 py-8">
-                <div class="flex flex-wrap gap-2.5 max-w-xl">
-                  <span v-for="(item, idx) in group.items.slice(0, 5)" :key="idx"
-                    class="inline-flex items-center px-4 py-2 rounded-2xl text-[10px] font-black bg-white/80 border border-indigo-100/50 text-indigo-900 shadow-sm group-hover:border-indigo-400 group-hover:shadow-md transition-all uppercase">
-                    {{ item.stock_name || item.stock_code }}
+                <!-- Items Preview -->
+                <td class="px-10 py-8">
+                  <div class="flex flex-wrap gap-2 max-w-xl">
+                    <span v-for="(item, idx) in group.items.slice(0, 5)" :key="idx"
+                      class="inline-flex items-center px-3 py-1.5 rounded-xl text-[10px] font-mono font-bold bg-indigo-50/50 border border-indigo-100/50 text-indigo-900 shadow-sm hover:border-indigo-400 hover:bg-white transition-all uppercase">
+                      {{ item.stock_name || item.stock_code }}
+                    </span>
+                    <div v-if="group.items.length > 5"
+                      class="inline-flex items-center px-4 py-1.5 rounded-xl text-[10px] font-black bg-gray-900 text-white shadow-lg">
+                      +{{ group.items.length - 5 }} 筆項目
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Count Badge -->
+                <td class="px-10 py-8 text-center">
+                  <span
+                    class="inline-flex items-center justify-center min-w-[3rem] px-4 py-2 rounded-2xl bg-orange-100 text-orange-700 text-sm font-black shadow-lg">
+                    {{ group.items.length }}
                   </span>
-                  <div v-if="group.items.length > 5"
-                    class="inline-flex items-center px-4 py-2 rounded-2xl text-[10px] font-black bg-indigo-950 text-white shadow-xl">
-                    +{{ group.items.length - 5 }} ITEMS
-                  </div>
+                </td>
+
+                <!-- Actions -->
+                <td class="px-10 py-8 text-center">
+                  <button @click="openLinkModal(group)"
+                    class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white text-sm font-black rounded-2xl hover:bg-indigo-700 hover:shadow-2xl hover:shadow-indigo-500/40 transition-all active:scale-95">
+                    <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    連結用戶
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mobile Cards: Visible below md -->
+        <div class="md:hidden space-y-4">
+          <div v-for="(group, gIdx) in filteredGroups" :key="group.owner_name"
+            class="bg-white rounded-3xl p-6 shadow-xl border border-indigo-50/50 animate-fade-in-up"
+            :style="{ animationDelay: `${gIdx * 0.05}s` }">
+            <div class="flex items-center gap-4 mb-4">
+              <div class="flex-grow">
+                <div class="flex items-center justify-between">
+                  <span class="font-black text-gray-900 text-lg">{{ group.owner_name }}</span>
+                  <span class="px-3 py-1 bg-orange-100 text-orange-700 text-[10px] font-black rounded-full shadow-sm">
+                    {{ group.items.length }} 筆項目
+                  </span>
                 </div>
-              </td>
+              </div>
+            </div>
 
-              <!-- Count Badge -->
-              <td class="px-10 py-8 text-center">
-                <span
-                  class="inline-flex items-center justify-center min-w-[3rem] px-4 py-2 rounded-2xl bg-orange-100 text-orange-700 text-sm font-black shadow-lg">
-                  {{ group.items.length }}
-                </span>
-              </td>
+            <div class="flex flex-wrap gap-2 mb-6">
+              <span v-for="(item, idx) in group.items.slice(0, 3)" :key="idx"
+                class="px-3 py-1.5 rounded-xl text-[10px] font-black bg-indigo-50/50 border border-indigo-100/50 text-indigo-900 uppercase">
+                {{ item.stock_name || item.stock_code }}
+              </span>
+              <div v-if="group.items.length > 3"
+                class="px-3 py-1.5 rounded-xl text-[10px] font-black bg-indigo-950 text-white shadow-md">
+                +{{ group.items.length - 3 }} 筆項目
+              </div>
+            </div>
 
-              <!-- Actions -->
-              <td class="px-10 py-8 text-center">
-                <button @click="openLinkModal(group)"
-                  class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white text-sm font-black rounded-2xl hover:bg-indigo-700 hover:shadow-2xl hover:shadow-indigo-500/40 transition-all active:scale-95">
-                  <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
-                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                  </svg>
-                  連結用戶
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+            <button @click="openLinkModal(group)"
+              class="w-full flex items-center justify-center px-6 py-4 bg-indigo-600 text-white text-sm font-black rounded-2xl hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-600/20">
+              <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+              即刻歸戶
+            </button>
+          </div>
+        </div>
       </div>
     </main>
 
@@ -182,39 +205,31 @@
           </div>
 
           <div
-            class="modal-content relative bg-white border border-white/50 shadow-[0_64px_256px_-32px_rgba(79,70,229,0.5)] w-full max-w-xl rounded-[3rem] overflow-hidden animate-modal-scale">
-            <div class="p-12">
-              <div class="flex items-center justify-between mb-10">
+            class="modal-content relative bg-white border border-white/50 shadow-[0_64px_256px_-32px_rgba(79,70,229,0.5)] w-full max-w-xl rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden animate-modal-scale">
+            <div class="p-6 sm:p-12">
+              <div class="flex items-start sm:items-center justify-between mb-6 sm:mb-10">
                 <div>
-                  <h3 class="text-4xl font-black text-gray-900 tracking-tighter">歸戶手續</h3>
-                  <p class="text-red-500 font-bold mt-1 uppercase text-xs tracking-[0.2em]">Linking Procedure v2.3
-                    [STABLE-V5-FINAL-RELOAD]</p>
-                </div>
-                <div
-                  class="w-16 h-16 bg-indigo-50 rounded-3xl flex items-center justify-center text-indigo-600 shadow-inner">
-                  <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                      d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h2M4 8h16" />
-                  </svg>
+                  <h3 class="text-2xl sm:text-4xl font-black text-gray-900 tracking-tighter">歸戶手續</h3>
+                  <p class="text-indigo-500 font-bold mt-1 uppercase text-[10px] tracking-[0.2em]">將暫存資料連結至正確用戶
+                  </p>
                 </div>
               </div>
 
-              <div class="bg-indigo-50/50 rounded-3xl p-6 mb-10 border border-indigo-100 flex items-center gap-6">
-                <div
-                  class="w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center font-black text-2xl text-indigo-600">
-                  {{ selectedGroup?.owner_name.charAt(0) }}
-                </div>
+              <div
+                class="bg-indigo-50/30 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-8 mb-6 sm:mb-10 border border-indigo-100/50 flex items-center gap-4 sm:gap-8">
                 <div>
-                  <div class="text-gray-900 font-black text-xl">{{ selectedGroup?.owner_name }}</div>
-                  <div class="text-indigo-600 font-bold text-sm">待處理：{{ selectedGroup?.items.length }} 筆項目</div>
+                  <div class="text-gray-900 font-black text-2xl sm:text-3xl tracking-tighter">{{
+                    selectedGroup?.owner_name }}</div>
+                  <div class="text-indigo-600 font-black text-sm uppercase tracking-widest mt-1">待處理：{{
+                    selectedGroup?.items.length }} 筆項目</div>
                 </div>
               </div>
 
-              <div class="mb-8 relative">
+              <div class="mb-6 sm:mb-8 relative">
                 <label
-                  class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-4">搜尋目標使用者</label>
+                  class="block text-[8px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 sm:mb-3 ml-2 sm:ml-4">搜尋目標使用者</label>
                 <input v-model="userSearch" @input="searchUsers" type="text"
-                  class="w-full px-8 py-5 bg-gray-50 border border-gray-100 rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:bg-white focus:border-indigo-200 transition-all font-bold text-lg"
+                  class="w-full px-4 sm:px-8 py-3 sm:py-5 bg-gray-50 border border-gray-100 rounded-xl sm:rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:bg-white focus:border-indigo-200 transition-all font-bold text-sm sm:text-lg"
                   placeholder="輸入 Email、姓名或暱稱..." autofocus />
                 <div v-if="searchingUsers" class="absolute right-6 top-12">
                   <svg class="animate-spin h-6 w-6 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -234,21 +249,23 @@
                 </div>
                 <div v-for="user in userResults" :key="user.id" @click="targetUser = user" class="user-option group"
                   :class="{ 'selected': targetUser?.id === user.id }">
-                  <div class="flex items-center gap-4">
+                  <div class="flex items-center gap-3 sm:gap-4">
                     <div
-                      class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 font-black group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                      class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 font-black group-hover:bg-indigo-600 group-hover:text-white transition-all text-sm">
                       {{ user.full_name?.charAt(0) || '?' }}
                     </div>
-                    <div>
-                      <div class="font-black text-gray-900">
+                    <div class="min-w-0 flex-grow">
+                      <div class="font-black text-gray-900 text-sm sm:text-base truncate">
                         {{ user.full_name || '未設定姓名' }}
                         <span v-if="user.nickname" class="text-indigo-500 font-bold ml-1">#{{ user.nickname }}</span>
                       </div>
-                      <div class="text-[10px] text-gray-400 font-bold uppercase tracking-tight">{{ user.email }}</div>
+                      <div class="text-[9px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-tight truncate">
+                        {{ user.email }}</div>
                     </div>
                   </div>
-                  <div v-if="targetUser?.id === user.id" class="text-indigo-600 bg-white shadow-md p-1.5 rounded-full">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div v-if="targetUser?.id === user.id"
+                    class="text-indigo-600 bg-white shadow-md p-1 rounded-full shrink-0">
+                    <svg class="w-4 h-4 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
@@ -256,18 +273,21 @@
               </div>
             </div>
 
-            <div class="bg-gray-50/80 backdrop-blur-md px-10 py-8 flex gap-4 justify-end border-t border-gray-100">
-              <button type="button" @click="closeModal" class="btn-secondary">
+            <div
+              class="bg-gray-50/80 backdrop-blur-md px-6 sm:px-10 py-4 sm:py-8 flex gap-3 sm:gap-4 justify-end border-t border-gray-100">
+              <button type="button" @click="closeModal" class="btn-secondary flex-1 sm:flex-none">
                 取消
               </button>
-              <button type="button" @click="confirmLink" :disabled="!targetUser || linking" class="btn-primary">
-                <svg v-if="linking" class="animate-spin -ml-1 mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24">
+              <button type="button" @click="confirmLink" :disabled="!targetUser || linking"
+                class="btn-primary flex-1 sm:flex-none">
+                <svg v-if="linking" class="animate-spin -ml-1 mr-2 h-4 w-4 sm:h-5 sm:w-5" fill="none"
+                  viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor"
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                   </path>
                 </svg>
-                {{ linking ? '歸戶處理中...' : '確認執行歸戶' }}
+                {{ linking ? '處理中...' : '確認' }}
               </button>
             </div>
           </div>
@@ -282,6 +302,8 @@ import Navbar from '@/components/Navbar.vue'
 import { useToast } from '@/composables/useToast'
 import { supabase } from '@/lib/supabase'
 import { computed, onMounted, ref } from 'vue'
+
+// 核心狀態
 
 const loading = ref(true)
 const stagingItems = ref([])
@@ -485,9 +507,7 @@ const confirmLink = async () => {
           collectionsToUpsertMap.set(uniqueKey, {
             user_id: userId,
             souvenir_id: souvenirId,
-            quantity: 1,
-            status: 'holding',
-            note: `大量匯入 (歸戶對象: ${selectedGroup.value.owner_name})`
+            status: 'holding'
           })
         }
       }
@@ -556,15 +576,15 @@ onMounted(() => {
 }
 
 .stat-card {
-  @apply flex items-center p-8 transition-all duration-500 hover:scale-[1.02];
+  @apply flex items-center p-6 sm:p-8 transition-all duration-500 hover:scale-[1.02] hover:shadow-indigo-500/10;
 }
 
 .stat-icon {
-  @apply w-16 h-16 rounded-3xl flex items-center justify-center mr-6 shadow-lg;
+  @apply w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl flex items-center justify-center mr-4 sm:mr-6 shadow-lg;
 }
 
 .glass-card {
-  @apply rounded-[2.5rem] transition-all;
+  @apply bg-white border border-gray-100 shadow-xl rounded-3xl sm:rounded-[2rem] transition-all duration-500;
 }
 
 .user-option {
@@ -576,11 +596,11 @@ onMounted(() => {
 }
 
 .btn-primary {
-  @apply px-10 py-5 bg-indigo-600 text-white font-black rounded-[1.5rem] hover:bg-indigo-700 hover:shadow-2xl hover:shadow-indigo-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest text-xs;
+  @apply px-4 sm:px-10 py-3 sm:py-5 bg-indigo-600 text-white font-black rounded-xl sm:rounded-[1.5rem] hover:bg-indigo-700 hover:shadow-2xl hover:shadow-indigo-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest text-[10px] sm:text-xs;
 }
 
 .btn-secondary {
-  @apply px-10 py-5 bg-gray-100 text-gray-400 font-black rounded-[1.5rem] hover:bg-gray-200 hover:text-gray-600 transition-all uppercase tracking-widest text-xs;
+  @apply px-4 sm:px-10 py-3 sm:py-5 bg-gray-100 text-gray-400 font-black rounded-xl sm:rounded-[1.5rem] hover:bg-gray-200 hover:text-gray-600 transition-all uppercase tracking-widest text-[10px] sm:text-xs;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
