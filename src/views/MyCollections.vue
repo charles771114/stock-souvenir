@@ -5,8 +5,13 @@
     <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
       <!-- Header -->
       <div class="mb-12 animate-fade-in-up">
-        <h1 class="text-4xl font-black text-slate-900 tracking-tight mb-2">領取清單 / My Collections</h1>
-        <p class="text-slate-500">管理您各年度計畫領取或已領取的紀念品項目</p>
+        <h1
+          class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 tracking-tighter">
+          我的收藏清單
+        </h1>
+        <p class="text-slate-400 mt-1 font-bold text-xs sm:text-sm uppercase tracking-wider">
+          管理您各年度計畫領取或已領取的紀念品項目
+        </p>
       </div>
 
       <!-- Filter Bar -->
@@ -14,20 +19,70 @@
         <div class="flex items-center gap-4">
           <span class="text-xs font-black text-slate-400 uppercase tracking-widest">選擇年度</span>
           <div class="flex bg-slate-100 p-1 rounded-xl">
-            <button v-for="y in ['2026', '2025', '2024']" :key="y"
-              @click="selectedYear = y"
+            <button v-for="y in ['2026', '2025', '2024']" :key="y" @click="selectedYear = y"
               class="px-5 py-2 rounded-lg text-xs font-black transition-all"
-              :class="selectedYear === y ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'"
-            >
+              :class="selectedYear === y ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'">
               {{ y }}
             </button>
           </div>
         </div>
 
-        <div class="flex items-center gap-4">
-           <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            Total {{ filteredCollections.length }} Items
+        <div class="flex items-center gap-6">
+          <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100">
+            {{ selectedYear }} 年度收藏總計: {{ mainCollections.length }}
           </p>
+          <button @click="showStats = !showStats" 
+            class="text-[10px] font-black text-slate-400 hover:text-indigo-500 transition-colors uppercase tracking-widest flex items-center gap-1.5 px-2 py-1 hover:bg-slate-100 rounded-lg">
+            {{ showStats ? '收起統計' : '展開統計' }}
+            <i class="fas" :class="showStats ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Statistics Breakdown -->
+      <div v-show="showStats" v-if="!loading && souvenirCounts.length > 0" class="mb-10 animate-fade-in-up delay-200">
+        <div class="flex flex-wrap gap-x-4 gap-y-6">
+          <div v-for="stat in souvenirCounts" :key="stat.name" class="flex flex-col gap-2 min-w-[150px]">
+            <!-- Main Pill (L1) -->
+            <div
+              class="backdrop-blur-md px-4 py-2 rounded-xl flex items-center justify-between gap-3 shadow-sm hover:shadow-md transition-all duration-300 group/stat cursor-pointer"
+              @click="toggleCategory(stat.name)"
+              :class="stat.isCard ? 'bg-indigo-50/80 border border-indigo-200/50 text-indigo-700 hover:bg-indigo-100' : 'bg-white/50 border border-white/40 text-slate-600 hover:bg-white'">
+              
+              <div class="flex items-center gap-2">
+                <div v-if="stat.isCard" class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></div>
+                <span class="text-[11px] font-black tracking-tight">{{ stat.name }}</span>
+              </div>
+              <span class="text-[10px] font-black px-2 py-0.5 rounded-lg shadow-sm"
+                :class="stat.isCard ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-700'">
+                {{ stat.total }}
+              </span>
+            </div>
+
+            <!-- Sub Items (L2: Denomination) -->
+            <transition name="expand">
+              <div v-if="isCategoryExpanded(stat.name) && stat.subItems.length > 0" class="flex flex-col gap-2 px-3 border-l-2 border-slate-100 ml-4">
+                <div v-for="sub in stat.subItems" :key="sub.label" class="flex flex-col gap-1">
+                  <div class="flex items-center justify-between group/sub">
+                    <span class="text-[10px] font-bold text-slate-500">{{ sub.label }}</span>
+                    <span class="text-[10px] font-black text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{{ sub.count }}</span>
+                  </div>
+                  <!-- L3: Companies with Inventory Status -->
+                  <div class="flex flex-wrap gap-1.5">
+                    <div v-for="company in sub.companies" :key="company.name"
+                      class="flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-md border transition-all"
+                      :class="company.inInventory 
+                        ? 'bg-emerald-50 border-emerald-100 text-emerald-600' 
+                        : 'bg-slate-50 border-slate-100 text-slate-400'">
+                      <span>{{ company.name }}</span>
+                      <i v-if="company.inInventory" class="fas fa-check-circle text-[8px]"></i>
+                      <span v-else class="text-[7px] font-black opacity-60">庫存沒有此股票</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </transition>
+          </div>
         </div>
       </div>
 
@@ -37,49 +92,22 @@
         <p class="text-xs font-black text-indigo-300 uppercase tracking-widest">Loading Collections...</p>
       </div>
 
-      <!-- Content -->
-      <div v-else-if="filteredCollections.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div v-for="item in filteredCollections" :key="item.id" class="animate-fade-in-up">
-          <div class="glass-card p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-            <div class="flex justify-between items-start mb-4">
-              <span class="font-mono text-[10px] font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">
-                {{ item.gift?.code }}
-              </span>
-              <button @click="handleRemove(item.id)" class="text-slate-300 hover:text-rose-500 transition-colors">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-            </div>
-            <h3 class="text-lg font-black text-slate-900 mb-2">{{ item.gift?.name }}</h3>
-            <p class="text-sm text-slate-600 font-medium mb-6 line-clamp-2">
-              {{ item.gift?.souvenir_item || '尚未公布' }}
-            </p>
-            
-            <div class="pt-4 border-t border-slate-50 flex items-center justify-between">
-              <div class="flex flex-col">
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">開會日期</span>
-                <span class="text-xs font-black font-mono text-slate-600">{{ item.gift?.meeting_date || '-' }}</span>
-              </div>
-              <div class="flex flex-col text-right">
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">領取狀態</span>
-                <span class="text-[10px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded shadow-sm">已在清單</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Empty State -->
-      <div v-else class="py-32 flex flex-col items-center justify-center text-center px-8 bg-white rounded-[3rem] border border-dashed border-slate-200">
-        <div class="w-24 h-24 bg-slate-50 rounded-[2.5rem] flex items-center justify-center mb-8 border border-slate-100 shadow-inner">
+      <!-- Content (Empty State Only) -->
+      <div v-if="!loading && souvenirCounts.length === 0"
+        class="py-32 flex flex-col items-center justify-center text-center px-8 bg-white rounded-[3rem] border border-dashed border-slate-200">
+        <div
+          class="w-24 h-24 bg-slate-50 rounded-[2.5rem] flex items-center justify-center mb-8 border border-slate-100 shadow-inner">
           <svg class="w-10 h-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
         </div>
-        <h4 class="text-xl font-bold text-slate-900 mb-2">{{ selectedYear }} 年度尚無收藏</h4>
+        <h4 class="text-xl font-bold text-slate-900 mb-2">
+          {{ selectedYear }} 年度尚無收藏
+        </h4>
         <p class="text-sm text-slate-400 max-w-xs mb-8">您可以前往「紀念品目錄」挑選感興趣的紀念品加入清單。</p>
-        <router-link to="/gifts" class="px-8 py-3 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all">
+        <router-link to="/gifts"
+          class="px-8 py-3 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all">
           前往領取目錄
         </router-link>
       </div>
@@ -95,24 +123,111 @@ import { useGifts } from '@/composables/useGifts'
 import { useToast } from '@/composables/useToast'
 import { computed, onMounted, ref, watch } from 'vue'
 
-const { myCollections, loading, fetchMyCollections, removeFromCollection } = useGifts()
 const { confirm } = useDialog()
 const { showToast } = useToast()
 const { user } = useAuth()
 
+const { 
+  myCollections, 
+  loading, 
+  fetchMyCollections, 
+  fetchUserInventoryIds, 
+  removeFromCollection 
+} = useGifts()
+
 const selectedYear = ref(new Date().getFullYear().toString())
+const showStats = ref(true)
+const showOtherYears = ref(false)
+const removing = ref(null)
+const inventoryIds = ref(new Set())
+const expandedCategories = ref({})
+
+const toggleCategory = (name) => {
+  if (expandedCategories.value[name] === undefined) {
+    expandedCategories.value[name] = true 
+  }
+  expandedCategories.value[name] = !expandedCategories.value[name]
+}
+
+const isCategoryExpanded = (name) => {
+  return expandedCategories.value[name] !== false
+}
+
+onMounted(() => {
+  loadData()
+})
 
 const filteredCollections = computed(() => {
   return myCollections.value.filter(item => {
-    // Check if the associated gift belongs to the selected year
     const meetingDate = item.gift?.meeting_date
-    if (!meetingDate) return false
-    return meetingDate.startsWith(selectedYear.value)
+    return meetingDate?.startsWith(selectedYear.value)
   })
+})
+
+const souvenirCounts = computed(() => {
+  const groups = {} // { mainName: { isCard, subItems: { label: { count, companies: Map<name, inInventory> } } } }
+  
+  filteredCollections.value.forEach(item => {
+    let name = item.gift?.souvenir_item || '尚未公布'
+    const companyName = item.gift?.name || '未知公司'
+    const inInventory = inventoryIds.value.has(item.souvenir_id)
+    
+    // Filter out unwanted items
+    if (name.includes('開會55日前再行公告') || name === '尚未公布') {
+      return
+    }
+
+    const parsed = name.match(/^(.*?)(\d+.*)$/)
+    const mainName = parsed ? parsed[1].trim() : name
+    const subLabel = parsed ? parsed[2].trim() : '其他'
+    
+    if (!groups[mainName]) {
+      groups[mainName] = {
+        total: 0,
+        isCard: mainName.includes('商品卡') || mainName.includes('禮物卡') || mainName.includes('禮券'),
+        subItems: {}
+      }
+    }
+    
+    groups[mainName].total++
+    if (!groups[mainName].subItems[subLabel]) {
+      groups[mainName].subItems[subLabel] = { count: 0, companies: new Map() }
+    }
+    groups[mainName].subItems[subLabel].count++
+    // We use a Map to store unique companies and their inventory status
+    groups[mainName].subItems[subLabel].companies.set(companyName, inInventory)
+  })
+  
+  return Object.entries(groups)
+    .map(([name, data]) => ({ 
+      name, 
+      total: data.total,
+      isCard: data.isCard,
+      subItems: Object.entries(data.subItems)
+        .map(([label, subData]) => ({ 
+          label, 
+          count: subData.count,
+          companies: Array.from(subData.companies.entries()).map(([compName, invStatus]) => ({
+            name: compName,
+            inInventory: invStatus
+          }))
+        }))
+        .sort((a, b) => {
+          const numA = parseInt(a.label) || 0
+          const numB = parseInt(b.label) || 0
+          return numA - numB
+        })
+    }))
+    .sort((a, b) => {
+      if (a.isCard && !b.isCard) return -1
+      if (!a.isCard && b.isCard) return 1
+      return b.total - a.total
+    })
 })
 
 const handleRemove = async (id) => {
   if (await confirm('確定要從領取清單中移除這項紀念品嗎？', '移除收藏')) {
+    removing.value = id
     const { error } = await removeFromCollection(id)
     if (!error) {
       showToast('已移除', 'success')
@@ -120,37 +235,60 @@ const handleRemove = async (id) => {
     } else {
       showToast('移除失敗', 'error')
     }
+    removing.value = null
   }
 }
 
-onMounted(() => {
+const loadData = async () => {
   if (user.value) {
-    fetchMyCollections()
+    await fetchMyCollections()
+    inventoryIds.value = await fetchUserInventoryIds()
   }
-})
+}
+
 
 watch(user, (val) => {
-  if (val) fetchMyCollections()
+  if (val) loadData()
 })
 </script>
 
 <style scoped>
 .glass-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 2rem;
+  @apply bg-white/70 backdrop-blur-xl border border-white/40 rounded-2xl sm:rounded-[1.5rem] shadow-sm;
 }
 
 @keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fade-in-up {
   animation: fade-in-up 0.5s ease-out forwards;
 }
 
-.delay-100 { animation-delay: 0.1s; }
+.expand-enter-active, .expand-leave-active {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+.expand-enter-from, .expand-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+  max-height: 0;
+}
+.expand-enter-to, .expand-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+  max-height: 500px;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
 </style>
