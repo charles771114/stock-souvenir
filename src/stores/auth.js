@@ -6,8 +6,9 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
   const allowEmails = ['charles771114@gmail.com', 'you@example.com']
 
+  const { showToast } = useToast()
+
   const login = async () => {
-    const { showToast } = useToast()
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
     })
@@ -34,7 +35,6 @@ export const useAuthStore = defineStore('auth', () => {
 
     // 2. Listen for changes
     supabase.auth.onAuthStateChange((_event, session) => {
-      const { showToast } = useToast()
       if (session?.user && allowEmails.includes(session.user.email)) {
         user.value = session.user
       } else {

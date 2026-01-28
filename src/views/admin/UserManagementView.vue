@@ -320,6 +320,7 @@
 </template>
 
 <script setup>
+// Build tag: 2026-01-28-v3
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import Navbar from '@/components/Navbar.vue'
 import { useAdmin } from '@/composables/useAdmin'
