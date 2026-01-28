@@ -23,8 +23,6 @@ export function useSouvenirBulkImport() {
           const data = e.target.result
           const readOptions = isCsv ? { type: 'string' } : { type: 'array', cellDates: true }
           const workbook = XLSX.read(data, readOptions)
-          console.log('[Import] XLSX 版本:', XLSX.version)
-          console.log('[Import] 檔案包含工作表數:', workbook.SheetNames.length, '筆: ', workbook.SheetNames)
           
           if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
             throw new Error('Excel 檔案中找不到工作表 (Sheet)')
@@ -53,21 +51,18 @@ export function useSouvenirBulkImport() {
               const newRange = { s: { c: 0, r: 0 }, e: { c: maxCol, r: maxRow } }
               const newRef = XLSX.utils.encode_range(newRange)
               if (newRef !== range) {
-                console.log(`[Import] 更新 Sheet[${idx}] 範圍: ${range} -> ${newRef}`)
                 ws['!ref'] = newRef
                 range = newRef
               }
             }
 
             const jsonData = XLSX.utils.sheet_to_json(ws, { defval: "" })
-            console.log(`[Import] Sheet[${idx}] "${name}": 最終範圍=${range}, 解析得 ${jsonData.length} 列`)
             
             if (jsonData.length > 0) {
               allParsedData = [...allParsedData, ...jsonData]
             }
           })
-
-          console.log(`[Import] 所有 Sheet 合計解析出 ${allParsedData.length} 列原始資料`)
+          
           resolve(allParsedData)
         } catch (err) {
           console.error('[Import] 解析核心錯誤:', err)
@@ -111,8 +106,6 @@ export function useSouvenirBulkImport() {
     // 輔助函式：標準化 Key 名稱 (去除空格、標點符號，但保留中文字與英數)
     // 原始 regex /[\s\W_]/g 會把中文也當成 \W 刪掉，導致所有中文欄位都變成空字串
     const normalize = (s) => String(s || '').trim().replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '')
-
-    console.log('[Import] 解析前 3 筆原始資料 (可展開察看內容):', rawData.slice(0, 3))
     
     let keyIndices = {}
     let headerRowIdx = -1 // 需要跳過的「位於資料列中」的標題列索引
@@ -136,12 +129,10 @@ export function useSouvenirBulkImport() {
       })
 
       if (keyMatchCount >= 2) {
-        console.log(`[Import] 成功從 Keys 识别到 ${keyMatchCount} 個欄位，不跳過資料列`)
         keyIndices = currentIndices
         // 此時 headerRowIdx 保持 -1，表示資料從 index 0 開始
       } else {
         // 2. 備選策略：如果 Keys 無意義，則在 Row 的內容 (Values) 中尋找標題
-        console.log('[Import] Keys 匹配不足，開始掃描 Row 內容識別標題...')
         let maxMatch = 0
         for (let i = 0; i < Math.min(rawData.length, 10); i++) {
           const row = rawData[i]
@@ -168,11 +159,8 @@ export function useSouvenirBulkImport() {
           }
           if (matchCount >= 3) break
         }
-        console.log(`[Import] 在資料列內容中找到標題，索引: ${headerRowIdx}, 匹配數: ${maxMatch}`)
       }
     }
-
-    console.log('[Import] 最終採用之欄位對應模型:', keyIndices)
 
     const result = rawData.map((row, index) => {
       // 如果 headerRowIdx !== -1，則跳過該索引及其之前的所有列
@@ -231,11 +219,7 @@ export function useSouvenirBulkImport() {
       // 修法：不再過濾掉 null rows，改為標記 isValid
       // 這樣使用者才能在預覽表格看到底哪些是有問題的
       const isValid = code && formattedMeetingDate
-
-      if (!isValid && index < 20) {
-        console.warn(`[Import] Row ${index} 不完整: 代號=${code}, 日期=${formattedMeetingDate} (原值:${meetingTime})`)
-      }
-
+ 
       return {
         doc_id: isValid ? `${code}_${formattedMeetingDate}` : null,
         code,
@@ -251,8 +235,7 @@ export function useSouvenirBulkImport() {
         isValid // 新增：用於 UI 顯示
       }
     })
-
-    console.log(`[Import] 解析完成，產出 ${result.length} 筆資料`)
+ 
     return result
   }
   /**
@@ -290,12 +273,11 @@ export function useSouvenirBulkImport() {
          const CACHE_PREFIX = 'stock-souvenir:gifts:'
          Object.keys(localStorage).forEach(key => {
            if (key.startsWith(CACHE_PREFIX)) {
-             localStorage.removeItem(key)
-           }
-         })
-         console.log('[Import] 已清除所有紀念品快取')
-       } catch (e) {
-         console.warn('[Import] 清除快取失敗 (不影響匯入):', e)
+              localStorage.removeItem(key)
+            }
+          })
+        } catch (e) {
+         // console.warn('[Import] 清除快取失敗 (不影響匯入):', e) // Removed
        }
  
        return { success: true, count: total }

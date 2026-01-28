@@ -30,59 +30,53 @@ export function usePDFScraper() {
 
       const pdf = await loadingTask.promise
       const numPages = pdf.numPages
-      const extractedData = []
-
-      for (let i = 1; i <= numPages; i++) {
-        const page = await pdf.getPage(i)
+      
+      // Parallelize page processing
+      const pagePromises = Array.from({ length: numPages }, (_, i) => i + 1).map(async (pageNum) => {
+        const page = await pdf.getPage(pageNum)
         const textContent = await page.getTextContent()
         const strings = textContent.items.map(item => item.str)
-        
-        // Joined text for better regex matching
         const fullText = strings.join(' ')
         
-        // Strategy: Look for the table header "證券代號"
-        // This helps us avoid noise like account numbers or dates in the document header
         const headerIndex = fullText.indexOf('證券代號')
-        if (headerIndex === -1) {
-          // If header not found on this page, skip to next page
-          continue
-        }
+        if (headerIndex === -1) return []
         
         const bodyText = fullText.substring(headerIndex)
-
-        // Regex explanation:
-        // 1. (\d+)?\s* : Optional leading index (項次)
-        // 2. (\d{4,6}) : Security Code (4-6 digits)
-        // 3. \s+ : Separator
-        // 4. ([\u4e00-\u9fa5A-Z0-9a-z...]+) : Security Name
         const regex = /(?:\d+\s+)?(\d{4,6})\s+([\u4e00-\u9fa5A-Z0-9a-z（）\(\)股份有限公司.\-_]+)/g
         
+        const pageResults = []
         let match
         while ((match = regex.exec(bodyText)) !== null) {
           const code = match[1]
           const name = match[2].trim()
 
-          // Strict filters:
-          // 1. If name is too short or just a date fragment (e.g. "月26日")
           if (name.length < 2) continue
-          if (/^[年月0-9日\s]+$/.test(name)) continue // Purely date-like labels
+          if (/^[年月0-9日\s]+$/.test(name)) continue
           
-          // 2. Skip common document labels
           const noiseLabels = ['產製時間', '帳號', '開戶日期', '戶名', '身分證', '統一編號', '證券代號', '證券名稱', '受控管', '借入', '市值']
           if (noiseLabels.some(label => name.includes(label))) continue
           
-          // 3. Ensure code looks like a Taiwan stock code (usually not part of a longer sequence)
-          // Since we matched 4-6 digits, we want to ensure it's not a fragment of a date or account number
-          // We check the context around the match if possible, but the header boundary already helps.
+          pageResults.push({ code, name })
+        }
+        return pageResults
+      })
 
-          if (!extractedData.some(item => item.code === code)) {
-            extractedData.push({ code, name })
-          }
+      const allPagesResults = await Promise.all(pagePromises)
+      
+      // Flatten and deduplicate
+      const flatResults = allPagesResults.flat()
+      const seenCodes = new Set()
+      const uniqueResults = []
+      
+      for (const item of flatResults) {
+        if (!seenCodes.has(item.code)) {
+          seenCodes.add(item.code)
+          uniqueResults.push(item)
         }
       }
 
-      results.value = extractedData
-      return extractedData
+      results.value = uniqueResults
+      return uniqueResults
     } catch (err) {
       console.error('PDF processing failed:', err)
       if (err.name === 'PasswordException') {

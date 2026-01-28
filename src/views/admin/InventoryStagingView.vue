@@ -471,7 +471,6 @@ const confirmLink = async () => {
     const missingCombos = uniqueCombos.filter(c => !souvenirMap[`${c.code}_${c.year}`])
 
     if (missingCombos.length > 0) {
-      console.log(`Found ${missingCombos.length} missing souvenirs, auto-creating...`)
       const toInsert = missingCombos.map(c => ({
         code: c.code,
         name: c.stock_name || '未知公司',
@@ -516,12 +515,9 @@ const confirmLink = async () => {
     const collectionsToUpsert = Array.from(collectionsToUpsertMap.values())
 
     if (collectionsToUpsert.length === 0) {
-      console.warn('[DEBUG] No valid items to upsert after deduplication');
       throw new Error('找不到可歸戶的紀念品資料')
     }
 
-    // [DEBUG-LOG-20260127-0023]
-    console.log(`[DEBUG] Upserting ${collectionsToUpsert.length} records to user_collections...`);
     const { error: collError } = await supabase
       .from('user_collections')
       .upsert(collectionsToUpsert, { onConflict: 'user_id,souvenir_id,status' })

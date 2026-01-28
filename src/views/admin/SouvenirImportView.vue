@@ -144,7 +144,6 @@ const processFile = async (f) => {
   file.value = f
   try {
     const rawData = await parseFile(f)
-    console.log('[View] Raw data summary:', rawData.slice(0, 2).map(r => JSON.stringify(r)))
     if (!rawData || rawData.length === 0) {
       throw new Error('檔案是空的或解析不到任何橫列資料')
     }

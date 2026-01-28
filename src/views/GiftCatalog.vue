@@ -284,7 +284,7 @@ const previousYearSouvenirs = ref(new Map()) // Track previous year souvenirs fo
 const filters = ref({
   search: '',
   year: new Date().getFullYear().toString(),
-  category: null,  // 預設顯示全部類別
+  category: '超商商品卡',
 })
 
 const isCurrentYear = computed(() => filters.value.year === new Date().getFullYear().toString())

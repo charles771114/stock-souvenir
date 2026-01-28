@@ -1,136 +1,86 @@
 # Stock Souvenir - 股東會紀念品管理系統
 
-一個現代化的股東會紀念品管理系統，從 Firebase 全面遷移至 **Supabase** 架構。支援一般用戶瀏覽和收藏紀念品，以及 Admin 管理員進行爬蟲數據更新與用戶管理。
+一個現代化、響應式且功能完善的股東會紀念品管理系統。從 Firebase 全面遷移至 **Supabase** 架構，支援一般用戶瀏覽和收藏紀念品，以及高級 Admin 管理員工具。
 
 ---
 
-## ✨ 主要功能
+## ✨ 核心功能
 
-### 👤 一般用戶
-- **Google 登入**：快速安全的身份驗證。
-- **紀念品瀏覽**：查看數千筆上市櫃公司紀念品資料 (圖片、價格、發放地點)。
-- **我的收藏**：標記感興趣的股票，並記錄「最後買進日」與「開會日期」。
-- **搜尋與篩選**：依照年份、分類或關鍵字快速查找。
+### 👤 一般用戶 (General User)
+- **Google 快速登入**：支援 Google OAuth。
+- **精品目錄 (Gift Catalog)**：現代化網格介面，查看數千筆上市櫃公司紀念品資料（含圖片、開會日期、最後買進日）。
+- **我的收藏 (My Collections)**：標記感興趣的股票，並追蹤其發放狀態。
+- **智慧統計**：自動统计收藏品中的「超商禮券」總額與各項目的庫存狀態。
+- **庫存同步**：一鍵將收藏品加入個人庫存。
 
 ### 🛡️ Admin 管理員 (後台)
-- **歷史資料匯入**：支援 CSV / Excel 批次上傳，並可指定年份 (解決舊資料年份判定問題)。
-- **用戶管理**：查看所有註冊會員列表與權限。
-- **爬蟲管理**：(開發中) 手動觸發 Edge Function 進行資料更新。
-- **後台路徑**：`/admin` (需具備 Admin 權限，否則會自動導回首頁)。
+- **後台主控台**：系統概況與數據統計。
+- **庫存歸戶管理 (Staging)**：支援 Excel/CSV 批量匯入，自動匹配用戶並建立歸戶資料。
+- **分類中心 (Classification)**：智慧分類對應，自動將關鍵字匹配至紀念品類別。
+- **審核隊列 (Review Queue)**：處理抓取過程中產生的存疑資料。
+- **用戶管理**：查看用戶權限、收藏統計，並可直接管理管理員名單。
+- **爬蟲管理**：手動觸發 Edge Functions 抓取最新數據，並監控抓取日誌。
+
+---
+
+## 📖 使用指南
+
+### 👤 一般用戶使用流程
+1. **登入**：點擊首頁「使用 Google 登入」。
+2. **瀏覽**：首頁即為紀念品目錄，可使用上方搜尋框關鍵字過濾，或使用年度、分類篩選。
+3. **收藏**：點擊卡片上的「收藏」按鈕（加號/心型）。
+4. **管理**：前往「我的收藏」，您可以：
+    - 查看所選年度的收藏清單。
+    - 點擊「展開統計」查看禮券總額、紀念品項目的分類加總。
+    - 點擊「新增到庫存」標記您已實際領取或持有的實體物品。
+    - 編輯收藏備註或特定領取日期。
+
+### 🛡️ 管理員操作指南
+1. **進入後台**：登入具管理員權限的帳號後，點擊導航列的「管理員」選單。
+2. **批量匯入資料**：
+    - 前往「庫存歸戶管理」。
+    - 上傳 CSV/Excel 檔案（需包含代號、姓名、年份等欄位）。
+    - 系統會自動比對現有用戶的資料。
+    - 針對「未匹配」的項目，您可以手動指定用戶。
+3. **維護紀念品分類**：
+    - 前往「分類中心」。
+    - 若系統抓取到新的紀念品名稱，可將其分配至正確的分類（如「居家」、「食品」）。
+    - 設定關鍵字，讓未來的抓取自動分類。
+4. **權限管理**：
+    - 前往「用戶管理」可將特定用戶升級為 Admin。
+    - 前往「Admin 設定」可直接編輯 Admin 白名單。
 
 ---
 
 ## 🚀 技術架構
 
-本專案採用前後端分離架構，並完全依賴 Supabase 提供的 Serverless 服務。
-
-- **Frontend**: Vue 3, Vite, TailwindCSS (Hosted on GitHub Pages)
-- **Backend**: Supabase (PostgreSQL)
-- **Auth**: Supabase Auth (Google OAuth)
-- **API/Functions**: Supabase Edge Functions (Deno)
+- **Frontend**: Vue 3 (Composition API), Vite, TailwindCSS (Hosted on GitHub Pages)
+- **Backend**: Supabase (PostgreSQL, Auth, Storage)
+- **Functions**: Supabase Edge Functions (Deno + Typescript)
+- **UI Architecture**: UI/UX Pro Max (Glassmorphism, Tailwind Animation System)
 
 ---
 
 ## 📦 快速開始 (Local Development)
 
-### 1. 環境準備
-- Node.js (v18+)
-- Docker Desktop (用於本地運行 Supabase)
-- Supabase CLI (`npm install -g supabase`)
-
-### 2. 安裝依賴
+### 1. 安裝與設定
 ```bash
 npm install
+cp .env.example .env
 ```
+請將 `VITE_SUPABASE_URL` 與 `VITE_SUPABASE_ANON_KEY` 填入 `.env`。
 
-### 3. 啟動後端 (Supabase)
-```bash
-# 啟動本地資料庫與服務
-supabase start
-
-# 這會顯示 API URL 和 Anon Key，請記下來
-```
-
-### 4. 設定環境變數
-將 `.env.example` 複製為 `.env`，並填入 `supabase start` 顯示的資訊：
-
-```ini
-# .env
-VITE_SUPABASE_URL=http://127.0.0.1:54321
-VITE_SUPABASE_ANON_KEY=sb_publishable_...
-
-# Google Login (本地開發需於 config.toml 設定，或直接使用 Supabase Dashboard 的設定)
-# 注意：前端不需要 GOOGLE_CLIENT_SECRET，這些是在 Supabase 平台設定的。
-```
-
-### 5. 啟動前端
+### 2. 啟動開發環境
 ```bash
 npm run dev
 ```
-前往 http://localhost:5173
 
 ---
 
-## 🚢 部署 (Deployment)
-
-本專案使用 **GitHub Actions** 自動部署至 **GitHub Pages**。
-
-### 1. 設定 GitHub Secrets
-為了安全起見，API Key 不應直接提交到 Git。請在 GitHub Repo 的 **Settings > Secrets and variables > Actions** 新增以下變數：
-
-| Secret Name | 說明 |
-|-------------|------|
-| `VITE_SUPABASE_URL` | 您的 Supabase 專案 URL (例如 https://xyz.supabase.co) |
-| `VITE_SUPABASE_ANON_KEY` | 您的 Supabase Anon Public Key |
-
-> **注意**：`GOOGLE_CLIENT_ID` 與 `GOOGLE_CLIENT_SECRET` **不需要** 設定在這裡。它們是在 Supabase Dashboard 的 Authentication > Providers > Google 中設定的。前端只需要 Supabase URL/Key 就能與 Auth 服務溝通。
-
-### 2. 推送程式碼
-推送到 `main` 或 `master` 分支即會自動觸發部署流程。
+## � 專案結構
+詳細結構請參閱 [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
 
 ---
 
-## 🛠️ 管理員指南
-
-### 如何成為 Admin？
-預設註冊用戶皆為 `user` 角色。要將某人設為 `admin`，需直接修改資料庫：
-
-1. 進入 Supabase Dashboard > SQL Editor。
-2. 執行以下 SQL (替換為目標 Email)：
-   ```sql
-   UPDATE public.profiles
-   SET role = 'admin'
-   WHERE email = 'target_user@gmail.com';
-   ```
-
-### 匯入歷史資料
-1. 登入具有 Admin 權限的帳號。
-2. 進入 **Admin Panel** (`/admin`)。
-3. 選擇 **歷史資料匯入**。
-4. 選取年份 (若檔案中日期缺少年份，如 "06/20")，並上傳 CSV/Excel 檔案。
-
----
-
-## 📂 專案結構
-
-```
-stock-souvenir/
-├── src/
-│   ├── components/  # Vue 元件 (AdminImportPanel, Navbar...)
-│   ├── views/       # 頁面 (Home, MyCollections, AdminPanel...)
-│   ├── composables/ # 邏輯複用 (useAuth, useGifts...)
-│   ├── lib/         # 第三方庫設定 (supabase.js)
-│   ├── utils/       # 工具函式 (fileParser.ts)
-│   └── style/       # Tailwind CSS
-├── supabase/        # 資料庫與後端定義
-│   ├── migrations/  # 資料庫變更記錄
-│   ├── functions/   # Edge Functions (爬蟲)
-│   └── seed.sql     # 測試資料
-├── scripts/         # 開發輔助腳本
-└── public/          # 靜態資源
-```
-
----
-
-**最後更新**: 2026-01-19
-**版本**: v2.0.0 (Supabase Migration Complete)
+**最後更新**: 2026-01-28
+**版本**: v3.0.0 (UI/UX Pro Max Update)

@@ -313,7 +313,6 @@ const { user } = useAuth()
 // Watch for user auth state to fetch data
 watch(user, async (val) => {
   if (val) {
-    console.log('[DEBUG] User available, fetching inventory...')
     await fetchAllInventory()
   }
 }, { immediate: true })

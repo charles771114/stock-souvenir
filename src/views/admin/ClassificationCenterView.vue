@@ -217,10 +217,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, markRaw, h } from 'vue'
-import { supabase } from '@/lib/supabase'
 import Navbar from '@/components/Navbar.vue'
 import { useCategories, type Category } from '@/composables/useCategories'
+import { useDialog } from '@/composables/useDialog'
+import { useToast } from '@/composables/useToast'
+import { supabase } from '@/lib/supabase'
+import { computed, onMounted, ref } from 'vue'
+
+const { showToast } = useToast()
+const { confirm: openConfirm } = useDialog()
 
 // Color Map (Tailwind Safelist equivalent)
 const colorMap: Record<string, string> = {
@@ -323,8 +328,9 @@ const assignCategory = async (souvenirName: string, categoryIdStr: string) => {
   if (!error) {
     // Optimistic update locally
     rawQueue.value = rawQueue.value.filter(item => item.souvenir_item !== souvenirName)
+    showToast('分類更新成功', 'success')
   } else {
-    alert('批量更新失敗: ' + error.message)
+    showToast('批量更新失敗: ' + error.message, 'error')
   }
 }
 
@@ -378,7 +384,7 @@ const removeKeyword = (index: number) => {
 
 const save = async () => {
   if (!form.value.name) {
-    alert('請輸入分類名稱')
+    showToast('請輸入分類名稱', 'warning')
     return
   }
   saving.value = true
@@ -390,20 +396,19 @@ const save = async () => {
       const { error } = await createCategory(form.value)
       if (error) throw error
     }
-    // After saving, trigger a generic re-match or just let user assign manually for now
-    // Actually, if we added a keyword that matches existing items, we might want to auto-assign them?
     // For now, let's keep it simple. User can now assign the new category from dropdown.
     closeModal()
   } catch (e: any) {
-    alert('儲存失敗: ' + e.message)
+    showToast('儲存失敗: ' + e.message, 'error')
   } finally {
     saving.value = false
   }
 }
 
 const handleDelete = async (id: number) => {
-  if (!confirm('確定要刪除此分類嗎？')) return
-  alert('刪除功能暫未開放')
+  const ok = await openConfirm('確定要刪除此分類嗎？')
+  if (!ok) return
+  showToast('刪除功能暫未開放', 'info')
 }
 </script>
 

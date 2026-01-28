@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { useToast } from '@/composables/useToast'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
@@ -7,12 +7,12 @@ export const useAuthStore = defineStore('auth', () => {
   const allowEmails = ['charles771114@gmail.com', 'you@example.com']
 
   const login = async () => {
+    const { showToast } = useToast()
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
     })
     if (error) {
-      console.error('Login failed:', error)
-      alert('登入失敗: ' + error.message)
+      showToast('登入失敗: ' + error.message, 'error')
     }
   }
 
@@ -34,6 +34,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     // 2. Listen for changes
     supabase.auth.onAuthStateChange((_event, session) => {
+      const { showToast } = useToast()
       if (session?.user && allowEmails.includes(session.user.email)) {
         user.value = session.user
       } else {
@@ -41,7 +42,7 @@ export const useAuthStore = defineStore('auth', () => {
         if (session?.user && !allowEmails.includes(session.user.email)) {
           // Optional: aggressive logout if not allowed
           supabase.auth.signOut()
-          alert('你沒有使用權限')
+          showToast('你沒有使用權限', 'error')
         }
       }
     })

@@ -152,11 +152,15 @@
 </template>
 
 <script setup lang="ts">
+import { useCategories } from '@/composables/useCategories'
+import { useDialog } from '@/composables/useDialog'; // Added import
+import { useToast } from '@/composables/useToast'
 import { supabase } from '@/lib/supabase'
 import { parseFile, type ParsedSouvenir } from '@/utils/fileParser'
-import { computed, ref, onMounted } from 'vue'
-import { useCategories } from '@/composables/useCategories'
+import { computed, onMounted, ref } from 'vue'
 
+const { showToast } = useToast()
+const { confirm: openConfirm } = useDialog() // Added declaration
 const { categories, fetchCategories, matchCategory } = useCategories()
 
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -202,12 +206,11 @@ const processFile = async (f: File) => {
     const result = await parseFile(f, selectedYear.value, selectedEncoding.value)
 
     if (result.errors.length > 0) {
-      console.warn('Parsing warnings/errors:', result.errors)
-      alert(`解析完成但有 ${result.errors.length} 筆錯誤。首筆錯誤: Row ${result.errors[0].row} - ${result.errors[0].reason}`)
+      showToast(`解析完成但有 ${result.errors.length} 筆錯誤`, 'warning')
     }
 
     if (result.data.length === 0) {
-      alert('檔案中沒有可用的有效資料')
+      showToast('檔案中沒有可用的有效資料', 'error')
       if (result.errors.length === 0) reset()
     } else {
       // Apply classification logic
@@ -218,11 +221,9 @@ const processFile = async (f: File) => {
       })
       
       parsedData.value = result.data
-      console.log('Parsed Valid Data:', result.data.slice(0, 3))
     }
   } catch (err) {
-    console.error(err)
-    alert('解析失敗: ' + (err as Error).message)
+    showToast('解析失敗: ' + (err as Error).message, 'error')
     reset()
   } finally {
     processing.value = false
@@ -240,7 +241,8 @@ const reset = () => {
 
 const handleImport = async () => {
   if (parsedData.value.length === 0) return
-  if (!confirm(`確定要匯入 ${parsedData.value.length} 筆資料嗎？重複的項目將被更新。`)) return
+  const ok = await openConfirm(`確定要匯入 ${parsedData.value.length} 筆資料嗎？重複的項目將被更新。`)
+  if (!ok) return
 
   uploading.value = true
   progress.value = 0
@@ -258,7 +260,6 @@ const handleImport = async () => {
       .upsert(chunk, { onConflict: 'doc_id' })
 
     if (error) {
-      console.error('Batch import error:', error)
       errors += chunk.length
     } else {
       uploaded += chunk.length
@@ -269,9 +270,9 @@ const handleImport = async () => {
 
   uploading.value = false
   if (errors > 0) {
-    alert(`匯入完成，但有 ${errors} 筆資料失敗。成功: ${uploaded} 筆。請查看 Console 了解詳情。`)
+    showToast(`匯入完成，但有 ${errors} 筆資料失敗`, 'warning')
   } else {
-    alert(`成功匯入 ${uploaded} 筆資料！`)
+    showToast(`成功匯入 ${uploaded} 筆資料！`, 'success')
     reset()
   }
 }

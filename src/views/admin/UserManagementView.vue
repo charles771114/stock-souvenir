@@ -324,8 +324,12 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import Navbar from '@/components/Navbar.vue'
 import { useAdmin } from '@/composables/useAdmin'
 import { useAuth } from '@/composables/useAuth'
+import { useDialog } from '@/composables/useDialog'
 import { useToast } from '@/composables/useToast'
 import { computed, onMounted, ref } from 'vue'
+
+const { showToast } = useToast()
+const { confirm: openConfirm } = useDialog()
 
 const { showToast } = useToast()
 
@@ -390,7 +394,8 @@ const toggleRole = async (targetUser) => {
   const newRole = targetUser.role === 'admin' ? 'user' : 'admin'
   const action = newRole === 'admin' ? '升級為管理員' : '降級為一般用戶'
   
-  if (!confirm(`確定要將「${targetUser.email}」${action}嗎？`)) return
+  const ok = await openConfirm(`確定要將「${targetUser.email}」${action}嗎？`)
+  if (!ok) return
 
   const { error: toggleError } = await toggleUserRole(targetUser.id, newRole)
   
@@ -402,7 +407,8 @@ const toggleRole = async (targetUser) => {
 }
 
 const confirmRemove = async (email) => {
-  if (!confirm(`確定要移除「${email}」的 admin 權限嗎？`)) return
+  const ok = await openConfirm(`確定要移除「${email}」的 admin 權限嗎？`)
+  if (!ok) return
 
   const { error: removeError } = await removeAdminEmail(email)
   
@@ -414,7 +420,8 @@ const confirmRemove = async (email) => {
 }
 
 const confirmPromote = async (email) => {
-  if (!confirm(`確定要將「${email}」設為主管理員 (Primary Admin) 嗎？\n\n主管理員擁有最高權限，且不能被移除。`)) return
+  const ok = await openConfirm(`確定要將「${email}」設為主管理員 (Primary Admin) 嗎？\n\n主管理員擁有最高權限，且不能被移除。`)
+  if (!ok) return
 
   const { error: promoteError } = await promoteToPrimary(email)
   

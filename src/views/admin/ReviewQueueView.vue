@@ -72,9 +72,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { useCategories } from '@/composables/useCategories'
+import { useToast } from '@/composables/useToast'
 import { supabase } from '@/lib/supabase'
-import { useCategories, type Category } from '@/composables/useCategories'
+import { onMounted, ref } from 'vue'
+
+const { showToast } = useToast()
 
 const { categories, fetchCategories } = useCategories()
 const queue = ref<any[]>([])
@@ -115,9 +118,9 @@ const assignCategory = async (item: any, categoryIdStr: string) => {
   if (!error) {
     // Remove from local queue
     queue.value = queue.value.filter(q => q.id !== item.id)
-    // Optional: Toast success
+    showToast('分類更新成功', 'success')
   } else {
-    alert('更新失敗')
+    showToast('更新失敗: ' + error.message, 'error')
   }
 }
 </script>

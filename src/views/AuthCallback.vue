@@ -44,10 +44,6 @@ const goToLogin = () => {
 
 onMounted(async () => {
   try {
-    console.log('Auth callback triggered')
-    console.log('Current URL:', window.location.href)
-    console.log('Hash:', window.location.hash)
-
     statusMessage.value = '處理登入資訊...'
 
     // IMPORTANT: For hash-based OAuth flow, we need to let Supabase parse the hash first
@@ -59,9 +55,6 @@ onMounted(async () => {
     // Now get the session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
-    console.log('Session after hash processing:', session)
-    console.log('Session error:', sessionError)
-
     if (sessionError) {
       console.error('Session error:', sessionError)
       throw sessionError
@@ -70,7 +63,6 @@ onMounted(async () => {
     if (!session) {
       // If still no session, check if we have hash params
       if (window.location.hash && window.location.hash.includes('access_token')) {
-        console.error('Hash contains token but no session created')
         // Try to manually trigger session from hash
         await supabase.auth.refreshSession()
         const { data: retryData } = await supabase.auth.getSession()
@@ -117,8 +109,6 @@ onMounted(async () => {
 
     // Slight delay for user feedback
     await new Promise(resolve => setTimeout(resolve, 800))
-
-    console.log('Redirecting to:', nextPath)
 
     // Clean up the URL hash before redirecting
     window.history.replaceState({}, document.title, window.location.pathname)

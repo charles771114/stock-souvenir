@@ -28,8 +28,6 @@ export function useAuth() {
       const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin
       const callbackUrl = `${siteUrl}${import.meta.env.BASE_URL}auth/callback`
       
-      console.log('Initiating Google Login with callback:', callbackUrl)
-
       const { data, error: signInError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -95,11 +93,6 @@ export function useAuth() {
 
       if (fetchError) throw fetchError
 
-      if (!data) {
-        console.warn(`Profile not found for user ${userId}`)
-        // Handle missing profile case gracefully, maybe return null or default structure
-      }
-
       // Map profiles structure to expected useAuth structure if needed
       // Currently, isAdmin computed property uses profile.value.is_admin
       // In new schema, we have 'role' column ('admin' or 'user').
@@ -139,7 +132,6 @@ export function useAuth() {
 
         // 監聽認證狀態變化
         supabase.auth.onAuthStateChange(async (event, session) => {
-          console.log('Auth state changed:', event)
 
           if (session?.user) {
             // 避免重複 fetch 同一用戶的 profile

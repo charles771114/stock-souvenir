@@ -8,7 +8,6 @@ export function useAdmin() {
   const error = ref(null)
 
   const fetchAllUsers = async () => {
-    console.log('🔄 Fetching all users...')
     loading.value = true
     error.value = null
     try {
@@ -29,8 +28,6 @@ export function useAdmin() {
 
       if (err) throw err
       
-      console.log('✅ Loaded profiles:', data.length)
-      console.table(data.map(u => ({ email: u.email, role: u.role, is_primary: u.is_primary_admin })))
 
       users.value = data.map(profile => ({
         ...profile,
@@ -94,7 +91,6 @@ export function useAdmin() {
     fetchAdminEmails: fetchAllUsers, // Alias for backward compatibility if needed
     fetchGiftStats,
     addAdminEmail: async (email) => {
-      console.log('➕ Adding admin:', email)
       loading.value = true
       error.value = null
       
@@ -139,7 +135,6 @@ export function useAdmin() {
         }
 
         // 3. Force refresh the list
-        console.log('✅ Admin added. Refreshing list...')
         await fetchAllUsers()
         
         loading.value = false

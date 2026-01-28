@@ -117,8 +117,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
 import { useCategories, type Category } from '@/composables/useCategories'
+import { useDialog } from '@/composables/useDialog'
+import { useToast } from '@/composables/useToast'
+import { computed, onMounted, ref } from 'vue'
+
+const { showToast } = useToast()
+const { confirm: openConfirm } = useDialog()
 
 const { categories, fetchCategories, createCategory, updateCategory, loading } = useCategories()
 
@@ -181,7 +186,7 @@ const removeKeyword = (index: number) => {
 
 const save = async () => {
   if (!form.value.name) {
-    alert('請輸入分類名稱')
+    showToast('請輸入分類名稱', 'warning')
     return
   }
 
@@ -196,15 +201,16 @@ const save = async () => {
     }
     closeModal()
   } catch (e: any) {
-    alert('儲存失敗: ' + e.message)
+    showToast('儲存失敗: ' + e.message, 'error')
   } finally {
     saving.value = false
   }
 }
 
 const handleDelete = async (id: number) => {
-  if (!confirm('確定要刪除此分類嗎？')) return
+  const ok = await openConfirm('確定要刪除此分類嗎？')
+  if (!ok) return
   // Note: Delete logic is not in useCategories yet, need to implement or just ignore for now as per plan
-  alert('刪除功能尚待實作 (需處理關聯資料)')
+  showToast('刪除功能尚待實作 (需處理關聯資料)', 'info')
 }
 </script>

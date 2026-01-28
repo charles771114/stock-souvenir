@@ -139,12 +139,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import Navbar from '@/components/Navbar.vue'
 import { useAdmin } from '@/composables/useAdmin'
 import { useAuth } from '@/composables/useAuth'
-import Navbar from '@/components/Navbar.vue'
-import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import { useDialog } from '@/composables/useDialog'
+import { useToast } from '@/composables/useToast'
 
+const { showToast } = useToast()
+const { confirm: openConfirm } = useDialog()
 const { adminEmails, loading, error, fetchAdminEmails, addAdminEmail, removeAdminEmail, promoteToPrimary } = useAdmin()
 const { user } = useAuth()
 
@@ -171,31 +174,33 @@ const handleAddAdmin = async () => {
   
   if (!addError) {
     newAdminEmail.value = ''
-    alert('Admin 新增成功')
+    showToast('Admin 新增成功', 'success')
   }
 }
 
 const confirmRemove = async (email) => {
-  if (!confirm(`確定要移除「${email}」的 admin 權限嗎？`)) return
+  const ok = await openConfirm(`確定要移除「${email}」的 admin 權限嗎？`)
+  if (!ok) return
 
   const { error: removeError } = await removeAdminEmail(email)
   
   if (!removeError) {
-    alert('Admin 移除成功')
+    showToast('Admin 移除成功', 'success')
   } else {
-    alert(removeError.message)
+    showToast(removeError.message, 'error')
   }
 }
 
 const confirmPromote = async (email) => {
-  if (!confirm(`確定要將「${email}」設為主管理員 (Primary Admin) 嗎？\n\n主管理員擁有最高權限，且不能被移除。`)) return
+  const ok = await openConfirm(`確定要將「${email}」設為主管理員 (Primary Admin) 嗎？\n\n主管理員擁有最高權限，且不能被移除。`)
+  if (!ok) return
 
   const { error: promoteError } = await promoteToPrimary(email)
   
   if (!promoteError) {
-    alert('已成功設為主管理員')
+    showToast('已成功設為主管理員', 'success')
   } else {
-    alert(promoteError.message)
+    showToast(promoteError.message, 'error')
   }
 }
 

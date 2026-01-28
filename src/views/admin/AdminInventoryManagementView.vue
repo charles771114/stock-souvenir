@@ -97,7 +97,9 @@
                   </div>
                   <div class="min-w-0">
                     <div class="font-black text-gray-900 truncate">{{ s.name }}</div>
-                    <div class="text-[10px] text-gray-400 font-black uppercase tracking-wider truncate">{{ s.souvenir_item }} ({{ s.year }})</div>
+                    <div class="text-[10px] text-gray-400 font-black uppercase tracking-wider truncate">
+                      {{ s.souvenir_item }} ({{ s.meeting_date ? new Date(s.meeting_date).getFullYear() : 'N/A' }})
+                    </div>
                   </div>
                 </div>
               </div>
@@ -255,11 +257,13 @@
 
 <script setup>
 import Navbar from '@/components/Navbar.vue'
+import { useDialog } from '@/composables/useDialog'
 import { useToast } from '@/composables/useToast'
 import { supabase } from '@/lib/supabase'
 import { ref, watch } from 'vue'
 
 const { showToast } = useToast()
+const { confirm: openConfirm } = useDialog()
 
 const searchMode = ref('user') // 'user' | 'souvenir'
 const userSearch = ref('')
@@ -319,9 +323,9 @@ const handleSouvenirSearch = () => {
     try {
       const { data, error } = await supabase
         .from('souvenirs')
-        .select('id, name, souvenir_item, code, year')
+        .select('id, name, souvenir_item, code, meeting_date')
         .or(`name.ilike.%${souvenirSearch.value}%,code.ilike.%${souvenirSearch.value}%`)
-        .order('year', { ascending: false })
+        .order('meeting_date', { ascending: false })
         .limit(10)
 
       if (!error) souvenirResults.value = data
@@ -342,7 +346,7 @@ const selectSouvenir = async (souvenir) => {
   selectedSouvenir.value = souvenir
   souvenirResults.value = []
   souvenirSearch.value = ''
-  await fetchInventoryBySouvenir(souvenir.id)
+  await fetchInventoryBySouvenir(souvenir)
 }
 
 const fetchInventoryByUser = async (userId) => {
@@ -365,13 +369,13 @@ const fetchInventoryByUser = async (userId) => {
   }
 }
 
-const fetchInventoryBySouvenir = async (souvenirId) => {
+const fetchInventoryBySouvenir = async (souvenir) => {
   loadingInventory.value = true
   try {
     const { data, error } = await supabase
       .from('user_collections')
-      .select('*, souvenir: souvenirs (*), profile: profiles (id, email, full_name)')
-      .eq('souvenir_id', souvenirId)
+      .select('*, souvenir: souvenirs!inner(*), profile: profiles (id, email, full_name)')
+      .eq('souvenir.code', souvenir.code)
       .eq('status', 'holding')
       .order('created_at', { ascending: false })
 
@@ -390,10 +394,22 @@ const handleDelete = async (item) => {
     ? item.souvenir?.name 
     : item.profile?.full_name || item.profile?.email
 
-  if (!confirm(`確定要刪除「${item.souvenir?.name}」的庫存記錄嗎？` + (searchMode.value === 'souvenir' ? `\n對象：${targetName}` : ''))) return
+  const ok = await openConfirm(`確定要刪除「${item.souvenir?.name}」的庫存記錄嗎？` + (searchMode.value === 'souvenir' ? `\n對象：${targetName}` : ''))
+  if (!ok) return
   
   deletingId.value = item.id
   try {
+    // 1. Reset matching inventory staging records if they exist
+    // Matching by user_id and stock_code
+    if (item.souvenir?.code && item.user_id) {
+       await supabase
+        .from('inventory_staging')
+        .update({ status: 'PENDING', matched_user_id: null })
+        .eq('matched_user_id', item.user_id)
+        .eq('stock_code', item.souvenir.code)
+    }
+
+    // 2. Delete the collection record
     const { error } = await supabase
       .from('user_collections')
       .delete()
@@ -401,7 +417,7 @@ const handleDelete = async (item) => {
 
     if (error) throw error
     
-    showToast('刪除成功', 'success')
+    showToast('刪除成功並已移回暫存區', 'success')
     inventory.value = inventory.value.filter(i => i.id !== item.id)
   } catch (err) {
     showToast('刪除失敗', 'error')
@@ -417,15 +433,31 @@ const handleBatchDelete = async () => {
 
   deletingAll.value = true
   try {
+    const itemsToDelete = inventory.value
+    const idsToDelete = itemsToDelete.map(i => i.id)
+
+    // 1. Reset inventory staging for all items in bulk if possible, 
+    // or iterate if composite keys are needed. 
+    // Since we have the list, we can group by user and code.
+    for (const item of itemsToDelete) {
+      if (item.souvenir?.code && item.user_id) {
+        await supabase
+          .from('inventory_staging')
+          .update({ status: 'PENDING', matched_user_id: null })
+          .eq('matched_user_id', item.user_id)
+          .eq('stock_code', item.souvenir.code)
+      }
+    }
+
+    // 2. Delete collection records
     const { error } = await supabase
       .from('user_collections')
       .delete()
-      .eq('souvenir_id', selectedSouvenir.value.id)
-      .eq('status', 'holding')
+      .in('id', idsToDelete)
 
     if (error) throw error
     
-    showToast(`已成功移除 ${inventory.value.length} 筆庫存記錄`, 'success')
+    showToast(`已回收 ${idsToDelete.length} 筆庫存至暫存區`, 'success')
     inventory.value = []
     showBatchModal.value = false
     batchConfirmText.value = ''
