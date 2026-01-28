@@ -189,7 +189,7 @@ export function useGifts() {
           gift:souvenirs (*)
         `)
         .eq('user_id', userId)
-        .eq('status', 'collected') // ONLY get gift collections
+        .in('status', ['collected', 'holding']) // Get both gift collections and inventory holdings
 
       // 套用年份篩選（如果指定）
       if (requestYear) {
@@ -204,10 +204,20 @@ export function useGifts() {
 
       if (fetchError) throw fetchError
 
-      // 因為有些資料可能因為 inner join 或 outer join 邏輯需要過濾 null gift (如果 API 沒濾掉)
+      // 過濾 null gift 並去重 (優先保留 collected 狀態，如果兩者都有)
       const filteredData = (data || []).filter(item => item.gift)
+      const uniqueMap = new Map()
+      
+      filteredData.forEach(item => {
+        const souvenirId = item.souvenir_id
+        // 優先保留 holding 狀態（在庫），如果兩者都有
+        if (!uniqueMap.has(souvenirId) || item.status === 'holding') {
+          uniqueMap.set(souvenirId, item)
+        }
+      })
 
-      myCollections.value = filteredData
+      const finalData = Array.from(uniqueMap.values())
+      myCollections.value = finalData
 
       // 3. 儲存快取
       if (requestYear && filteredData.length > 0) {

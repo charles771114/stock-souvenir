@@ -7,10 +7,10 @@
       <div class="mb-12 animate-fade-in-up">
         <h1
           class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 tracking-tighter">
-          我的收藏清單
+          我的購股領取計畫
         </h1>
         <p class="text-slate-400 mt-1 font-bold text-xs sm:text-sm uppercase tracking-wider">
-          管理您各年度計畫領取或已領取的紀念品項目
+          追蹤感興趣的紀念品，並管理對應的持股庫存
         </p>
       </div>
 
@@ -29,7 +29,7 @@
 
         <div class="flex items-center gap-6">
           <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100">
-            {{ selectedYear }} 年度收藏總計: {{ filteredCollections.length }}
+            {{ selectedYear }} 年度計畫總計: {{ filteredCollections.length }}
           </p>
           <button @click="showStats = !showStats" 
             class="text-[10px] font-black text-slate-400 hover:text-indigo-500 transition-colors uppercase tracking-widest flex items-center gap-1.5 px-2 py-1 hover:bg-slate-100 rounded-lg">
@@ -92,87 +92,160 @@
         <p class="text-xs font-black text-indigo-300 uppercase tracking-widest">Loading Collections...</p>
       </div>
 
-      <!-- Content - 條列式 (當前年度) -->
-      <div v-else-if="!loading && filteredCollections.length > 0 && isCurrentYear" class="flex flex-col gap-3">
-        <div v-for="item in filteredCollections" :key="item.id" class="animate-fade-in-up">
-          <div class="glass-card flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 hover:bg-white transition-all duration-300 border-white/50 group">
-            <!-- 左側資訊 -->
-            <div class="flex items-center gap-4 sm:gap-6 flex-grow">
-              <span class="font-mono text-[10px] font-black text-indigo-500 bg-indigo-50 px-2.5 py-1 rounded-lg shrink-0">
-                {{ item.gift?.code }}
-              </span>
-              <div class="flex flex-col">
-                <h3 class="text-sm font-black text-slate-700 group-hover:text-indigo-600 transition-colors">
-                  {{ item.gift?.name }}
-                </h3>
-                <p class="text-[11px] font-bold text-slate-400 mt-0.5">
-                  {{ item.gift?.souvenir_item }}
-                </p>
+      <!-- Content Sections -->
+      <div v-if="!loading && hasFilteredItems">
+        <!-- 1. 領取計畫 (collected) -->
+        <div v-if="groupedCollections.planned.length > 0" class="mb-10">
+          <div class="flex items-center gap-3 mb-4 px-2">
+            <div class="w-1 h-6 bg-indigo-500 rounded-full"></div>
+            <h2 class="text-lg font-black text-slate-700 tracking-tight">待買進標的</h2>
+            <span class="text-[10px] font-black bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-lg border border-indigo-100">
+              {{ groupedCollections.planned.length }}
+            </span>
+          </div>
+          
+          <div v-if="isCurrentYear" class="flex flex-col gap-3">
+            <div v-for="item in groupedCollections.planned" :key="item.id" class="animate-fade-in-up">
+              <div class="glass-card flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 hover:bg-white transition-all duration-300 border-white/50 group">
+                <!-- 左側資訊 -->
+                <div class="flex items-center gap-4 sm:gap-6 flex-grow">
+                  <span class="font-mono text-[10px] font-black text-indigo-500 bg-indigo-50 px-2.5 py-1 rounded-lg shrink-0">
+                    {{ item.gift?.code }}
+                  </span>
+                  <div class="flex flex-col">
+                    <h3 class="text-sm font-black text-slate-700 group-hover:text-indigo-600 transition-colors">
+                      {{ item.gift?.name }}
+                    </h3>
+                    <p class="text-[11px] font-bold text-slate-400 mt-0.5">
+                      {{ item.gift?.souvenir_item }}
+                    </p>
+                  </div>
+                </div>
+
+                <!-- 右側操作 -->
+                <div class="flex items-center justify-between sm:justify-end gap-6 mt-4 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-50">
+                  <button @click="addToInventory(item.souvenir_id)" :disabled="addingToInventory === item.souvenir_id"
+                    class="flex items-center gap-1.5 px-3 py-1 bg-slate-50 text-slate-400 rounded-full border border-slate-100 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all duration-300 cursor-pointer group">
+                    <svg v-if="addingToInventory === item.souvenir_id" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <svg v-else class="w-3.5 h-3.5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span class="text-[10px] font-black uppercase tracking-wider">{{ addingToInventory === item.souvenir_id ? '新增中...' : '新增到庫存' }}</span>
+                  </button>
+
+                  <button @click="handleRemove(item.id)" :disabled="removing === item.id"
+                    class="p-2.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all duration-300 border border-transparent hover:border-rose-100">
+                    <i v-if="removing === item.id" class="fas fa-spinner fa-spin"></i>
+                    <i v-else class="fas fa-trash-alt w-4 h-4"></i>
+                  </button>
+                </div>
               </div>
             </div>
-
-            <!-- 右側狀態與操作 -->
-            <div class="flex items-center justify-between sm:justify-end gap-6 mt-4 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-50">
-              <!-- 庫存狀態 -->
-              <div class="flex items-center shrink-0">
-                <div v-if="inventoryIds.has(item.souvenir_id)"
-                  class="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100/50">
-                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span class="text-[10px] font-black uppercase tracking-wider">在庫存中</span>
+          </div>
+          <!-- 卡片式 (其他年度 - 領取計畫) -->
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div v-for="item in groupedCollections.planned" :key="item.id" class="animate-fade-in-up">
+              <div class="glass-card p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                <div class="flex justify-between items-start mb-4">
+                  <span class="font-mono text-[10px] font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">
+                    {{ item.gift?.code }}
+                  </span>
+                  <button @click="handleRemove(item.id)" :disabled="removing === item.id"
+                    class="text-slate-300 hover:text-rose-500 transition-colors">
+                    <i v-if="removing === item.id" class="fas fa-spinner fa-spin"></i>
+                    <i v-else class="fas fa-trash-alt w-5 h-5"></i>
+                  </button>
                 </div>
-                <button v-else @click="addToInventory(item.souvenir_id)" :disabled="addingToInventory === item.souvenir_id"
-                  class="flex items-center gap-1.5 px-3 py-1 bg-slate-50 text-slate-400 rounded-full border border-slate-100 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all duration-300 cursor-pointer group">
-                  <svg v-if="addingToInventory === item.souvenir_id" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <svg v-else class="w-3.5 h-3.5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span class="text-[10px] font-black uppercase tracking-wider">{{ addingToInventory === item.souvenir_id ? '新增中...' : '新增到庫存' }}</span>
-                </button>
+                <h3 class="text-lg font-black text-slate-900 mb-2">{{ item.gift?.name }}</h3>
+                <p class="text-sm text-slate-600 font-medium mb-6 line-clamp-2">
+                  {{ item.gift?.souvenir_item || '尚未公布' }}
+                </p>
+                <div class="pt-4 border-t border-slate-50 flex items-center justify-between">
+                  <div class="flex flex-col">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">開會日期</span>
+                    <span class="text-xs font-black font-mono text-slate-600">{{ item.gift?.meeting_date || '-' }}</span>
+                  </div>
+                </div>
               </div>
-
-              <!-- 刪除按鈕 -->
-              <button @click="handleRemove(item.id)" :disabled="removing === item.id"
-                class="p-2.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all duration-300 border border-transparent hover:border-rose-100">
-                <i v-if="removing === item.id" class="fas fa-spinner fa-spin"></i>
-                <i v-else class="fas fa-trash-alt w-4 h-4"></i>
-              </button>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Content - 卡片式 (其他年度) -->
-      <div v-else-if="!loading && filteredCollections.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div v-for="item in filteredCollections" :key="item.id" class="animate-fade-in-up">
-          <div class="glass-card p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-            <div class="flex justify-between items-start mb-4">
-              <span class="font-mono text-[10px] font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">
-                {{ item.gift?.code }}
-              </span>
-              <button @click="handleRemove(item.id)" :disabled="removing === item.id"
-                class="text-slate-300 hover:text-rose-500 transition-colors">
-                <i v-if="removing === item.id" class="fas fa-spinner fa-spin"></i>
-                <i v-else class="fas fa-trash-alt w-5 h-5"></i>
-              </button>
-            </div>
-            <h3 class="text-lg font-black text-slate-900 mb-2">{{ item.gift?.name }}</h3>
-            <p class="text-sm text-slate-600 font-medium mb-6 line-clamp-2">
-              {{ item.gift?.souvenir_item || '尚未公布' }}
-            </p>
-            
-            <div class="pt-4 border-t border-slate-50 flex items-center justify-between">
-              <div class="flex flex-col">
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">開會日期</span>
-                <span class="text-xs font-black font-mono text-slate-600">{{ item.gift?.meeting_date || '-' }}</span>
+        <!-- 2. 在庫項目 (holding) -->
+        <div v-if="groupedCollections.inventory.length > 0" class="mb-10">
+          <div class="flex items-center gap-3 mb-4 px-2">
+            <div class="w-1 h-6 bg-emerald-500 rounded-full"></div>
+            <h2 class="text-lg font-black text-slate-700 tracking-tight">已入袋持股</h2>
+            <span class="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-lg border border-emerald-100">
+              {{ groupedCollections.inventory.length }}
+            </span>
+          </div>
+
+          <div v-if="isCurrentYear" class="flex flex-col gap-3">
+            <div v-for="item in groupedCollections.inventory" :key="item.id" class="animate-fade-in-up">
+              <div class="glass-card border-emerald-100/50 hover:border-emerald-200/50 bg-emerald-50/20 flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 hover:bg-white transition-all duration-300 group">
+                <!-- 左側資訊 -->
+                <div class="flex items-center gap-4 sm:gap-6 flex-grow">
+                  <span class="font-mono text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg shrink-0">
+                    {{ item.gift?.code }}
+                  </span>
+                  <div class="flex flex-col">
+                    <h3 class="text-sm font-black text-slate-700 group-hover:text-emerald-600 transition-colors">
+                      {{ item.gift?.name }}
+                    </h3>
+                    <p class="text-[11px] font-bold text-slate-400 mt-0.5">
+                      {{ item.gift?.souvenir_item }}
+                    </p>
+                  </div>
+                </div>
+
+                <!-- 右側狀態 -->
+                <div class="flex items-center justify-between sm:justify-end gap-6 mt-4 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-50">
+                  <div class="flex items-center shrink-0">
+                    <div class="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100/50 shadow-sm">
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span class="text-[10px] font-black uppercase tracking-wider">已經在庫存</span>
+                    </div>
+                  </div>
+                  
+                  <button @click="handleRemove(item.id)" :disabled="removing === item.id"
+                    class="p-2.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all duration-300 border border-transparent hover:border-rose-100">
+                    <i v-if="removing === item.id" class="fas fa-spinner fa-spin"></i>
+                    <i v-else class="fas fa-trash-alt w-4 h-4"></i>
+                  </button>
+                </div>
               </div>
-              <div class="flex flex-col text-right">
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">領取狀態</span>
-                <span class="text-[10px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded shadow-sm">已在清單</span>
+            </div>
+          </div>
+          <!-- 卡片式 (其他年度 - 在庫項目) -->
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div v-for="item in groupedCollections.inventory" :key="item.id" class="animate-fade-in-up">
+              <div class="glass-card border-emerald-100/50 p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                <div class="flex justify-between items-start mb-4">
+                  <span class="font-mono text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg">
+                    {{ item.gift?.code }}
+                  </span>
+                  <button @click="handleRemove(item.id)" :disabled="removing === item.id"
+                    class="text-slate-300 hover:text-rose-500 transition-colors">
+                    <i v-if="removing === item.id" class="fas fa-spinner fa-spin"></i>
+                    <i v-else class="fas fa-trash-alt w-5 h-5"></i>
+                  </button>
+                </div>
+                <h3 class="text-lg font-black text-slate-900 mb-2">{{ item.gift?.name }}</h3>
+                <p class="text-sm text-slate-600 font-medium mb-6 line-clamp-2">
+                  {{ item.gift?.souvenir_item || '尚未公布' }}
+                </p>
+                <div class="pt-4 border-t border-slate-50 flex items-center justify-between">
+                  <div class="flex flex-col">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">狀態</span>
+                    <span class="text-[10px] font-black text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded shadow-sm">已持有</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -190,7 +263,7 @@
           </svg>
         </div>
         <h4 class="text-xl font-bold text-slate-900 mb-2">
-          {{ selectedYear }} 年度尚無收藏
+          {{ selectedYear }} 年度尚無預計標的
         </h4>
         <p class="text-sm text-slate-400 max-w-xs mb-8">您可以前往「紀念品目錄」挑選感興趣的紀念品加入清單。</p>
         <router-link to="/gifts"
@@ -255,8 +328,24 @@ const isCurrentYear = computed(() => {
 const filteredCollections = computed(() => {
   return myCollections.value.filter(item => {
     const meetingDate = item.gift?.meeting_date
-    return meetingDate?.startsWith(selectedYear.value)
+    if (!meetingDate?.startsWith(selectedYear.value)) return false
+    
+    // 嚴格過濾：名稱必須「明確」
+    const name = item.gift?.souvenir_item || ''
+    const isVague = name.includes('開會55日前再行公告') || name === '尚未公布' || name === ''
+    
+    return !isVague
   })
+})
+
+const hasFilteredItems = computed(() => filteredCollections.value.length > 0)
+
+const groupedCollections = computed(() => {
+  // 領取計畫：狀態為 collected 且名稱明確（已在 filteredCollections 中過濾過）
+  const planned = filteredCollections.value.filter(item => item.status === 'collected')
+  // 在庫項目：狀態為 holding 且名稱明確
+  const inventory = filteredCollections.value.filter(item => item.status === 'holding')
+  return { planned, inventory }
 })
 
 const souvenirCounts = computed(() => {

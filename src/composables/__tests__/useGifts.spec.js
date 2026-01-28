@@ -12,7 +12,7 @@ import { ref } from 'vue'
 const mockUser = ref(null)
 
 // Mock useAuth composable
-vi.mock('./useAuth', () => ({
+vi.mock('../useAuth', () => ({
   useAuth: () => ({
     user: mockUser,
     profile: ref(null),
@@ -24,7 +24,7 @@ vi.mock('./useAuth', () => ({
 }))
 
 // Mock localStorage cache
-vi.mock('./useLocalStorageCache', () => ({
+vi.mock('../useLocalStorageCache', () => ({
   useLocalStorageCache: () => ({
     get: vi.fn(() => null),
     set: vi.fn(),
@@ -43,7 +43,7 @@ vi.mock('@/lib/supabase', () => ({
 }))
 
 // Import after mocks
-import { useGifts } from './useGifts'
+import { useGifts } from '../useGifts'
 
 describe('useGifts', () => {
   beforeEach(() => {
@@ -57,9 +57,9 @@ describe('useGifts', () => {
       expect(gifts.value).toEqual([])
     })
 
-    it('should have empty collections array by default', () => {
-      const { collections } = useGifts()
-      expect(collections.value).toEqual([])
+    it('should have empty myCollections array by default', () => {
+      const { myCollections } = useGifts()
+      expect(myCollections.value).toEqual([])
     })
 
     it('should not be loading by default', () => {
@@ -178,28 +178,26 @@ describe('useGifts', () => {
         { id: 'coll-1', souvenir_id: 'gift-1', souvenir: { id: 'gift-1', name: 'Test' } },
       ]
 
-      const mockOrder = vi.fn().mockResolvedValueOnce({
-        data: mockCollectionsData,
-        error: null,
-      })
-      const mockEq = vi.fn().mockReturnValueOnce({ order: mockOrder })
+      const mockIn = vi.fn().mockReturnValueOnce({ order: mockOrder })
+      const mockEq = vi.fn().mockReturnValueOnce({ in: mockIn })
       const mockSelect = vi.fn().mockReturnValueOnce({ eq: mockEq })
 
       mockSupabase.from.mockReturnValueOnce({ select: mockSelect })
 
-      const { fetchMyCollections, collections } = useGifts()
+      const { fetchMyCollections, myCollections } = useGifts()
       await fetchMyCollections()
 
       expect(mockSupabase.from).toHaveBeenCalledWith('user_collections')
       expect(mockEq).toHaveBeenCalledWith('user_id', 'test-user-id')
-      expect(collections.value).toEqual(mockCollectionsData)
+      expect(mockIn).toHaveBeenCalledWith('status', ['collected', 'holding'])
+      expect(myCollections.value).toEqual(mockCollectionsData)
     })
   })
 
   describe('isInCollection', () => {
     it('should return true when gift is in collection', () => {
-      const { collections, isInCollection } = useGifts()
-      collections.value = [
+      const { myCollections, isInCollection } = useGifts()
+      myCollections.value = [
         { id: 'coll-1', souvenir_id: 'gift-1' },
         { id: 'coll-2', souvenir_id: 'gift-2' },
       ]
@@ -209,8 +207,8 @@ describe('useGifts', () => {
     })
 
     it('should return false when gift is not in collection', () => {
-      const { collections, isInCollection } = useGifts()
-      collections.value = [
+      const { myCollections, isInCollection } = useGifts()
+      myCollections.value = [
         { id: 'coll-1', souvenir_id: 'gift-1' },
       ]
 
@@ -220,16 +218,16 @@ describe('useGifts', () => {
 
   describe('getCollection', () => {
     it('should return collection record for a given gift', () => {
-      const { collections, getCollection } = useGifts()
+      const { myCollections, getCollection } = useGifts()
       const mockCollection = { id: 'coll-1', souvenir_id: 'gift-1', note: 'Test note' }
-      collections.value = [mockCollection]
+      myCollections.value = [mockCollection]
 
       expect(getCollection('gift-1')).toEqual(mockCollection)
     })
 
     it('should return undefined when gift is not in collection', () => {
-      const { collections, getCollection } = useGifts()
-      collections.value = []
+      const { myCollections, getCollection } = useGifts()
+      myCollections.value = []
 
       expect(getCollection('gift-1')).toBeUndefined()
     })
@@ -265,9 +263,8 @@ describe('useGifts', () => {
       expect(mockInsert).toHaveBeenCalledWith({
         user_id: 'test-user-id',
         souvenir_id: 'gift-1',
-        status: 'wanted',
-        collected_date: null,
-      })
+        status: 'collected'
+      }, { onConflict: 'user_id,souvenir_id,status' })
     })
   })
 
@@ -277,8 +274,8 @@ describe('useGifts', () => {
       const mockDelete = vi.fn().mockReturnValueOnce({ eq: mockEq })
       mockSupabase.from.mockReturnValueOnce({ delete: mockDelete })
 
-      const { removeFromCollection, collections } = useGifts()
-      collections.value = [
+      const { removeFromCollection, myCollections } = useGifts()
+      myCollections.value = [
         { id: 'coll-1', souvenir_id: 'gift-1' },
         { id: 'coll-2', souvenir_id: 'gift-2' },
       ]
@@ -286,8 +283,8 @@ describe('useGifts', () => {
       const result = await removeFromCollection('coll-1')
 
       expect(result.success).toBe(true)
-      expect(collections.value).toHaveLength(1)
-      expect(collections.value[0].id).toBe('coll-2')
+      expect(myCollections.value).toHaveLength(1)
+      expect(myCollections.value[0].id).toBe('coll-2')
     })
 
     it('should handle deletion errors', async () => {
@@ -338,7 +335,7 @@ describe('useGifts', () => {
       expect(result).toEqual(new Set(['sov-1', 'sov-2', 'sov-3']))
       expect(mockSelect).toHaveBeenCalledWith('souvenir_id')
       expect(mockEqUser).toHaveBeenCalledWith('user_id', 'test-user-id')
-      expect(mockEqStatus).toHaveBeenCalledWith('status', 'collected')
+      expect(mockEqStatus).toHaveBeenCalledWith('status', 'holding')
     })
   })
 })

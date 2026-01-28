@@ -30,7 +30,7 @@
             <router-link to="/my-collections"
               class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors"
               :class="isActive('/my-collections') ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:text-indigo-600 hover:bg-gray-50'">
-              領取清單
+              購股計畫
             </router-link>
 
             <router-link to="/inventory"
@@ -143,7 +143,7 @@
             class="block px-4 py-2.5 text-base font-medium transition-all duration-200 animate-slide-in"
             style="animation-delay: 0.1s"
             :class="isActive('/my-collections') ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600'">
-            領取清單
+            購股計畫
           </router-link>
           <router-link to="/inventory" 
             class="block px-4 py-2.5 text-base font-medium transition-all duration-200 animate-slide-in"
