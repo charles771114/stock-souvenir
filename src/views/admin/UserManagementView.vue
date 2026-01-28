@@ -331,8 +331,6 @@ import { computed, onMounted, ref } from 'vue'
 const { showToast } = useToast()
 const { confirm: openConfirm } = useDialog()
 
-const { showToast } = useToast()
-
 const { users, adminEmails, loading, error, fetchAllUsers, addAdminEmail, removeAdminEmail, promoteToPrimary, toggleUserRole } = useAdmin()
 const { user } = useAuth()
 
