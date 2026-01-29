@@ -89,7 +89,7 @@
                   <div class="flex items-center justify-between group/sub">
                     <span class="text-[10px] font-bold text-slate-500">{{ sub.label }}</span>
                     <span class="text-[10px] font-black text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{{ sub.count
-                    }}</span>
+                      }}</span>
                   </div>
                   <!-- L3: Companies with Inventory Status -->
                   <div class="flex flex-wrap gap-1.5">
@@ -152,9 +152,17 @@
                     </div>
                     <p class="text-[11px] font-bold text-slate-400 mt-0.5 flex flex-wrap items-center gap-2">
                       <span>{{ item.gift?.souvenir_item }}</span>
-                      <span v-if="item.gift?.last_buy_date"
-                        class="text-[9px] font-black text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100 uppercase tracking-tighter">最後買進:
-                        {{ item.gift?.last_buy_date }}</span>
+                      <span v-if="item.gift?.last_buy_date" :class="[
+                        'text-[9px] font-black px-1.5 py-0.5 rounded border uppercase tracking-tighter flex items-center gap-1',
+                        getUrgencyColor(getUrgencyLevel(item.gift?.last_buy_date))
+                      ]">
+                        <span v-if="getUrgencyLevel(item.gift?.last_buy_date) === 'urgent'">🔴</span>
+                        <span v-else-if="getUrgencyLevel(item.gift?.last_buy_date) === 'warning'">🟡</span>
+                        最後買進: {{ item.gift?.last_buy_date }}
+                        <span v-if="getDaysRemaining(item.gift?.last_buy_date) > 0" class="font-mono">
+                          ({{ getDaysRemaining(item.gift?.last_buy_date) }}天)
+                        </span>
+                      </span>
                       <span v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)"
                         class="text-[10px] text-slate-300 italic font-medium">
                         (去年: {{ previousYearSouvenirs.get(item.gift?.code) }})
@@ -219,9 +227,17 @@
                 </div>
                 <p class="text-sm text-slate-600 font-medium mb-6 line-clamp-2">
                   <span>{{ item.gift?.souvenir_item || '尚未公布' }}</span>
-                  <span v-if="item.gift?.last_buy_date"
-                    class="block text-[10px] font-black text-rose-500 mt-1 uppercase tracking-widest">最後買進: {{
-                      item.gift?.last_buy_date }}</span>
+                  <span v-if="item.gift?.last_buy_date" :class="[
+                    'block text-[10px] font-black mt-1 uppercase tracking-widest px-2 py-1 rounded inline-flex items-center gap-1',
+                    getUrgencyColor(getUrgencyLevel(item.gift?.last_buy_date))
+                  ]">
+                    <span v-if="getUrgencyLevel(item.gift?.last_buy_date) === 'urgent'">🔴</span>
+                    <span v-else-if="getUrgencyLevel(item.gift?.last_buy_date) === 'warning'">🟡</span>
+                    最後買進: {{ item.gift?.last_buy_date }}
+                    <span v-if="getDaysRemaining(item.gift?.last_buy_date) > 0" class="font-mono">
+                      ({{ getDaysRemaining(item.gift?.last_buy_date) }}天)
+                    </span>
+                  </span>
                   <br v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)" />
                   <span v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)"
                     class="text-xs text-slate-400 italic">
@@ -232,7 +248,7 @@
                   <div class="flex flex-col">
                     <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">開會日期</span>
                     <span class="text-xs font-black font-mono text-slate-600">{{ item.gift?.meeting_date || '-'
-                    }}</span>
+                      }}</span>
                   </div>
                 </div>
               </div>
@@ -428,6 +444,34 @@ const isExpired = (dateString) => {
   const target = new Date(dateString).setHours(23, 59, 59, 999)
   const now = new Date().getTime()
   return target < now
+}
+
+// 🆕 計算距離最後買進日的剩餘天數
+const getDaysRemaining = (dateString) => {
+  if (!dateString) return null
+  const target = new Date(dateString).setHours(23, 59, 59, 999)
+  const now = new Date().getTime()
+  const diff = target - now
+  return Math.ceil(diff / (1000 * 60 * 60 * 24))
+}
+
+// 🆕 取得緊急程度 (urgent, warning, normal)
+const getUrgencyLevel = (dateString) => {
+  const days = getDaysRemaining(dateString)
+  if (days === null || days < 0) return null
+  if (days <= 3) return 'urgent'
+  if (days <= 7) return 'warning'
+  return 'normal'
+}
+
+// 🆕 取得緊急程度的顏色樣式
+const getUrgencyColor = (level) => {
+  switch (level) {
+    case 'urgent': return 'text-red-500 bg-red-50 border-red-200'
+    case 'warning': return 'text-amber-500 bg-amber-50 border-amber-200'
+    case 'normal': return 'text-emerald-500 bg-emerald-50 border-emerald-200'
+    default: return 'text-slate-400 bg-slate-50 border-slate-200'
+  }
 }
 
 const toggleCategory = (name) => {

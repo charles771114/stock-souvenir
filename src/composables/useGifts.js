@@ -28,9 +28,26 @@ export function useGifts() {
       const code = String(item.gift?.code || '').trim()
       const uniqueKey = code || item.souvenir_id
       
-      // 優先保留 holding 狀態（已持股），如果兩者都有
-      if (!uniqueMap.has(uniqueKey) || item.status === 'holding') {
+      const existing = uniqueMap.get(uniqueKey)
+      
+      // 優先順序：
+      // 1. user_collections (沒有 _source 或 _source !== 'inventory')
+      // 2. holding 狀態
+      // 3. inventory 來源
+      if (!existing) {
         uniqueMap.set(uniqueKey, item)
+      } else {
+        const existingIsInventory = existing._source === 'inventory'
+        const currentIsInventory = item._source === 'inventory'
+        
+        // 如果現有的是 inventory 來源，而新的不是，則替換
+        if (existingIsInventory && !currentIsInventory) {
+          uniqueMap.set(uniqueKey, item)
+        }
+        // 如果兩者來源相同，優先保留 holding 狀態
+        else if (existingIsInventory === currentIsInventory && item.status === 'holding') {
+          uniqueMap.set(uniqueKey, item)
+        }
       }
     })
     
@@ -157,6 +174,70 @@ export function useGifts() {
     }
   }
 
+  /**
+   * 取得庫存中有明確紀念品的項目
+   * 用於在 MyCollections 中自動顯示已持有的紀念品
+   */
+  const fetchInventoryWithGifts = async (year = null) => {
+    try {
+      if (!user.value) return []
+
+      // 1. 查詢 user_inventory 並關聯 souvenirs
+      let invQuery = supabase
+        .from('user_inventory')
+        .select(`
+          *,
+          souvenir:souvenirs!user_inventory_stock_code_fkey (*)
+        `)
+      
+      if (isCombinedView.value) {
+        invQuery = invQuery.eq('user_id', user.value.id)
+      } else if (currentPortfolioId.value) {
+        invQuery = invQuery.eq('portfolio_id', currentPortfolioId.value)
+      } else {
+        return []
+      }
+
+      const { data: inventoryData, error: invError } = await invQuery
+
+      if (invError) {
+        console.error('查詢庫存紀念品失敗:', invError)
+        return []
+      }
+
+      // 2. 過濾：只保留有明確紀念品的項目
+      const validItems = inventoryData?.filter(inv => {
+        const gift = inv.souvenir
+        if (!gift) return false
+        
+        // 必須有明確的紀念品名稱
+        const hasValidName = gift.souvenir_item && 
+                            gift.souvenir_item !== '尚未公布' && 
+                            gift.souvenir_item !== ''
+        
+        // 必須符合年份（如果有指定）
+        const matchesYear = !year || gift.meeting_date?.startsWith(year)
+        
+        return hasValidName && matchesYear
+      }) || []
+
+      // 3. 轉換為與 user_collections 相同的格式
+      return validItems.map(inv => ({
+        id: `inv_${inv.id}`, // 加上前綴避免與 user_collections 的 ID 衝突
+        user_id: inv.user_id,
+        portfolio_id: inv.portfolio_id,
+        souvenir_id: inv.souvenir?.id,
+        status: 'holding',
+        created_at: inv.created_at,
+        gift: inv.souvenir,
+        _source: 'inventory' // 標記來源
+      }))
+    } catch (e) {
+      console.error('取得庫存紀念品失敗:', e)
+      return []
+    }
+  }
+
   const fetchMyCollections = async (year = null) => {
     loading.value = true
     error.value = null
@@ -214,7 +295,14 @@ export function useGifts() {
 
       if (fetchError) throw fetchError
 
-      const finalData = deduplicateCollections(data)
+      // 🆕 取得庫存中的紀念品
+      const inventoryGifts = await fetchInventoryWithGifts(requestYear)
+
+      // 🆕 合併兩個來源的資料
+      const combinedData = [...(data || []), ...inventoryGifts]
+      
+      // 🆕 去重：優先保留 user_collections 的記錄
+      const finalData = deduplicateCollections(combinedData)
       myCollections.value = finalData
 
       if (requestYear && requestYear !== currentYear && finalData.length > 0) {
