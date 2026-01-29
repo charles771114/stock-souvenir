@@ -20,10 +20,10 @@
           </div>
           <h1
             class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 tracking-tighter mb-2">
-            使用者收藏總覽
+            已入袋持股總覽
           </h1>
           <p class="text-slate-400 font-bold text-xs sm:text-sm uppercase tracking-wider">
-            全域收藏統計、使用者行為模式與審核日誌
+            全域持股統計、使用者資產分布與領取記錄
           </p>
         </div>
 
@@ -46,7 +46,7 @@
                 d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
           </div>
-          <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">總收藏次數</span>
+          <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">總持股筆數</span>
           <div class="flex items-end gap-2">
             <span class="text-4xl font-black text-slate-800 tracking-tighter">{{ stats.totalCollections }}</span>
             <span class="text-[10px] font-black text-emerald-500 mb-1.5 uppercase tracking-widest">+ Live</span>
@@ -61,7 +61,7 @@
                 d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
           </div>
-          <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">活躍使用者數</span>
+          <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">持股使用者數</span>
           <div class="flex items-end gap-2">
             <span class="text-4xl font-black text-slate-800 tracking-tighter">{{ stats.activeUsers }}</span>
             <span class="text-[10px] font-black text-slate-400 mb-1.5 uppercase tracking-widest">位使用者</span>
@@ -76,7 +76,7 @@
                 d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
           </div>
-          <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">人均收藏數</span>
+          <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">人均持股數</span>
           <div class="flex items-end gap-2">
             <span class="text-4xl font-black text-slate-800 tracking-tighter">{{ avgCollections }}</span>
             <span class="text-[10px] font-black text-slate-400 mb-1.5 uppercase tracking-widest">個項目</span>
@@ -356,49 +356,183 @@ const fetchUsers = async () => {
 const fetchFavorites = async () => {
   loading.value = true
   try {
-    let query = supabase
+    // 1. 查詢 user_collections (只查詢 status = 'holding')
+    let collQuery = supabase
       .from('user_collections')
       .select(`
         id, user_id, portfolio_id, souvenir_id, created_at,
         profiles!inner(email, full_name),
         portfolios(name, is_default),
-        souvenirs!inner(code, name, souvenir_item, meeting_date)
+        souvenirs!inner(code, name, souvenir_item, meeting_date, last_buy_date)
       `)
+      .eq('status', 'holding')  // 🆕 只查詢已入袋
       .order('created_at', { ascending: false })
 
-    if (selectedUser.value) query = query.eq('profiles.email', selectedUser.value)
+    if (selectedUser.value) collQuery = collQuery.eq('profiles.email', selectedUser.value)
 
-    const { data, error } = await query
-    if (error) throw error
+    // 2. 查詢 user_inventory
+    let invQuery = supabase
+      .from('user_inventory')
+      .select('*')
 
-    if (data) {
-      let results = data.map(item => ({
-        collection_id: item.id,
-        user_id: item.user_id,
-        email: item.profiles.email,
-        full_name: item.profiles.full_name,
-        portfolio_name: item.portfolios?.name || '未知',
-        is_default_portfolio: item.portfolios?.is_default || false,
-        stock_code: item.souvenirs.code,
-        company_name: item.souvenirs.name,
-        souvenir_item: item.souvenirs.souvenir_item,
-        meeting_date: item.souvenirs.meeting_date,
-        collected_at: item.created_at
-      }))
+    const [collRes, invRes] = await Promise.all([collQuery, invQuery])
 
-      if (selectedYear.value) {
-        results = results.filter(f => {
-          const year = new Date(f.meeting_date).getFullYear().toString()
-          return year === selectedYear.value
+    if (collRes.error) throw collRes.error
+    if (invRes.error) throw invRes.error
+
+    // 3. 處理 user_collections 資料
+    const collectionHoldings = collRes.data?.map(item => ({
+      id: item.id,
+      user_id: item.user_id,
+      email: item.profiles.email,
+      full_name: item.profiles.full_name,
+      portfolio_id: item.portfolio_id,
+      portfolio_name: item.portfolios?.name || '未知',
+      is_default_portfolio: item.portfolios?.is_default || false,
+      stock_code: item.souvenirs.code,
+      company_name: item.souvenirs.name,
+      souvenir_item: item.souvenirs.souvenir_item,
+      meeting_date: item.souvenirs.meeting_date,
+      last_buy_date: item.souvenirs.last_buy_date,
+      collected_at: item.created_at,
+      _source: 'collection'
+    })) || []
+
+    // 4. 處理 user_inventory 資料
+    const stockCodes = invRes.data?.map(inv => inv.stock_code).filter(Boolean) || []
+
+    let inventoryHoldings = []
+    if (stockCodes.length > 0) {
+      // 查詢對應的紀念品
+      const { data: souvenirData } = await supabase
+        .from('souvenirs')
+        .select('*')
+        .in('code', stockCodes)
+
+      // 建立映射
+      const souvenirMap = new Map()
+      souvenirData?.forEach(s => {
+        if (s.souvenir_item && s.souvenir_item !== '尚未公布' && s.souvenir_item !== '') {
+          souvenirMap.set(String(s.code).trim(), s)
+        }
+      })
+
+      // 查詢使用者資訊
+      const userIds = [...new Set(invRes.data.map(inv => inv.user_id))]
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, email, full_name')
+        .in('id', userIds)
+
+      const profileMap = new Map(profilesData?.map(p => [p.id, p]) || [])
+
+      // 查詢帳戶資訊
+      const portfolioIds = [...new Set(invRes.data.map(inv => inv.portfolio_id).filter(Boolean))]
+      const { data: portfoliosData } = await supabase
+        .from('portfolios')
+        .select('id, name, is_default')
+        .in('id', portfolioIds)
+
+      const portfolioMap = new Map(portfoliosData?.map(p => [p.id, p]) || [])
+
+      // 合併資料
+      inventoryHoldings = invRes.data
+        .map(inv => {
+          const souvenir = souvenirMap.get(String(inv.stock_code).trim())
+          if (!souvenir) return null
+
+          const profile = profileMap.get(inv.user_id)
+          if (!profile) return null
+
+          // 如果有選擇特定使用者，過濾
+          if (selectedUser.value && profile.email !== selectedUser.value) return null
+
+          const portfolio = portfolioMap.get(inv.portfolio_id)
+
+          return {
+            id: `inv_${inv.id}`,
+            user_id: inv.user_id,
+            email: profile.email,
+            full_name: profile.full_name,
+            portfolio_id: inv.portfolio_id,
+            portfolio_name: portfolio?.name || '未知',
+            is_default_portfolio: portfolio?.is_default || false,
+            stock_code: souvenir.code,
+            company_name: souvenir.name,
+            souvenir_item: souvenir.souvenir_item,
+            meeting_date: souvenir.meeting_date,
+            last_buy_date: souvenir.last_buy_date,
+            collected_at: inv.created_at,
+            _source: 'inventory'
+          }
         })
-      }
-      favorites.value = results
+        .filter(Boolean)
     }
+
+    // 5. 合併並去重
+    const combined = [...collectionHoldings, ...inventoryHoldings]
+    const deduped = deduplicateHoldings(combined)
+
+    // 6. 年份過濾
+    let results = deduped
+    if (selectedYear.value) {
+      results = results.filter(f => {
+        const year = new Date(f.meeting_date).getFullYear().toString()
+        return year === selectedYear.value
+      })
+    }
+
+    favorites.value = results
   } catch (e) {
     console.error(e)
     showToast('載入資料失敗', 'error')
   } finally {
     loading.value = false
+  }
+}
+
+// 🆕 去重邏輯
+const deduplicateHoldings = (holdings) => {
+  const map = new Map()
+
+  holdings.forEach(item => {
+    const key = `${item.user_id}_${item.stock_code}_${item.portfolio_id}`
+    const existing = map.get(key)
+
+    // 優先保留 collection 來源
+    if (!existing || (existing._source === 'inventory' && item._source === 'collection')) {
+      map.set(key, item)
+    }
+  })
+
+  return Array.from(map.values())
+}
+
+// 🆕 計算距離最後買進日的剩餘天數
+const getDaysRemaining = (dateString) => {
+  if (!dateString) return null
+  const target = new Date(dateString).setHours(23, 59, 59, 999)
+  const now = new Date().getTime()
+  const diff = target - now
+  return Math.ceil(diff / (1000 * 60 * 60 * 24))
+}
+
+// 🆕 取得緊急程度
+const getUrgencyLevel = (dateString) => {
+  const days = getDaysRemaining(dateString)
+  if (days === null || days < 0) return null
+  if (days <= 3) return 'urgent'
+  if (days <= 7) return 'warning'
+  return 'normal'
+}
+
+// 🆕 取得緊急程度的顏色樣式
+const getUrgencyColor = (level) => {
+  switch (level) {
+    case 'urgent': return 'text-red-500 bg-red-50 border-red-200'
+    case 'warning': return 'text-amber-500 bg-amber-50 border-amber-200'
+    case 'normal': return 'text-emerald-500 bg-emerald-50 border-emerald-200'
+    default: return 'text-slate-400 bg-slate-50 border-slate-200'
   }
 }
 
