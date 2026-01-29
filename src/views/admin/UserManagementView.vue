@@ -1,347 +1,269 @@
 <template>
-  <div class="min-h-screen bg-gray-50 relative overflow-hidden">
-    <!-- Animated Background Mesh (same as AdminPanel) -->
-    <div class="absolute inset-0 z-0 pointer-events-none opacity-40">
-      <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-200 rounded-full blur-[100px] animate-blob"></div>
-      <div class="absolute top-[20%] right-[-10%] w-[40%] h-[40%] bg-purple-200 rounded-full blur-[100px] animate-blob animation-delay-2000"></div>
-      <div class="absolute bottom-[-10%] left-[20%] w-[40%] h-[40%] bg-pink-100 rounded-full blur-[100px] animate-blob animation-delay-4000"></div>
-    </div>
+  <div class="min-h-screen bg-[#fafafa]">
+    <Navbar />
 
-    <Navbar class="relative z-10" />
-
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-10">
-      <!-- Header -->
-      <div class="mb-10 flex items-center justify-between">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in">
+      <!-- Page Header -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-12 gap-6 animate-fade-in-up">
         <div>
-          <h1 class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 tracking-tighter mb-2">
-            用戶管理
+          <div class="flex items-center gap-2 mb-4">
+            <router-link to="/admin/panel"
+              class="group flex items-center gap-2 text-slate-400 hover:text-indigo-600 transition-all font-bold text-xs uppercase tracking-widest leading-none">
+              <div
+                class="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-indigo-50 group-hover:border-indigo-100 shadow-sm transition-all">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7" />
+                </svg>
+              </div>
+              管理主頁
+            </router-link>
+          </div>
+          <h1
+            class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 tracking-tighter mb-2">
+            用戶權限管理
           </h1>
-          <p class="text-base sm:text-lg text-gray-600 font-light">
-            User Management & Permissions
+          <p class="text-slate-400 font-bold text-xs sm:text-sm uppercase tracking-wider">
+            使用者列表、權限設定與社群統計
           </p>
         </div>
-        <div class="text-sm text-gray-500 font-mono bg-white/50 backdrop-blur-sm px-3 py-1 rounded-full border border-gray-200/50">
-          {{ users.length }} Users
-        </div>
-      </div>
 
-      <!-- Tab Navigation -->
-      <div class="mb-8">
-        <div class="bg-white/60 backdrop-blur-xl border border-white/40 shadow-lg rounded-2xl p-2 inline-flex gap-2">
-          <button
-            @click="activeTab = 'all'"
-            :class="[
-              'px-6 py-3 rounded-xl font-medium transition-all duration-300',
-              activeTab === 'all' 
-                ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg shadow-indigo-200' 
-                : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-            ]"
-          >
-            <span class="flex items-center gap-2">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-              所有用戶 ({{ users.length }})
-            </span>
-          </button>
-          <button
-            @click="activeTab = 'admins'"
-            :class="[
-              'px-6 py-3 rounded-xl font-medium transition-all duration-300',
-              activeTab === 'admins' 
-                ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg shadow-indigo-200' 
-                : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-            ]"
-          >
-            <span class="flex items-center gap-2">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              管理員 ({{ adminEmails.length }})
-            </span>
-          </button>
-        </div>
-      </div>
-
-      <!-- All Users Tab Content -->
-      <div v-show="activeTab === 'all'" class="space-y-6">
-        <!-- Search & Filter Bar -->
-        <div class="bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
-          <div class="flex flex-col sm:flex-row gap-4">
-            <div class="flex-1 relative">
-              <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                v-model="searchQuery"
-                type="text"
-                placeholder="搜尋 Email 或姓名..."
-                class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-              />
-            </div>
-            <select
-              v-model="filterRole"
-              class="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-            >
-              <option value="">所有角色</option>
-              <option value="admin">管理員</option>
-              <option value="user">一般用戶</option>
-            </select>
+        <div class="flex items-center gap-3">
+          <div class="px-5 py-2 rounded-2xl bg-indigo-50 border border-indigo-100/50 shadow-sm">
+            <span class="text-xs font-black text-indigo-600 uppercase tracking-widest">{{ users.length }} 位註冊用戶</span>
           </div>
         </div>
+      </div>
 
-        <!-- User Cards Grid -->
-        <div v-if="loading && users.length === 0" class="flex justify-center py-12">
-          <LoadingSpinner />
+      <!-- Tabs Navigation -->
+      <div class="flex flex-col sm:flex-row gap-4 mb-8 sm:mb-12 animate-fade-in-up delay-100">
+        <div class="flex bg-slate-100/50 p-1.5 rounded-[1.5rem] w-full sm:w-auto self-start">
+          <button @click="activeTab = 'all'" :class="[
+            'px-6 py-3 rounded-[1.25rem] text-xs font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2',
+            activeTab === 'all' ? 'bg-white text-indigo-600 shadow-xl shadow-indigo-500/10' : 'text-slate-400 hover:text-slate-600'
+          ]">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            所有用戶
+          </button>
+          <button @click="activeTab = 'admins'" :class="[
+            'px-6 py-3 rounded-[1.25rem] text-xs font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2',
+            activeTab === 'admins' ? 'bg-white text-indigo-600 shadow-xl shadow-indigo-500/10' : 'text-slate-400 hover:text-slate-600'
+          ]">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            管理員
+          </button>
         </div>
 
-        <div v-else-if="filteredUsers.length === 0" class="bg-white/80 backdrop-blur-md rounded-2xl p-12 text-center">
-          <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-          </svg>
-          <p class="text-gray-500 text-lg">找不到符合條件的用戶</p>
+        <!-- Quick Search (Only for All Tab) -->
+        <div v-if="activeTab === 'all'" class="flex-1 relative animate-fade-in">
+          <div class="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+            <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input v-model="searchQuery" type="text" placeholder="搜尋電子郵件或名稱..."
+            class="w-full h-full min-h-[56px] pl-14 pr-6 py-3 bg-white border border-slate-100 rounded-[1.5rem] text-sm font-bold placeholder:text-slate-300 shadow-sm focus:border-indigo-200 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none" />
+        </div>
+      </div>
+
+      <!-- Tab Content: All Users -->
+      <div v-show="activeTab === 'all'" class="animate-fade-in-up delay-200">
+        <div v-if="loading && users.length === 0" class="py-24 flex flex-col items-center gap-6">
+          <div class="w-16 h-16 border-8 border-indigo-50 border-t-indigo-600 rounded-full animate-spin"></div>
+          <p class="text-sm font-black text-indigo-300 uppercase tracking-[0.2em] animate-pulse">同步使用者目錄中...</p>
         </div>
 
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-else-if="filteredUsers.length === 0" class="glass-card py-24 text-center">
           <div
-            v-for="user in filteredUsers"
-            :key="user.id"
-            class="group relative bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl shadow-indigo-100/20 rounded-2xl p-6 transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-200/30"
-          >
-            <div class="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent rounded-2xl pointer-events-none"></div>
-            
-            <div class="relative">
-              <!-- User Avatar & Info -->
-              <div class="flex items-start gap-4 mb-4">
-                <div class="relative flex-shrink-0">
-                  <div class="h-14 w-14 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                    {{ user.email.charAt(0).toUpperCase() }}
-                  </div>
-                  <!-- Primary Badge -->
-                  <div v-if="user.is_primary_admin" class="absolute -top-1 -right-1 bg-yellow-400 rounded-full p-1 border-2 border-white shadow-lg" title="主管理員">
-                    <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  </div>
-                </div>
-
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 mb-1">
-                    <h3 class="text-sm font-semibold text-gray-900 truncate">
-                      {{ user.email }}
-                    </h3>
-                    <span v-if="isCurrentUser(user.email)" class="px-2 py-0.5 text-xs bg-indigo-100 text-indigo-700 rounded-full font-medium">
-                      您
-                    </span>
-                  </div>
-                  
-                  <!-- Role Toggle -->
-                  <button
-                    @click="toggleRole(user)"
-                    :disabled="user.is_primary_admin || isCurrentUser(user.email)"
-                    :class="[
-                      'inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200',
-                      user.role === 'admin'
-                        ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
-                      (user.is_primary_admin || isCurrentUser(user.email)) && 'opacity-50 cursor-not-allowed'
-                    ]"
-                  >
-                    <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                    {{ user.role === 'admin' ? 'Admin' : 'User' }}
-                  </button>
-                </div>
-              </div>
-
-              <!-- User Stats -->
-              <div class="grid grid-cols-2 gap-3 pt-4 border-t border-gray-100">
-                <div class="text-center">
-                  <p class="text-xs text-gray-500 mb-1">註冊時間</p>
-                  <p class="text-sm font-semibold text-gray-900">{{ formatDate(user.created_at) }}</p>
-                </div>
-                <div class="text-center">
-                  <p class="text-xs text-gray-500 mb-1">收藏數</p>
-                  <p class="text-sm font-semibold text-gray-900">{{ user.collection_count || 0 }}</p>
-                </div>
-              </div>
-
-              <!-- User Portfolios -->
-              <div class="mt-4 pt-4 border-t border-gray-100">
-                <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-2">持有的帳戶 ({{ user.portfolios.length }})</p>
-                <div class="flex flex-wrap gap-1.5">
-                  <div v-for="p in user.portfolios" :key="p.id"
-                    class="px-2 py-0.5 rounded text-[10px] font-bold border"
-                    :class="p.is_default ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-gray-50 text-gray-600 border-gray-100'"
-                  >
-                    {{ p.name }}
-                    <span v-if="p.is_default" class="text-[8px] opacity-70 ml-0.5">(預設)</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Admins Tab Content -->
-      <div v-show="activeTab === 'admins'" class="space-y-6">
-        <!-- Add Admin Form -->
-        <div class="bg-gradient-to-br from-indigo-50 to-purple-50/30 border border-indigo-100 rounded-2xl p-6 shadow-lg">
-          <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
-            <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            class="w-20 h-20 bg-slate-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 border border-slate-100">
+            <svg class="w-10 h-10 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
-            新增管理員
-          </h2>
-          
-          <form @submit.prevent="handleAddAdmin" class="flex gap-4">
-            <div class="flex-1">
-              <input
-                v-model="newAdminEmail"
-                type="email"
-                placeholder="輸入 Email 地址"
-                required
-                class="w-full px-4 py-3 border border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-white/80"
-              />
-            </div>
-            <button
-              type="submit"
-              :disabled="loading"
-              class="px-8 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl hover:shadow-lg hover:shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-semibold"
-            >
-              {{ loading ? '新增中...' : '新增' }}
-            </button>
-          </form>
-
-          <p class="mt-3 text-sm text-indigo-700 flex items-center">
-            <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            新增後該 email 下次登入會自動成為 admin
-          </p>
-
-          <!-- Error Message -->
-          <div v-if="error" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl">
-            <p class="text-sm text-red-800">{{ error }}</p>
           </div>
+          <p class="text-sm font-black text-slate-300 uppercase tracking-widest">找不到符合搜尋條件的用戶</p>
         </div>
 
-        <!-- Admin List -->
-        <div class="bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-transparent">
-            <h2 class="text-lg font-bold text-gray-900">Admin 帳號列表</h2>
-          </div>
-
-          <div v-if="loading && adminEmails.length === 0" class="p-6 flex justify-center">
-            <LoadingSpinner />
-          </div>
-
-          <div v-else-if="adminEmails.length === 0" class="p-6 text-center text-gray-500">
-            尚無 Admin 帳號
-          </div>
-
-          <div v-else class="divide-y divide-gray-100">
-            <div
-              v-for="admin in adminEmails"
-              :key="admin.email"
-              class="px-6 py-5 flex items-center justify-between hover:bg-gradient-to-r hover:from-indigo-50/30 hover:to-transparent transition-all duration-200"
-            >
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div v-for="user in filteredUsers" :key="user.id"
+            class="glass-card p-8 group hover:border-indigo-200 transition-all flex flex-col">
+            <div class="flex items-start justify-between mb-8">
               <div class="flex items-center gap-4">
                 <div class="relative">
-                  <div class="h-12 w-12 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold shadow-lg">
-                    {{ admin.email.charAt(0).toUpperCase() }}
+                  <div
+                    class="h-16 w-16 rounded-[1.75rem] border-4 border-white shadow-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white font-black text-2xl group-hover:scale-105 transition-transform duration-500">
+                    {{ user.email.charAt(0).toUpperCase() }}
                   </div>
-                  <!-- Primary Badge -->
-                  <div v-if="admin.is_primary_admin" class="absolute -top-1 -right-1 bg-yellow-400 rounded-full p-1 border-2 border-white shadow-lg" title="主管理員">
+                  <div v-if="user.is_primary_admin"
+                    class="absolute -top-1 -right-1 w-6 h-6 bg-amber-400 rounded-lg border-2 border-white flex items-center justify-center shadow-md animate-bounce shadow-amber-200">
                     <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      <path
+                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                   </div>
                 </div>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 mb-1">
+                    <h3 class="text-base font-black text-slate-800 truncate leading-none">{{ user.email.split('@')[0] }}
+                    </h3>
+                    <span v-if="isCurrentUser(user.email)"
+                      class="text-[8px] font-black bg-indigo-600 text-white px-1.5 py-0.5 rounded uppercase tracking-widest">自己</span>
+                  </div>
+                  <p class="text-[10px] font-bold text-slate-400 truncate">{{ user.email }}</p>
+                </div>
+              </div>
+            </div>
 
+            <div class="grid grid-cols-2 gap-4 mb-8">
+              <div
+                class="p-4 rounded-2xl bg-indigo-50/30 border border-indigo-100/20 group-hover:bg-white group-hover:border-indigo-100 transition-all">
+                <span class="text-[8px] font-black text-slate-300 uppercase tracking-widest block mb-1">收藏項目數</span>
+                <span class="text-xl font-black text-slate-700 tracking-tighter">{{ user.collection_count || 0 }}</span>
+              </div>
+              <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100/50 group-hover:bg-white transition-all">
+                <span class="text-[8px] font-black text-slate-300 uppercase tracking-widest block mb-1">註冊日期</span>
+                <span class="text-[10px] font-black text-slate-600 font-mono tracking-tighter">{{
+                  formatDate(user.created_at) }}</span>
+              </div>
+            </div>
+
+            <div class="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between">
+              <div class="flex flex-wrap gap-1.5 min-h-[24px]">
+                <span v-for="p in user.portfolios.slice(0, 2)" :key="p.id"
+                  class="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-500 text-[9px] font-bold border border-slate-200 shadow-sm leading-none">
+                  {{ p.name }}
+                </span>
+                <span v-if="user.portfolios.length > 2" class="text-[9px] font-black text-slate-300 self-center">+{{
+                  user.portfolios.length - 2 }} 個帳戶</span>
+              </div>
+
+              <button @click="toggleRole(user)" :disabled="user.is_primary_admin || isCurrentUser(user.email)"
+                class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
+                :class="[
+                  user.role === 'admin' ? 'bg-indigo-600 text-white shadow-indigo-200' : 'bg-white border border-slate-100 text-slate-400 hover:border-indigo-600 hover:text-indigo-600',
+                  (user.is_primary_admin || isCurrentUser(user.email)) && 'opacity-30 cursor-not-allowed grayscale'
+                ]">
+                {{ user.role.toUpperCase() }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: Admins -->
+      <div v-show="activeTab === 'admins'" class="animate-fade-in-up delay-200 space-y-12">
+        <!-- New Admin Section -->
+        <div class="glass-card p-10 bg-gradient-to-br from-white/80 via-white to-indigo-50/30">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-10">
+            <div class="max-w-md">
+              <span class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-2 block">權限管理中心</span>
+              <h2 class="text-3xl font-black text-slate-800 tracking-tighter mb-4">新增管理員權限</h2>
+              <p class="text-sm font-bold text-slate-400 leading-relaxed mb-6">輸入電子郵件以授權管理員權限。被授權者下次登入時，系統將自動套用管理員角色環境。
+              </p>
+
+              <div v-if="error"
+                class="mb-4 p-4 bg-rose-50 border border-rose-100 rounded-2xl text-xs font-bold text-rose-500 animate-bounce-in">
+                Error: {{ error }}
+              </div>
+            </div>
+
+            <form @submit.prevent="handleAddAdmin" class="flex-1 w-full flex flex-col sm:flex-row gap-4">
+              <div class="relative flex-1">
+                <input v-model="newAdminEmail" type="email" placeholder="enter-email@stock-souvenir.com" required
+                  class="w-full h-16 px-8 bg-white border border-slate-200 rounded-[1.5rem] text-sm font-bold placeholder:text-slate-300 shadow-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none" />
+              </div>
+              <button type="submit" :disabled="loading"
+                class="px-10 h-16 bg-indigo-600 text-white rounded-[1.5rem] text-xs font-black uppercase tracking-widest shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:shadow-2xl transition-all disabled:opacity-50 flex items-center justify-center gap-3">
+                <div v-if="loading" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin">
+                </div>
+                同步權限設定
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Admin Table / Cards -->
+        <div>
+          <div class="flex items-center gap-3 mb-8 px-2">
+            <h2 class="text-[10px] font-black text-indigo-900/40 uppercase tracking-[0.2em] flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              已授權管理員帳戶
+            </h2>
+            <div class="h-px flex-1 bg-indigo-50/50"></div>
+          </div>
+
+          <div v-if="adminEmails.length === 0" class="glass-card py-24 text-center">
+            <p class="text-sm font-black text-slate-300 uppercase tracking-widest">尚無 Admin 帳號</p>
+          </div>
+
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div v-for="admin in adminEmails" :key="admin.email"
+              class="glass-card p-6 flex items-center justify-between group hover:border-indigo-200 transition-all">
+              <div class="flex items-center gap-5">
+                <div class="relative">
+                  <div
+                    class="h-14 w-14 rounded-2xl bg-slate-900 flex items-center justify-center text-white font-black text-xl shadow-xl group-hover:scale-105 transition-transform duration-500">
+                    {{ admin.email.charAt(0).toUpperCase() }}
+                  </div>
+                  <div v-if="admin.is_primary_admin"
+                    class="absolute -top-1 -right-1 w-5 h-5 bg-amber-400 rounded-lg border-2 border-white flex items-center justify-center shadow-md shadow-amber-200">
+                    <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path
+                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  </div>
+                </div>
                 <div>
                   <div class="flex items-center gap-2 mb-1">
-                    <span class="text-sm font-semibold text-gray-900">{{ admin.email }}</span>
-                    <span v-if="isCurrentUser(admin.email)" class="px-2 py-0.5 text-xs bg-indigo-100 text-indigo-700 rounded-full font-medium">
-                      您現在的帳號
-                    </span>
-                    <span v-if="admin.is_primary_admin" class="px-2 py-0.5 text-xs bg-gradient-to-r from-amber-400 to-yellow-400 text-amber-900 rounded-full font-medium border border-amber-200 shadow-sm">
-                      Primary
-                    </span>
+                    <span class="text-sm font-black text-slate-800">{{ admin.email }}</span>
+                    <span v-if="isCurrentUser(admin.email)"
+                      class="text-[8px] font-black bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded uppercase tracking-widest border border-indigo-100 shadow-sm leading-none">Your
+                      Account</span>
                   </div>
-                  <p class="text-xs text-gray-500">
-                    新增於 {{ formatDate(admin.added_at) }}
-                  </p>
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">加入日期: {{
+                    formatDate(admin.added_at) }}</p>
                 </div>
               </div>
 
-              <div class="flex items-center gap-2">
-                <!-- Promote Button -->
-                <button
-                  v-if="!admin.is_primary_admin"
-                  @click="confirmPromote(admin.email)"
-                  class="px-4 py-2 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-all duration-200 border border-indigo-100 hover:border-indigo-200"
-                >
-                  設為主管理員
+              <div class="flex gap-2">
+                <button v-if="!admin.is_primary_admin" @click="confirmPromote(admin.email)"
+                  class="px-4 py-2.5 bg-white border border-slate-200 text-amber-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-50 hover:border-amber-200 transition-all shadow-sm">
+                  升級權限
                 </button>
-
-                <!-- Remove Button -->
-                <button
-                  v-if="!isCurrentUser(admin.email) && !admin.is_primary_admin"
+                <button v-if="!isCurrentUser(admin.email) && !admin.is_primary_admin"
                   @click="confirmRemove(admin.email)"
-                  class="px-4 py-2 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-all duration-200 border border-red-100 hover:border-red-200"
-                >
-                  移除權限
+                  class="px-4 py-2.5 bg-white border border-slate-100 text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-50 hover:border-rose-100 transition-all shadow-sm">
+                  撤銷權限
                 </button>
-                <span v-else-if="admin.is_primary_admin" class="px-4 py-2 text-xs text-gray-400 italic">
-                  無法移除
+                <span v-else-if="admin.is_primary_admin"
+                  class="px-4 py-2.5 bg-slate-50 text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100/50">
+                  鎖定中
                 </span>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Warning Notice -->
-        <div class="bg-gradient-to-br from-yellow-50 to-amber-50/30 border border-yellow-200 rounded-2xl p-6 shadow-lg">
-          <div class="flex gap-4">
-            <svg class="w-6 h-6 text-yellow-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-            </svg>
-            <div class="flex-1">
-              <p class="font-semibold text-yellow-900 mb-2">注意事項</p>
-              <ul class="space-y-1 text-sm text-yellow-800">
-                <li class="flex items-start">
-                  <span class="mr-2">•</span>
-                  <span>您無法移除自己的 admin 權限</span>
-                </li>
-                <li class="flex items-start">
-                  <span class="mr-2">•</span>
-                  <span>移除 admin 後，該用戶下次登入時會失去管理員權限</span>
-                </li>
-                <li class="flex items-start">
-                  <span class="mr-2">•</span>
-                  <span>請謹慎管理 admin 帳號列表</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
       </div>
-    </div>
+    </main>
   </div>
 </template>
 
 <script setup>
-// Build tag: 2026-01-28-v3
-import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import Navbar from '@/components/Navbar.vue'
 import { useAdmin } from '@/composables/useAdmin'
 import { useAuth } from '@/composables/useAuth'
 import { useDialog } from '@/composables/useDialog'
 import { useToast } from '@/composables/useToast'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 const { showToast } = useToast()
 const { confirm: openConfirm } = useDialog()
@@ -360,26 +282,21 @@ const isCurrentUser = (email) => {
 
 const filteredUsers = computed(() => {
   let result = users.value
-
-  // Search filter
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
-    result = result.filter(u => 
+    result = result.filter(u =>
       u.email.toLowerCase().includes(query) ||
       u.full_name?.toLowerCase().includes(query)
     )
   }
-
-  // Role filter
   if (filterRole.value) {
     result = result.filter(u => u.role === filterRole.value)
   }
-
   return result
 })
 
 const formatDate = (dateString) => {
-  if (!dateString) return '未知'
+  if (!dateString) return '從未'
   const date = new Date(dateString)
   return date.toLocaleDateString('zh-TW', {
     year: 'numeric',
@@ -390,30 +307,24 @@ const formatDate = (dateString) => {
 
 const handleAddAdmin = async () => {
   if (!newAdminEmail.value) return
-
   const { error: addError } = await addAdminEmail(newAdminEmail.value)
-  
   if (!addError) {
     newAdminEmail.value = ''
     showToast('Admin 新增成功', 'success')
+    await fetchAllUsers()
   }
 }
 
 const toggleRole = async (targetUser) => {
-  if (targetUser.is_primary_admin || isCurrentUser(targetUser.email)) {
-    return
-  }
-
+  if (targetUser.is_primary_admin || isCurrentUser(targetUser.email)) return
   const newRole = targetUser.role === 'admin' ? 'user' : 'admin'
   const action = newRole === 'admin' ? '升級為管理員' : '降級為一般用戶'
-  
   const ok = await openConfirm(`確定要將「${targetUser.email}」${action}嗎？`)
   if (!ok) return
-
   const { error: toggleError } = await toggleUserRole(targetUser.id, newRole)
-  
   if (!toggleError) {
     showToast(`已成功${action}`, 'success')
+    await fetchAllUsers()
   } else {
     showToast(`操作失敗: ${toggleError.message}`, 'error')
   }
@@ -422,24 +333,22 @@ const toggleRole = async (targetUser) => {
 const confirmRemove = async (email) => {
   const ok = await openConfirm(`確定要移除「${email}」的 admin 權限嗎？`)
   if (!ok) return
-
   const { error: removeError } = await removeAdminEmail(email)
-  
   if (!removeError) {
     showToast('Admin 移除成功', 'success')
+    await fetchAllUsers()
   } else {
     showToast(removeError.message, 'error')
   }
 }
 
 const confirmPromote = async (email) => {
-  const ok = await openConfirm(`確定要將「${email}」設為主管理員 (Primary Admin) 嗎？\n\n主管理員擁有最高權限，且不能被移除。`)
+  const ok = await openConfirm(`確定要將「${email}」設為主管理員 (Primary Admin) 嗎？\n\n主管理員擁有最高權限且不可移除。`)
   if (!ok) return
-
   const { error: promoteError } = await promoteToPrimary(email)
-  
   if (!promoteError) {
     showToast('已成功設為主管理員', 'success')
+    await fetchAllUsers()
   } else {
     showToast(promoteError.message, 'error')
   }
@@ -448,29 +357,77 @@ const confirmPromote = async (email) => {
 onMounted(async () => {
   await fetchAllUsers()
 })
+
+watch(activeTab, async (val) => {
+  if (val === 'all') await fetchAllUsers()
+})
 </script>
 
 <style scoped>
-.font-display {
-  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 2.5rem;
+  box-shadow: 0 10px 40px -10px rgba(31, 38, 135, 0.05);
 }
 
-@keyframes blob {
-  0% { transform: translate(0px, 0px) scale(1); }
-  33% { transform: translate(30px, -50px) scale(1.1); }
-  66% { transform: translate(-20px, 20px) scale(0.9); }
-  100% { transform: translate(0px, 0px) scale(1); }
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.animate-blob {
-  animation: blob 7s infinite;
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
-.animation-delay-2000 {
-  animation-delay: 2s;
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scale(1.02);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
-.animation-delay-4000 {
-  animation-delay: 4s;
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out forwards;
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
 }
 </style>

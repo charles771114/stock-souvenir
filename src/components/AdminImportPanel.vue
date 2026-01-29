@@ -1,9 +1,10 @@
 <template>
-  <div class="bg-white/60 backdrop-blur-xl border border-white/40 rounded-2xl shadow-xl shadow-indigo-100/20 p-8 mb-8 relative overflow-hidden">
+  <div
+    class="bg-white/60 backdrop-blur-xl border border-white/40 rounded-2xl shadow-xl shadow-indigo-100/20 p-8 mb-8 relative overflow-hidden">
     <!-- Gradient Overlay -->
     <div class="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none"></div>
     <div class="relative z-10">
-      <h3 class="text-lg font-semibold text-gray-900">匯入歷史資料 (Historical Data Import)</h3>
+      <h3 class="text-lg font-semibold text-gray-900">匯入歷史資料</h3>
       <p class="text-sm text-gray-600 mt-1">
         支援拖曳或點擊上傳 CSV / Excel (.xlsx, .xls) 檔案。系統將自動解析並寫入資料庫。
       </p>
@@ -13,7 +14,7 @@
     <div class="flex items-end gap-6 mb-6">
       <!-- Year Selection -->
       <div class="w-48">
-        <label for="year" class="block text-sm font-medium text-gray-700 mb-1">目標年份 (Target Year)</label>
+        <label for="year" class="block text-sm font-medium text-gray-700 mb-1">目標年份</label>
         <select id="year" v-model="selectedYear"
           class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
           <option value="">自動偵測 (不強制)</option>
@@ -27,7 +28,7 @@
 
       <!-- Encoding Selection -->
       <div class="w-48">
-        <label for="encoding" class="block text-sm font-medium text-gray-700 mb-1">CSV 編碼 (Encoding)</label>
+        <label for="encoding" class="block text-sm font-medium text-gray-700 mb-1">CSV 編碼</label>
         <select id="encoding" v-model="selectedEncoding"
           class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
           <option value="UTF-8">UTF-8 (預設)</option>
@@ -122,11 +123,12 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ item.code }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.name }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <span v-if="item.classification_status === 'system_matched'" 
-                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  {{ categories.find(c => c.id === item.category_id)?.name || 'Matched' }}
+                <span v-if="item.classification_status === 'system_matched'"
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  {{categories.find(c => c.id === item.category_id)?.name || '已匹配'}}
                 </span>
-                <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                <span v-else
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                   需審核
                 </span>
               </td>
@@ -152,12 +154,12 @@
 </template>
 
 <script setup lang="ts">
-import { useCategories } from '@/composables/useCategories'
+import { useCategories } from '@/composables/useCategories';
 import { useDialog } from '@/composables/useDialog'; // Added import
-import { useToast } from '@/composables/useToast'
-import { supabase } from '@/lib/supabase'
-import { parseFile, type ParsedSouvenir } from '@/utils/fileParser'
-import { computed, onMounted, ref } from 'vue'
+import { useToast } from '@/composables/useToast';
+import { supabase } from '@/lib/supabase';
+import { parseFile, type ParsedSouvenir } from '@/utils/fileParser';
+import { computed, onMounted, ref } from 'vue';
 
 const { showToast } = useToast()
 const { confirm: openConfirm } = useDialog() // Added declaration
@@ -219,7 +221,7 @@ const processFile = async (f: File) => {
         item.category_id = match.id || undefined
         item.classification_status = match.status
       })
-      
+
       parsedData.value = result.data
     }
   } catch (err) {

@@ -1,183 +1,242 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-amber-50/30 flex flex-col">
+  <div class="min-h-screen bg-[#fafafa]">
     <Navbar />
 
-    <main class="flex-grow max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-      <!-- Header -->
-      <div class="mb-8 animate-fade-in-up">
-        <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-600 to-orange-600">
-          庫存批量匯入
-        </h1>
-        <p class="text-gray-600 mt-2">上傳 Excel 或 CSV 檔案，系統將自動分析並顯示人員摘要</p>
-      </div>
-
-      <!-- Instructions Card -->
-      <div class="glass-card mb-8 animate-fade-in-up" style="animation-delay: 0.1s">
-        <h2 class="text-lg font-bold text-gray-900 mb-3 flex items-center">
-          <svg class="w-5 h-5 mr-2 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          使用說明
-        </h2>
-        <ul class="space-y-2 text-sm text-gray-700">
-          <li class="flex items-start">
-            <span class="text-amber-500 mr-2">•</span>
-            <span>支援 <strong>Excel (.xlsx)</strong> 或 <strong>CSV</strong> 格式</span>
-          </li>
-          <li class="flex items-start">
-            <span class="text-amber-500 mr-2">•</span>
-            <span>必須包含 <strong>「姓名」</strong> 欄位</span>
-          </li>
-          <li class="flex items-start">
-            <span class="text-amber-500 mr-2">•</span>
-            <span>建議包含「股票代號」或「股票名稱」以供識別</span>
-          </li>
-          <li class="flex items-start">
-            <span class="text-amber-500 mr-2">•</span>
-            <span>匯入後請至「歸戶管理」連結用戶</span>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Year Selection & Upload -->
-      <div class="glass-card mb-8 animate-fade-in-up" style="animation-delay: 0.2s">
-        <div class="mb-6">
-          <label class="block text-sm font-semibold text-gray-700 mb-2">選擇年度</label>
-          <select v-model="selectedYear"
-            class="block w-full max-w-xs px-4 py-2.5 bg-white/80 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all">
-            <option v-for="year in years" :key="year" :value="year">{{ year }} 年</option>
-          </select>
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in">
+      <!-- Page Header -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-12 gap-6 animate-fade-in-up">
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <router-link to="/admin/panel"
+              class="group flex items-center gap-2 text-slate-400 hover:text-indigo-600 transition-all font-bold text-xs uppercase tracking-widest leading-none">
+              <div
+                class="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-indigo-50 group-hover:border-indigo-100 shadow-sm transition-all">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7" />
+                </svg>
+              </div>
+              管理主頁
+            </router-link>
+          </div>
+          <h1
+            class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 tracking-tighter mb-2">
+            庫存批量匯入
+          </h1>
+          <p class="text-slate-400 font-bold text-xs sm:text-sm uppercase tracking-wider">
+            多使用者庫存數據的批量匯入引擎
+          </p>
         </div>
 
-        <!-- Upload Zone -->
-        <div class="upload-zone" :class="{ 'drag-active': isDragging }" @dragover.prevent="isDragging = true"
-          @dragleave.prevent="isDragging = false" @drop.prevent="handleDrop" @click="$refs.fileInput.click()">
-          <input ref="fileInput" type="file" class="hidden" accept=".xlsx, .xls, .csv" @change="handleFileChange" />
-
-          <div v-if="!file" class="pointer-events-none text-center">
-            <svg class="mx-auto h-16 w-16 text-amber-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-            </svg>
-            <p class="text-lg font-semibold text-gray-900 mb-1">拖曳檔案至此或點擊上傳</p>
-            <p class="text-sm text-gray-500">支援 .xlsx, .csv 檔案</p>
-          </div>
-
-          <div v-else class="pointer-events-none text-center">
-            <svg class="mx-auto h-16 w-16 text-green-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p class="text-lg font-bold text-gray-900">{{ file.name }}</p>
-            <p class="text-sm text-gray-500 mt-1">{{ (file.size / 1024).toFixed(1) }} KB</p>
-            <button @click.stop="clearFile"
-              class="mt-4 text-red-500 hover:text-red-700 text-sm font-medium pointer-events-auto">
-              移除檔案
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Summary Stats -->
-      <div v-if="groupedByOwner.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-fade-in-up"
-        style="animation-delay: 0.3s">
-        <div class="stat-card">
-          <div class="stat-icon bg-blue-100 text-blue-600">
-            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-          <div>
-            <div class="text-2xl font-bold text-gray-900">{{ totalRows }}</div>
-            <div class="text-sm text-gray-600">總筆數</div>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon bg-amber-100 text-amber-600">
-            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-          </div>
-          <div>
-            <div class="text-2xl font-bold text-gray-900">{{ groupedByOwner.length }}</div>
-            <div class="text-sm text-gray-600">人員數</div>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon bg-green-100 text-green-600">
-            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <div>
-            <div class="text-2xl font-bold text-gray-900">{{ selectedYear }}</div>
-            <div class="text-sm text-gray-600">匯入年度</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Owner Summary Cards -->
-      <div v-if="groupedByOwner.length > 0">
-        <div class="flex items-center justify-between mb-6 animate-fade-in-up" style="animation-delay: 0.4s">
-          <h2 class="text-xl font-bold text-gray-900">人員清單摘要</h2>
+        <div v-if="groupedByOwner.length > 0" class="flex items-center gap-3">
           <button @click="handleUpload" :disabled="uploading"
-            class="btn-primary">
-            <svg v-if="uploading" class="animate-spin -ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24">
+            class="h-12 px-8 bg-amber-600 text-white rounded-2xl shadow-xl shadow-amber-200 hover:shadow-2xl hover:bg-amber-700 transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2">
+            <svg v-if="uploading" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor"
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
               </path>
             </svg>
-            {{ uploading ? `匯入中 ${progress}%` : '確認匯入全部資料' }}
+            {{ uploading ? `處理中 ${progress}%` : '執行匯入' }}
           </button>
         </div>
+      </div>
 
-        <!-- Owner Summary Table -->
-        <div class="bg-white/80 backdrop-blur-md border border-white/60 rounded-2xl shadow-sm overflow-hidden mb-6 animate-fade-in-up" 
-             style="animation-delay: 0.5s">
-          <table class="w-full">
-            <thead class="bg-gray-50/80">
-              <tr class="border-b border-gray-200">
-                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">姓名</th>
-                <th class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">資料筆數</th>
-                <th class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">狀態</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-              <tr v-for="owner in groupedByOwner" :key="owner.name" 
-                  class="hover:bg-amber-50/30 transition-colors duration-200">
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-lg shadow-sm">
-                      {{ owner.name.charAt(0) }}
-                    </div>
-                    <span class="font-bold text-gray-900">{{ owner.name }}</span>
-                  </div>
-                </td>
-                <td class="px-6 py-4 text-center">
-                  <span class="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-sm font-bold">
-                    {{ owner.count }}
-                  </span>
-                </td>
-                <td class="px-6 py-4 text-center">
-                  <span class="inline-flex items-center gap-1.5 text-xs font-medium text-gray-400 bg-gray-100 px-2.5 py-1 rounded-md">
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    待匯入
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- Sidebar: Steps & Instructions -->
+        <div class="lg:col-span-4 space-y-6">
+          <!-- Step Indicator -->
+          <div class="glass-card p-6">
+            <h2 class="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-6">工作流程步驟</h2>
+            <div class="space-y-6">
+              <div v-for="(step, idx) in ['分析上傳檔案', '預覽數據內容', '選擇目標年度']" :key="idx"
+                class="flex items-center gap-4 group">
+                <div :class="[
+                  'w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs transition-all',
+                  idx === 0 && !file ? 'bg-indigo-600 text-white' :
+                    idx === 1 && file ? 'bg-amber-600 text-white shadow-lg' :
+                      'bg-slate-100 text-slate-300'
+                ]">
+                  {{ idx + 1 }}
+                </div>
+                <span :class="[
+                  'text-xs font-black uppercase tracking-widest transition-colors',
+                  idx === 0 && !file ? 'text-indigo-600' :
+                    idx === 1 && file ? 'text-amber-600' :
+                      'text-slate-300'
+                ]">{{ step }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Instructions -->
+          <div class="glass-card p-6 bg-amber-50/20 border-amber-100/30">
+            <h2 class="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              匯入規範說明
+            </h2>
+            <ul class="space-y-3">
+              <li v-for="req in ['僅支援 .xlsx 或 .csv 檔案', '必須包含「姓名」欄位', '建議包含公司代碼或名稱']" :key="req"
+                class="flex items-start gap-2 text-[10px] font-bold text-slate-500 leading-relaxed uppercase tracking-wider">
+                <span class="text-amber-500">•</span>
+                {{ req }}
+              </li>
+            </ul>
+            <router-link to="/admin/staging"
+              class="mt-6 block p-4 bg-white border border-slate-100 rounded-2xl text-[10px] font-black text-indigo-600 tracking-widest uppercase hover:bg-slate-50 transition-all text-center shadow-sm">
+              前往歸戶管理頁面 →
+            </router-link>
+          </div>
         </div>
 
-        <p v-if="error" class="mt-6 text-red-600 text-sm text-center font-medium">{{ error }}</p>
+        <!-- Main Workspace -->
+        <div class="lg:col-span-8 space-y-8">
+          <!-- Selection & Dropzone -->
+          <div class="glass-card p-6 sm:p-10 animate-fade-in-up delay-100">
+            <div class="flex flex-col sm:flex-row gap-6 items-end mb-8">
+              <div class="flex-1 w-full">
+                <label
+                  class="block text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase mb-2 ml-2">目標匯入年度</label>
+                <select v-model="selectedYear"
+                  class="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-600 outline-none focus:bg-white focus:border-amber-200 focus:ring-4 focus:ring-amber-500/5 transition-all">
+                  <option v-for="year in years" :key="year" :value="year">{{ year }}年度</option>
+                </select>
+              </div>
+              <div v-if="file" class="w-full sm:w-auto">
+                <button @click="clearFile"
+                  class="h-14 px-6 rounded-2xl text-xs font-black uppercase tracking-widest text-rose-500 hover:bg-rose-50 transition-all flex items-center gap-2 border border-rose-100 leading-none">
+                  重設選擇
+                </button>
+              </div>
+            </div>
+
+            <div class="upload-zone relative group overflow-hidden" :class="{ 'drag-active': isDragging }"
+              @dragover.prevent="isDragging = true" @dragleave.prevent="isDragging = false" @drop.prevent="handleDrop"
+              @click="$refs.fileInput.click()">
+              <input ref="fileInput" type="file" class="hidden" accept=".xlsx, .xls, .csv" @change="handleFileChange" />
+
+              <div v-if="!file" class="py-12 flex flex-col items-center">
+                <div
+                  class="w-20 h-20 rounded-[2rem] bg-amber-50 text-amber-500 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-amber-100 transition-all duration-500 shadow-xl shadow-amber-50">
+                  <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                </div>
+                <h3 class="text-xl font-black text-slate-800 tracking-tight mb-2">將數據檔案拖放到此處</h3>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">點擊選取檔案進行上傳 (.xlsx 或
+                  .csv)</p>
+              </div>
+
+              <div v-else class="py-12 flex flex-col items-center animate-bounce-in">
+                <div
+                  class="w-20 h-20 rounded-[2rem] bg-emerald-50 text-emerald-500 flex items-center justify-center mb-6 shadow-xl shadow-emerald-50">
+                  <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 class="text-xl font-black text-slate-800 tracking-tight mb-1 truncate max-w-[250px]">{{ file.name }}
+                </h3>
+                <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">{{ (file.size /
+                  1024).toFixed(1) }} KB • 準備進行處理</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Parsed Results -->
+          <div v-if="parsedData.length > 0" class="space-y-8 animate-fade-in-up delay-200">
+            <!-- Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div class="glass-card p-6 border-slate-100">
+                <span
+                  class="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 block leading-none">Target
+                  目標紀錄筆數</span>
+                <span class="text-2xl font-black text-slate-800 tracking-tighter">{{ totalRows }}</span>
+              </div>
+              <div class="glass-card p-6 border-amber-100/30">
+                <span
+                  class="text-[8px] font-black text-amber-500 uppercase tracking-[0.2em] mb-1 block leading-none">Impact
+                  影響人數</span>
+                <span class="text-2xl font-black text-slate-800 tracking-tighter">{{ groupedByOwner.length }}</span>
+              </div>
+              <div class="glass-card p-6 border-indigo-100/30 hidden md:block">
+                <span
+                  class="text-[8px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-1 block leading-none">Fiscal
+                  目標年度</span>
+                <span class="text-2xl font-black text-slate-800 tracking-tighter">{{ selectedYear }}</span>
+              </div>
+            </div>
+
+            <!-- Owners List -->
+            <div>
+              <h2
+                class="text-[10px] font-black text-indigo-900/40 uppercase tracking-[0.2em] mb-6 flex items-center gap-2 px-2">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                權屬分析預覽
+              </h2>
+
+              <div class="glass-card p-0 overflow-hidden">
+                <div class="hidden sm:block">
+                  <table class="w-full border-separate border-spacing-0">
+                    <thead>
+                      <tr class="bg-slate-50 border-b border-slate-100">
+                        <th class="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                          權屬單位 (姓名)</th>
+                        <th
+                          class="px-6 py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                          紀錄筆數</th>
+                        <th
+                          class="px-6 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest pr-8">
+                          狀態</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50">
+                      <tr v-for="owner in groupedByOwner" :key="owner.name" class="hover:bg-amber-50/20 transition-all">
+                        <td class="px-8 py-4">
+                          <div class="flex items-center gap-3">
+                            <div
+                              class="w-10 h-10 rounded-[0.8rem] bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-sm">
+                              {{ owner.name.charAt(0) }}
+                            </div>
+                            <span class="font-black text-slate-800 text-sm tracking-tight">{{ owner.name }}</span>
+                          </div>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                          <span class="text-xs font-black text-slate-700 bg-slate-100 px-3 py-1 rounded-lg">{{
+                            owner.count }}</span>
+                        </td>
+                        <td class="px-6 py-4 text-right pr-8">
+                          <span class="text-[9px] font-black text-amber-500 uppercase tracking-widest">待處理</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Mobile Owner List -->
+                <div class="sm:hidden p-4 space-y-3">
+                  <div v-for="owner in groupedByOwner" :key="owner.name"
+                    class="p-4 bg-white border border-slate-50 rounded-2xl flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                      <div
+                        class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-sm">
+                        {{ owner.name.charAt(0) }}</div>
+                      <div class="font-black text-slate-800 text-xs tracking-tight">{{ owner.name }}</div>
+                    </div>
+                    <span class="text-[10px] font-black text-amber-500 uppercase tracking-widest">{{ owner.count }}
+                      個項目</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   </div>
@@ -208,7 +267,6 @@ const totalRows = computed(() => parsedData.value.length)
 
 const groupedByOwner = computed(() => {
   const map = {}
-  
   parsedData.value.forEach(row => {
     const name = row['姓名'] || row['Owner'] || row['owner_name'] || '未知'
     if (!map[name]) {
@@ -216,7 +274,6 @@ const groupedByOwner = computed(() => {
     }
     map[name].count++
   })
-  
   return Object.values(map).sort((a, b) => b.count - a.count)
 })
 
@@ -235,6 +292,7 @@ const processFile = async (f) => {
   file.value = f
   try {
     parsedData.value = await parseFile(f)
+    showToast(`成功讀取 ${parsedData.value.length} 筆資料`, 'success')
   } catch (err) {
     showToast(err.message, 'error')
     file.value = null
@@ -249,7 +307,6 @@ const clearFile = () => {
 
 const handleUpload = async () => {
   const result = await uploadToStaging(parsedData.value, selectedYear.value)
-
   if (result.success) {
     showToast(`成功匯入 ${result.count} 筆資料`, 'success')
     router.push('/admin/staging')
@@ -260,127 +317,104 @@ const handleUpload = async () => {
 </script>
 
 <style scoped>
-@keyframes fadeInUp {
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 2.25rem;
+  box-shadow: 0 10px 40px -10px rgba(31, 38, 135, 0.05);
+}
+
+.upload-zone {
+  border: 2px dashed #e2e8f0;
+  border-radius: 2rem;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+}
+
+.upload-zone:hover {
+  border-color: #fbbf24;
+  background: rgba(255, 251, 235, 0.5);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -20px rgba(251, 191, 36, 0.2);
+}
+
+.upload-zone.drag-active {
+  border-color: #fbbf24;
+  background: rgba(251, 191, 36, 0.05);
+  scale: 1.02;
+}
+
+@keyframes fade-in-up {
   from {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scale(1.02);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 .animate-fade-in-up {
-  animation: fadeInUp 0.6s ease-out backwards;
+  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.glass-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 1.5rem;
-  padding: 2rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out forwards;
 }
 
-.upload-zone {
-  border: 2px dashed #e5e7eb;
-  border-radius: 1.5rem;
-  padding: 3rem;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(251, 250, 249, 0.9) 100%);
+.animate-bounce-in {
+  animation: bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-.upload-zone:hover {
-  border-color: #f59e0b;
-  background: linear-gradient(135deg, rgba(255, 251, 235, 0.9) 0%, rgba(254, 243, 199, 0.9) 100%);
-  transform: translateY(-2px);
+.delay-100 {
+  animation-delay: 0.1s;
 }
 
-.upload-zone.drag-active {
-  border-color: #f59e0b;
-  background: linear-gradient(135deg, rgba(255, 251, 235, 1) 0%, rgba(254, 243, 199, 1) 100%);
-  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+.delay-200 {
+  animation-delay: 0.2s;
 }
 
-.stat-card {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 1.25rem;
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s ease;
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
 }
 
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.stat-icon {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.owner-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 1.25rem;
-  padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: fadeInUp 0.5s ease-out backwards;
-}
-
-.owner-card:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 12px 32px rgba(245, 158, 11, 0.15);
-  border-color: rgba(245, 158, 11, 0.3);
-}
-
-.count-badge {
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-  color: white;
-  font-size: 0.875rem;
-  font-weight: 700;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
-}
-
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: white;
-  font-weight: 600;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-  transition: all 0.3s ease;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
-}
-
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(99, 102, 241, 0.1);
+  border-radius: 20px;
 }
 </style>

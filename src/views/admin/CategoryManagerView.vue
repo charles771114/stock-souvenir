@@ -2,7 +2,7 @@
   <div class="p-6">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold text-gray-900">紀念品分類管理</h1>
-      <button @click="openModal()" 
+      <button @click="openModal()"
         class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
         新增分類
       </button>
@@ -23,7 +23,8 @@
           <tr v-for="cat in categories" :key="cat.id">
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ cat.name }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              <span :class="`px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-${cat.color}-100 text-${cat.color}-800`">
+              <span
+                :class="`px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-${cat.color}-100 text-${cat.color}-800`">
                 {{ cat.color }}
               </span>
             </td>
@@ -50,35 +51,39 @@
     </div>
 
     <!-- Edit/Create Modal -->
-    <div v-if="showModal" class="fixed inset-0 z-10 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div v-if="showModal" class="fixed inset-0 z-10 overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+      aria-modal="true">
       <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeModal"></div>
 
         <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-        <div class="relative inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div
+          class="relative inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
           <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
             <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">{{ isEditing ? '編輯分類' : '新增分類' }}</h3>
-            
+
             <div class="space-y-4">
               <!-- Name -->
               <div>
                 <label class="block text-sm font-medium text-gray-700">分類名稱</label>
-                <input v-model="form.name" type="text" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                <input v-model="form.name" type="text"
+                  class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
               </div>
 
               <!-- Color -->
               <div>
                 <label class="block text-sm font-medium text-gray-700">顏色代碼 (Tailwind Color Name)</label>
-                <select v-model="form.color" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                  <option value="gray">Gray</option>
-                  <option value="red">Red</option>
-                  <option value="yellow">Yellow</option>
-                  <option value="green">Green</option>
-                  <option value="blue">Blue</option>
-                  <option value="indigo">Indigo</option>
-                  <option value="purple">Purple</option>
-                  <option value="pink">Pink</option>
+                <select v-model="form.color"
+                  class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                  <option value="gray">灰色</option>
+                  <option value="red">紅色</option>
+                  <option value="yellow">黃色</option>
+                  <option value="green">綠色</option>
+                  <option value="blue">藍色</option>
+                  <option value="indigo">靛藍色</option>
+                  <option value="purple">紫色</option>
+                  <option value="pink">粉紅色</option>
                 </select>
               </div>
 
@@ -86,15 +91,16 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700">關鍵字 (輸入後按 Enter 新增)</label>
                 <div class="mt-1 flex rounded-md shadow-sm">
-                  <input v-model="keywordInput" @keydown.enter.prevent="addKeyword" type="text" 
-                    placeholder="輸入關鍵字..."
+                  <input v-model="keywordInput" @keydown.enter.prevent="addKeyword" type="text" placeholder="輸入關鍵字..."
                     class="flex-1 block w-full border border-gray-300 rounded-l-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                  <button @click="addKeyword" class="inline-flex items-center px-4 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-500 hover:bg-gray-100">
+                  <button @click="addKeyword"
+                    class="inline-flex items-center px-4 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-500 hover:bg-gray-100">
                     新增
                   </button>
                 </div>
                 <div class="mt-2 flex flex-wrap gap-2">
-                  <span v-for="(k, idx) in form.keywords" :key="idx" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
+                  <span v-for="(k, idx) in form.keywords" :key="idx"
+                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
                     {{ k }}
                     <button @click="removeKeyword(idx)" class="ml-1 text-indigo-400 hover:text-indigo-600">×</button>
                   </span>
@@ -103,10 +109,12 @@
             </div>
           </div>
           <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-            <button @click="save" :disabled="saving" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+            <button @click="save" :disabled="saving"
+              class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
               {{ saving ? '儲存中...' : '儲存' }}
             </button>
-            <button @click="closeModal" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+            <button @click="closeModal"
+              class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
               取消
             </button>
           </div>

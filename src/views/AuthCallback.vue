@@ -45,54 +45,54 @@ const goToLogin = () => {
 onMounted(async () => {
   try {
     statusMessage.value = '處理登入資訊...'
+    console.log('[AuthCallback] Processing OAuth response...')
 
-    // IMPORTANT: For hash-based OAuth flow, we need to let Supabase parse the hash first
-    // This happens automatically if detectSessionInUrl is true, but we need to wait
+    // Helper for retrying session retrieval
+    const getSessionWithRetry = async (retries = 3, delay = 800) => {
+      for (let i = 0; i < retries; i++) {
+        console.log(`[AuthCallback] Session attempt ${i + 1}/${retries}...`)
+        const { data: { session }, error } = await supabase.auth.getSession()
 
-    // Give Supabase client time to process the hash
-    await new Promise(resolve => setTimeout(resolve, 500))
+        if (session) return session
+        if (error) {
+          console.warn(`[AuthCallback] Attempt ${i + 1} failed:`, error.message)
+        }
 
-    // Now get the session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        // Check if hash contains tokens even if getSession didn't find them yet
+        if (window.location.hash && (window.location.hash.includes('access_token') || window.location.hash.includes('error'))) {
+          console.log('[AuthCallback] Hash detected, forcing refresh...')
+          await supabase.auth.refreshSession()
+        }
 
-    if (sessionError) {
-      console.error('Session error:', sessionError)
-      throw sessionError
+        await new Promise(resolve => setTimeout(resolve, delay))
+      }
+      return null
     }
 
-    if (!session) {
-      // If still no session, check if we have hash params
-      if (window.location.hash && window.location.hash.includes('access_token')) {
-        // Try to manually trigger session from hash
-        await supabase.auth.refreshSession()
-        const { data: retryData } = await supabase.auth.getSession()
+    const session = await getSessionWithRetry()
 
-        if (!retryData.session) {
-          throw new Error('登入驗證失敗：無法建立 Session。請清除瀏覽器快取後重試。')
-        }
-      } else {
-        throw new Error('未偵測到登入狀態，請重新嘗試')
+    if (!session) {
+      // Check for error in hash
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const errorDescription = hashParams.get('error_description')
+      if (errorDescription) {
+        throw new Error(`登入失敗：${errorDescription}`)
       }
+      throw new Error('登入驗證失敗：無法建立 Session。請嘗試重新登入。')
     }
 
     statusMessage.value = '正在載入用戶資料...'
-
-    // Refresh session data to ensure we have the latest
-    const { data: { session: currentSession } } = await supabase.auth.getSession()
-
-    if (!currentSession) {
-      throw new Error('Session 已過期')
-    }
+    console.log('[AuthCallback] Session established for:', session.user.id)
 
     // Get Profile to determine role
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', currentSession.user.id)
+      .eq('id', session.user.id)
       .maybeSingle()
 
     if (profileError) {
-      console.warn('Profile fetch error:', profileError)
+      console.warn('[AuthCallback] Profile fetch error:', profileError)
     }
 
     const isAdmin = profile?.role === 'admin'
@@ -101,22 +101,32 @@ onMounted(async () => {
     const routeNode = router.currentRoute.value
     let nextPath = routeNode.query.next
 
-    if (!nextPath) {
+    // Handle potential double encoding or empty paths
+    if (nextPath) {
+      try {
+        nextPath = decodeURIComponent(nextPath)
+      } catch (e) {
+        console.warn('[AuthCallback] Failed to decode next path:', nextPath)
+      }
+    }
+
+    if (!nextPath || nextPath === 'null' || nextPath === 'undefined') {
       nextPath = isAdmin ? '/admin/panel' : '/gifts'
     }
 
     statusMessage.value = `登入成功！即將前往 ${isAdmin ? '管理後台' : '首頁'}...`
 
-    // Slight delay for user feedback
-    await new Promise(resolve => setTimeout(resolve, 800))
-
-    // Clean up the URL hash before redirecting
+    // Clean up the URL hash before redirecting to avoid re-triggering logic if user hits 'back'
     window.history.replaceState({}, document.title, window.location.pathname)
 
-    router.replace(nextPath)
+    // Final short delay for UX
+    setTimeout(() => {
+      console.log('[AuthCallback] Redirecting to:', nextPath)
+      router.replace(nextPath)
+    }, 500)
 
   } catch (e) {
-    console.error('處理登入回調失敗:', e)
+    console.error('[AuthCallback] Critical Error:', e)
     error.value = e.message || '登入過程發生未知錯誤'
     statusMessage.value = '登入失敗'
   }

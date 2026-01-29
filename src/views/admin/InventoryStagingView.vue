@@ -1,239 +1,258 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex flex-col">
+  <div class="min-h-screen bg-[#fafafa]">
     <Navbar />
 
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-      <!-- Header -->
-      <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in-up">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in">
+      <!-- Page Header -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-12 gap-6 animate-fade-in-up">
         <div>
+          <div class="flex items-center gap-2 mb-4">
+            <router-link to="/admin/panel"
+              class="group flex items-center gap-2 text-slate-400 hover:text-indigo-600 transition-all font-bold text-xs uppercase tracking-widest leading-none">
+              <div
+                class="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-indigo-50 group-hover:border-indigo-100 shadow-sm transition-all">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7" />
+                </svg>
+              </div>
+              管理主頁
+            </router-link>
+          </div>
           <h1
-            class="text-2xl sm:text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600">
+            class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 tracking-tighter mb-2">
             庫存歸戶管理
           </h1>
-          <p class="text-gray-400 mt-1 font-bold text-xs sm:text-sm uppercase tracking-wider">連結暫存庫存資料與使用者帳號</p>
+          <p class="text-slate-400 font-bold text-xs sm:text-sm uppercase tracking-wider">
+            核對並將匯入的數據與使用者身份進行關聯
+          </p>
         </div>
+
         <router-link to="/admin/import/inventory"
-          class="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 bg-white/80 backdrop-blur-md border border-indigo-100 rounded-xl sm:rounded-2xl text-indigo-600 font-black hover:bg-indigo-50 hover:shadow-2xl hover:shadow-indigo-500/20 transition-all duration-300 text-sm sm:text-base">
-          <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          class="h-12 px-8 bg-white border border-slate-100 text-indigo-600 rounded-2xl shadow-sm hover:bg-indigo-50 transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2 leading-none">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
               d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
           </svg>
-          匯入新資料
+          匯入新檔案
         </router-link>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 mb-12">
-        <div class="stat-card animate-fade-in-up glass-card relative group" style="animation-delay: 0.1s">
-          <div class="stat-icon bg-orange-100/50 text-orange-600 shadow-orange-100/50">
-            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-12 animate-fade-in-up delay-100">
+        <div
+          class="glass-card p-6 sm:p-8 flex flex-col justify-between group overflow-hidden relative border-rose-100/30">
+          <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <svg class="w-16 h-16 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
-          <div>
-            <div class="text-3xl sm:text-5xl font-black text-gray-900 tracking-tighter">{{ stats.pendingCount }}</div>
-            <div class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1 sm:mt-2">待處理總量</div>
+          <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">待處理總筆數</span>
+          <div class="flex items-end gap-2">
+            <span class="text-4xl font-black text-slate-800 tracking-tighter">{{ stats.pendingCount }}</span>
+            <span class="text-[10px] font-black text-rose-500 mb-1.5 uppercase tracking-widest">筆紀錄</span>
           </div>
         </div>
 
-        <div class="stat-card animate-fade-in-up glass-card border border-white/40 overflow-hidden relative group"
-          style="animation-delay: 0.2s">
-          <div class="stat-icon bg-indigo-50 text-indigo-600">
-            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        <div
+          class="glass-card p-6 sm:p-8 flex flex-col justify-between group overflow-hidden relative border-amber-100/30">
+          <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <svg class="w-16 h-16 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
                 d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           </div>
-          <div>
-            <div class="text-3xl sm:text-4xl font-black text-gray-900 leading-none">{{ stats.uniqueOwners }}</div>
-            <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">不同姓名數</div>
+          <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">已識別對象姓名</span>
+          <div class="flex items-end gap-2">
+            <span class="text-4xl font-black text-slate-800 tracking-tighter">{{ stats.uniqueOwners }}</span>
+            <span class="text-[10px] font-black text-slate-400 mb-1.5 uppercase tracking-widest">位使用者</span>
           </div>
         </div>
 
-        <div class="glass-card animate-fade-in-up p-2 sm:p-3 flex items-center relative overflow-hidden group/search"
-          style="animation-delay: 0.3s">
+        <div class="glass-card p-2 sm:p-4 flex items-center relative overflow-hidden group/search">
           <div class="absolute inset-y-0 left-6 sm:left-10 flex items-center pointer-events-none z-10">
-            <svg class="h-5 w-5 text-indigo-400 group-focus-within/search:scale-110 transition-transform" fill="none"
-              viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="h-5 w-5 text-indigo-400 transition-transform" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
-          <input v-model="searchOwner" type="text" placeholder="快速搜尋對象姓名..."
-            class="w-full pl-12 sm:pl-16 pr-6 py-4 sm:py-6 bg-indigo-50/50 border-none rounded-2xl sm:rounded-[1.5rem] text-gray-900 placeholder-indigo-300 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:bg-white transition-all duration-300 font-bold text-sm sm:text-base" />
+          <input v-model="searchOwner" type="text" placeholder="搜尋姓名..."
+            class="w-full h-full pl-12 sm:pl-16 pr-6 bg-transparent border-none text-slate-800 placeholder-slate-300 focus:outline-none font-bold text-sm sm:text-base" />
         </div>
       </div>
 
-      <!-- Loading -->
-      <div v-if="loading" class="flex flex-col items-center justify-center py-32 space-y-6">
-        <div class="relative">
-          <div class="w-20 h-20 border-8 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
-          <div class="absolute inset-0 flex items-center justify-center">
-            <div class="w-8 h-8 bg-indigo-600 rounded-full animate-pulse"></div>
+      <!-- Main Content Area -->
+      <div class="animate-fade-in-up delay-200">
+        <div v-if="loading" class="py-24 flex flex-col items-center gap-6">
+          <div class="w-16 h-16 border-8 border-indigo-50 border-t-indigo-600 rounded-full animate-spin"></div>
+          <p class="text-sm font-black text-indigo-300 uppercase tracking-[0.2em] animate-pulse">同步暫存項目中...</p>
+        </div>
+
+        <div v-else-if="groupedStaging.length === 0" class="glass-card py-24 text-center border-emerald-100/30">
+          <div
+            class="w-24 h-24 bg-emerald-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 border border-emerald-100 text-emerald-500 shadow-xl shadow-emerald-50">
+            <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+            </svg>
           </div>
+          <h3 class="text-3xl font-black text-slate-800 mb-2 tracking-tighter">歸戶完成</h3>
+          <p class="text-[10px] font-bold text-emerald-500 uppercase tracking-[0.2em]">目前無待處理的暫存項目</p>
         </div>
-        <div class="text-indigo-900 font-black tracking-widest animate-pulse">正在載入暫存資料...</div>
-      </div>
 
-      <!-- Empty State -->
-      <div v-else-if="groupedStaging.length === 0"
-        class="bg-white/60 backdrop-blur-2xl border border-white/40 rounded-[3rem] text-center py-32 animate-fade-in-up shadow-2xl">
-        <div class="mx-auto h-32 w-32 bg-green-100 rounded-full flex items-center justify-center mb-8 shadow-inner">
-          <svg class="h-16 w-16 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <h3 class="text-4xl font-black text-gray-900 mb-4">太棒了！所有資料都已歸戶</h3>
-        <p class="text-gray-500 text-lg font-medium">目前沒有待處理的庫存資料，休息一下吧！</p>
-      </div>
-
-      <!-- Staging Table (Desktop) / Cards (Mobile) -->
-      <div class="animate-fade-in-up" style="animation-delay: 0.4s">
-        <!-- Desktop Table: Visible on md and up -->
-        <div class="hidden md:block glass-card border-none overflow-hidden hover:shadow-indigo-500/20">
-          <table class="w-full">
-            <thead>
-              <tr class="bg-indigo-50/50 backdrop-blur-sm border-b border-indigo-100/50">
-                <th class="px-10 py-6 text-left text-xs font-black text-indigo-900/60 uppercase tracking-[0.2em]">待歸戶對象
-                </th>
-                <th class="px-10 py-6 text-left text-xs font-black text-indigo-900/60 uppercase tracking-[0.2em]">待處理項目集
-                </th>
-                <th class="px-10 py-6 text-center text-xs font-black text-indigo-900/60 uppercase tracking-[0.2em]">總量
-                </th>
-                <th class="px-10 py-6 text-center text-xs font-black text-indigo-900/60 uppercase tracking-[0.2em]">操作
-                </th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-indigo-50/30">
-              <tr v-for="(group, gIdx) in filteredGroups" :key="group.owner_name"
-                class="hover:bg-indigo-50/40 transition-all duration-300 group"
-                :style="{ animationDelay: `${gIdx * 0.05}s` }">
-                <!-- Owner Name -->
-                <td class="px-10 py-8">
-                  <div class="flex items-center gap-5">
-                    <div>
-                      <span
-                        class="font-black text-gray-900 text-xl block group-hover:text-indigo-600 transition-colors">{{
-                          group.owner_name }}</span>
+        <div v-else class="glass-card overflow-hidden p-0">
+          <!-- Desktop View -->
+          <div class="hidden lg:block overflow-x-auto">
+            <table class="w-full border-separate border-spacing-0">
+              <thead>
+                <tr class="bg-slate-50/50 border-b border-slate-100">
+                  <th
+                    class="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                    待歸戶身份</th>
+                  <th
+                    class="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                    數據組成項目</th>
+                  <th
+                    class="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                    筆數</th>
+                  <th
+                    class="px-6 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none pr-10">
+                    歸戶操作</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-50">
+                <tr v-for="(group, gIdx) in filteredGroups" :key="group.owner_name"
+                  class="group hover:bg-slate-50/50 transition-colors">
+                  <td class="px-8 py-6">
+                    <div class="flex items-center gap-4">
+                      <div
+                        class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-xl shadow-sm">
+                        {{ group.owner_name.charAt(0) }}
+                      </div>
+                      <div>
+                        <div class="text-xl font-black text-slate-800 tracking-tighter">{{ group.owner_name }}</div>
+                        <div class="text-[10px] font-bold text-slate-300 uppercase tracking-widest leading-none mt-1">
+                          等待歸戶中</div>
+                      </div>
                     </div>
-                  </div>
-                </td>
-
-                <!-- Items Preview -->
-                <td class="px-10 py-8">
-                  <div class="flex flex-wrap gap-2 max-w-xl">
-                    <span v-for="(item, idx) in group.items.slice(0, 5)" :key="idx"
-                      class="inline-flex items-center px-3 py-1.5 rounded-xl text-[10px] font-mono font-bold bg-indigo-50/50 border border-indigo-100/50 text-indigo-900 shadow-sm hover:border-indigo-400 hover:bg-white transition-all uppercase">
-                      {{ item.stock_name || item.stock_code }}
+                  </td>
+                  <td class="px-6 py-6 max-w-lg">
+                    <div class="flex flex-wrap gap-1.5">
+                      <span v-for="(item, idx) in group.items.slice(0, 4)" :key="idx"
+                        class="px-2.5 py-1.5 rounded-lg text-[9px] font-black bg-white border border-slate-100 text-slate-500 uppercase tracking-wider shadow-sm group-hover:border-indigo-200 transition-all">
+                        {{ item.stock_name || item.stock_code }}
+                      </span>
+                      <div v-if="group.items.length > 4"
+                        class="px-2.5 py-1.5 rounded-lg text-[9px] font-black bg-slate-900 text-white shadow-lg">
+                        +{{ group.items.length - 4 }} 筆
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-6 text-center">
+                    <span
+                      class="text-sm font-black text-slate-700 bg-amber-50 border border-amber-100 px-4 py-2 rounded-2xl shadow-sm">
+                      {{ group.items.length }}
                     </span>
-                    <div v-if="group.items.length > 5"
-                      class="inline-flex items-center px-4 py-1.5 rounded-xl text-[10px] font-black bg-gray-900 text-white shadow-lg">
-                      +{{ group.items.length - 5 }} 筆項目
-                    </div>
+                  </td>
+                  <td class="px-6 py-6 text-right pr-8">
+                    <button @click="openLinkModal(group)"
+                      class="h-12 px-6 bg-indigo-600 text-white text-[10px] font-black rounded-2xl uppercase tracking-widest hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 ml-auto shadow-lg shadow-indigo-100">
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      </svg>
+                      連結使用者
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Mobile Cards -->
+          <div class="lg:hidden p-6 sm:p-8 space-y-4">
+            <div v-for="(group, gIdx) in filteredGroups" :key="group.owner_name"
+              class="p-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:border-indigo-200 transition-all group active:scale-[0.98]">
+              <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-xl shadow-xl shadow-indigo-100">
+                    {{ group.owner_name.charAt(0) }}
                   </div>
-                </td>
-
-                <!-- Count Badge -->
-                <td class="px-10 py-8 text-center">
-                  <span
-                    class="inline-flex items-center justify-center min-w-[3rem] px-4 py-2 rounded-2xl bg-orange-100 text-orange-700 text-sm font-black shadow-lg">
-                    {{ group.items.length }}
-                  </span>
-                </td>
-
-                <!-- Actions -->
-                <td class="px-10 py-8 text-center">
-                  <button @click="openLinkModal(group)"
-                    class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white text-sm font-black rounded-2xl hover:bg-indigo-700 hover:shadow-2xl hover:shadow-indigo-500/40 transition-all active:scale-95">
-                    <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
-                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                    </svg>
-                    連結用戶
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Mobile Cards: Visible below md -->
-        <div class="md:hidden space-y-4">
-          <div v-for="(group, gIdx) in filteredGroups" :key="group.owner_name"
-            class="bg-white rounded-3xl p-6 shadow-xl border border-indigo-50/50 animate-fade-in-up"
-            :style="{ animationDelay: `${gIdx * 0.05}s` }">
-            <div class="flex items-center gap-4 mb-4">
-              <div class="flex-grow">
-                <div class="flex items-center justify-between">
-                  <span class="font-black text-gray-900 text-lg">{{ group.owner_name }}</span>
-                  <span class="px-3 py-1 bg-orange-100 text-orange-700 text-[10px] font-black rounded-full shadow-sm">
-                    {{ group.items.length }} 筆項目
-                  </span>
+                  <div class="text-xl font-black text-slate-800 tracking-tighter">{{ group.owner_name }}</div>
                 </div>
+                <span class="h-10 px-4 flex items-center rounded-xl bg-amber-50 text-amber-600 text-xs font-black">{{
+                  group.items.length }} 筆</span>
               </div>
-            </div>
 
-            <div class="flex flex-wrap gap-2 mb-6">
-              <span v-for="(item, idx) in group.items.slice(0, 3)" :key="idx"
-                class="px-3 py-1.5 rounded-xl text-[10px] font-black bg-indigo-50/50 border border-indigo-100/50 text-indigo-900 uppercase">
-                {{ item.stock_name || item.stock_code }}
-              </span>
-              <div v-if="group.items.length > 3"
-                class="px-3 py-1.5 rounded-xl text-[10px] font-black bg-indigo-950 text-white shadow-md">
-                +{{ group.items.length - 3 }} 筆項目
+              <div class="flex flex-wrap gap-2 mb-8">
+                <span v-for="(item, idx) in group.items.slice(0, 3)" :key="idx"
+                  class="px-2 py-1.5 rounded-lg text-[10px] font-bold bg-slate-50 text-slate-400 border border-slate-100 uppercase truncate max-w-[120px]">
+                  {{ item.stock_name || item.stock_code }}
+                </span>
+                <div v-if="group.items.length > 3"
+                  class="px-2 py-1.5 rounded-lg text-[10px] font-black bg-slate-900 text-white">+{{ group.items.length -
+                    3 }}</div>
               </div>
-            </div>
 
-            <button @click="openLinkModal(group)"
-              class="w-full flex items-center justify-center px-6 py-4 bg-indigo-600 text-white text-sm font-black rounded-2xl hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-600/20">
-              <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
-                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
-              即刻歸戶
-            </button>
+              <button @click="openLinkModal(group)"
+                class="w-full flex items-center justify-center h-14 bg-indigo-600 text-white text-[10px] font-black rounded-2xl uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
+                連結使用者帳戶
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </main>
 
-    <!-- Link User Modal -->
+    <!-- Match Modal -->
     <Teleport to="body">
-      <div v-if="isModalOpen" class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
-        <div class="flex min-h-screen items-center justify-center p-4">
-          <div class="fixed inset-0 bg-indigo-950/60 backdrop-blur-xl transition-all duration-700" @click="closeModal">
-          </div>
+      <div v-if="isModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-fade-in" @click="closeModal"></div>
+        <div class="relative bg-white rounded-[2.5rem] w-full max-w-xl shadow-2xl animate-bounce-in overflow-hidden">
+          <!-- Top Accent -->
+          <div class="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
 
-          <div
-            class="modal-content relative bg-white border border-white/50 shadow-[0_64px_256px_-32px_rgba(79,70,229,0.5)] w-full max-w-xl rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden animate-modal-scale">
-            <div class="p-6 sm:p-12">
-              <div class="flex items-start sm:items-center justify-between mb-6 sm:mb-10">
-                <div>
-                  <h3 class="text-2xl sm:text-4xl font-black text-gray-900 tracking-tighter">歸戶手續</h3>
-                  <p class="text-indigo-500 font-bold mt-1 uppercase text-[10px] tracking-[0.2em]">將暫存資料連結至正確用戶
-                  </p>
-                </div>
+          <div class="p-8 sm:p-12">
+            <div class="flex items-center justify-between mb-10">
+              <div>
+                <span class="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] block mb-1">Staging
+                  暫存交接</span>
+                <h3 class="text-4xl font-black text-slate-800 tracking-tighter">歸戶協作</h3>
               </div>
+              <button @click="closeModal"
+                class="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-300 hover:text-slate-800 transition-all">&times;</button>
+            </div>
 
+            <div
+              class="p-8 rounded-[2rem] bg-indigo-50/50 border border-indigo-100 mb-10 group/owner relative overflow-hidden">
               <div
-                class="bg-indigo-50/30 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-8 mb-6 sm:mb-10 border border-indigo-100/50 flex items-center gap-4 sm:gap-8">
-                <div>
-                  <div class="text-gray-900 font-black text-2xl sm:text-3xl tracking-tighter">{{
-                    selectedGroup?.owner_name }}</div>
-                  <div class="text-indigo-600 font-black text-sm uppercase tracking-widest mt-1">待處理：{{
-                    selectedGroup?.items.length }} 筆項目</div>
-                </div>
+                class="absolute top-0 right-0 p-4 opacity-5 pointer-events-none group-hover/owner:opacity-10 transition-opacity">
+                <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08s5.97 1.09 6 3.08c-1.29 1.94-3.5 3.22-6 3.22z" />
+                </svg>
               </div>
+              <span class="text-[10px] font-black text-indigo-300 uppercase tracking-widest block mb-1">Source Dataset
+                來源數據實體</span>
+              <div class="text-3xl font-black text-indigo-950 tracking-tighter">{{ selectedGroup?.owner_name }}</div>
+              <div
+                class="inline-flex items-center gap-2 mt-2 px-3 py-1 rounded-lg bg-white border border-indigo-100 text-[10px] font-black text-indigo-600 uppercase tracking-widest shadow-sm">
+                {{ selectedGroup?.items.length }} 筆待處理紀錄
+              </div>
+            </div>
 
-              <div class="mb-6 sm:mb-8 relative">
-                <label
-                  class="block text-[8px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 sm:mb-3 ml-2 sm:ml-4">搜尋目標使用者</label>
-                <input v-model="userSearch" @input="searchUsers" type="text"
-                  class="w-full px-4 sm:px-8 py-3 sm:py-5 bg-gray-50 border border-gray-100 rounded-xl sm:rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:bg-white focus:border-indigo-200 transition-all font-bold text-sm sm:text-lg"
-                  placeholder="輸入 Email、姓名或暱稱..." autofocus />
-                <div v-if="searchingUsers" class="absolute right-6 top-12">
-                  <svg class="animate-spin h-6 w-6 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none"
-                    viewBox="0 0 24 24">
+            <!-- User Search Section -->
+            <div class="space-y-6">
+              <div class="relative group">
+                <span
+                  class="absolute left-6 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 group-focus-within:text-indigo-600 uppercase tracking-widest pointer-events-none transition-colors">Find
+                  尋找對象:</span>
+                <input v-model="userSearch" @input="searchUsers" type="text" placeholder="電子郵件或暱稱..."
+                  class="w-full h-16 pl-28 pr-6 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-black focus:bg-white focus:border-indigo-200 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none" />
+                <div v-if="searchingUsers" class="absolute right-6 top-1/2 -translate-y-1/2">
+                  <svg class="animate-spin h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor"
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
@@ -242,109 +261,112 @@
                 </div>
               </div>
 
-              <!-- User Selection List -->
-              <div v-if="!targetUser" class="max-h-60 overflow-y-auto custom-scrollbar pr-2 space-y-3 mb-6">
-                <div v-if="userResults.length === 0 && userSearch && !searchingUsers"
-                  class="p-10 text-center text-gray-400 font-bold border-2 border-dashed border-gray-100 rounded-[2rem]">
-                  找不到符合條件的用戶
-                </div>
-                <div v-for="user in userResults" :key="user.id" @click="selectUser(user)" class="user-option group">
-                  <div class="flex items-center gap-3 sm:gap-4">
+              <!-- User Search Results -->
+              <div v-if="!targetUser" class="max-h-60 overflow-y-auto custom-scrollbar pr-2 space-y-2">
+                <div v-for="user in userResults" :key="user.id" @click="selectUser(user)"
+                  class="p-4 bg-white border border-slate-100 rounded-2xl flex items-center justify-between group transition-all cursor-pointer hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/5 active:scale-[0.98]">
+                  <div class="flex items-center gap-4">
                     <div
-                      class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 font-black group-hover:bg-indigo-600 group-hover:text-white transition-all text-sm">
+                      class="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center font-black text-sm group-hover:bg-indigo-600 group-hover:text-white transition-all">
                       {{ user.full_name?.charAt(0) || '?' }}
                     </div>
-                    <div class="min-w-0 flex-grow">
-                      <div class="font-black text-gray-900 text-sm sm:text-base truncate">
-                        {{ user.full_name || '未設定姓名' }}
-                        <span v-if="user.nickname" class="text-indigo-500 font-bold ml-1">#{{ user.nickname }}</span>
+                    <div class="min-w-0">
+                      <div class="text-sm font-black text-slate-800 tracking-tight leading-none mb-1">
+                        {{ user.full_name || '匿名用戶' }}
+                        <span v-if="user.nickname" class="text-indigo-400 font-bold ml-1 text-xs">@{{ user.nickname
+                        }}</span>
                       </div>
-                      <div class="text-[9px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-tight truncate">
-                        {{ user.email }}</div>
+                      <div class="text-[9px] font-bold text-slate-300 uppercase leading-none">{{ user.email }}</div>
                     </div>
                   </div>
+                  <svg class="w-4 h-4 text-slate-200 group-hover:text-indigo-600 transition-colors" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" />
+                  </svg>
                 </div>
               </div>
 
-              <!-- Selected User & Portfolio Selection -->
-              <div v-else class="space-y-6 mb-10">
-                <div class="flex items-center justify-between p-4 bg-indigo-600 rounded-3xl text-white shadow-xl shadow-indigo-100">
+              <!-- Portfolio Choice -->
+              <div v-else class="space-y-4 animate-bounce-in">
+                <div
+                  class="p-6 bg-indigo-600 rounded-3xl text-white shadow-xl shadow-indigo-100 flex items-center justify-between">
                   <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-black">
-                      {{ targetUser.full_name?.charAt(0) || '?' }}
-                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center font-black text-xl">
+                      {{ targetUser.email.charAt(0).toUpperCase() }}</div>
                     <div>
-                      <div class="font-black">{{ targetUser.full_name }}</div>
-                      <div class="text-[10px] opacity-70">{{ targetUser.email }}</div>
+                      <div class="text-lg font-black tracking-tight leading-none mb-1">{{ targetUser.full_name ||
+                        targetUser.email }}</div>
+                      <div class="text-[10px] font-bold opacity-60 uppercase tracking-widest leading-none">Ready for
+                        準備進行核對歸戶</div>
                     </div>
                   </div>
-                  <button @click="targetUser = null; targetPortfolios = []; selectedPortfolioId = null" class="text-[10px] font-black uppercase tracking-widest bg-white/10 px-3 py-1.5 rounded-lg hover:bg-white/20 transition-all">重選人員</button>
+                  <button @click="targetUser = null; targetPortfolios = []; selectedPortfolioId = null"
+                    class="h-10 px-4 bg-white/10 hover:bg-white/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all italic underline">更改對象</button>
                 </div>
 
-                <div v-if="fetchingPortfolios" class="py-10 flex flex-col items-center gap-3">
-                  <div class="w-8 h-8 border-4 border-indigo-100 border-t-indigo-500 rounded-full animate-spin"></div>
-                  <p class="text-[10px] font-black text-indigo-300 uppercase tracking-widest">正在載入帳戶清單...</p>
-                </div>
-
-                <div v-else class="space-y-4">
-                  <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">歸戶目標帳戶</label>
-                  
-                  <!-- Existing Portfolios -->
-                  <div v-if="targetPortfolios.length > 0" class="grid grid-cols-1 gap-2">
-                    <button v-for="port in targetPortfolios" :key="port.id" 
-                      @click="selectedPortfolioId = port.id"
-                      class="flex items-center justify-between p-4 rounded-2xl border-2 transition-all"
-                      :class="selectedPortfolioId === port.id ? 'border-indigo-500 bg-indigo-50' : 'border-gray-50 bg-gray-50/50 hover:border-indigo-200 hover:bg-white'">
+                <div class="space-y-3">
+                  <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest block ml-4">Select Target
+                    選擇目標帳戶</span>
+                  <div v-if="fetchingPortfolios" class="py-12 flex flex-col items-center gap-4">
+                    <div class="w-8 h-8 border-4 border-indigo-50 border-t-indigo-600 rounded-full animate-spin"></div>
+                    <span
+                      class="text-[10px] font-black text-indigo-300 uppercase tracking-widest animate-pulse">Scanning
+                      正在掃描帳戶...</span>
+                  </div>
+                  <div v-else class="space-y-2">
+                    <div v-for="port in targetPortfolios" :key="port.id" @click="selectedPortfolioId = port.id"
+                      class="p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between group"
+                      :class="selectedPortfolioId === port.id ? 'border-indigo-600 bg-indigo-50 shadow-xl shadow-indigo-500/10' : 'border-slate-50 bg-slate-50/50 hover:border-indigo-200 hover:bg-white'">
                       <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black"
-                          :class="selectedPortfolioId === port.id ? 'bg-indigo-600 text-white' : 'bg-white text-gray-400'">
+                        <div
+                          class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black transition-all"
+                          :class="selectedPortfolioId === port.id ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white text-slate-300'">
                           {{ port.name.charAt(0) }}
                         </div>
-                        <div class="text-sm font-black text-gray-900">{{ port.name }}</div>
+                        <div class="text-sm font-black text-slate-700">{{ port.name }}</div>
                       </div>
-                      <div v-if="port.is_default" class="text-[9px] font-black text-indigo-400 uppercase bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">預設</div>
-                    </button>
-                  </div>
+                      <div v-if="port.is_default"
+                        class="text-[9px] font-black text-indigo-400 uppercase bg-white border border-indigo-100 px-2 py-0.5 rounded shadow-sm">
+                        主要帳戶</div>
+                    </div>
 
-                  <!-- New Portfolio Inferred -->
-                  <div v-else @click="selectedPortfolioId = 'NEW_DEFAULT'"
-                    class="flex items-center justify-between p-6 rounded-3xl border-2 border-dashed border-indigo-200 bg-indigo-50/30 cursor-pointer hover:bg-indigo-50 transition-all">
-                    <div class="flex items-center gap-4">
-                      <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200">
-                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    <div v-if="targetPortfolios.length === 0" @click="selectedPortfolioId = 'NEW_DEFAULT'"
+                      class="p-6 rounded-[2rem] border-2 border-dashed transition-all cursor-pointer flex items-center justify-between"
+                      :class="selectedPortfolioId === 'NEW_DEFAULT' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-100 bg-slate-50/30 hover:border-indigo-200 hover:bg-white'">
+                      <div class="flex items-center gap-4">
+                        <div
+                          class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-xl shadow-indigo-100 p-3">
+                          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                              d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
+                        </div>
+                        <div class="text-left">
+                          <div class="text-sm font-black text-slate-800 tracking-tight">建立主要帳戶</div>
+                          <div class="text-[9px] text-indigo-400 font-bold uppercase tracking-widest">偵測到新使用者
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        class="w-6 h-6 rounded-full flex items-center justify-center transition-all bg-indigo-600 shadow-lg scale-0 opacity-0"
+                        :class="{ 'scale-100 opacity-100': selectedPortfolioId === 'NEW_DEFAULT' }">
+                        <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                          stroke-width="4">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
-                      <div>
-                        <div class="text-sm font-black text-gray-900">自動建立新帳戶 (本人)</div>
-                        <div class="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">該用戶目前無帳戶，歸戶時將自動建立</div>
-                      </div>
-                    </div>
-                    <div class="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center">
-                      <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                      </svg>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div
-              class="bg-gray-50/80 backdrop-blur-md px-6 sm:px-10 py-4 sm:py-8 flex gap-3 sm:gap-4 justify-end border-t border-gray-100">
-              <button type="button" @click="closeModal" class="btn-secondary flex-1 sm:flex-none">
-                取消
-              </button>
-              <button type="button" @click="confirmLink" :disabled="!targetUser || !selectedPortfolioId || linking"
-                class="btn-primary flex-1 sm:flex-none">
-                <svg v-if="linking" class="animate-spin -ml-1 mr-2 h-4 w-4 sm:h-5 sm:w-5" fill="none"
-                  viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                  </path>
-                </svg>
-                {{ linking ? '處理中...' : '確認歸戶' }}
+            <div class="mt-12 flex gap-4">
+              <button @click="closeModal"
+                class="flex-1 h-16 bg-slate-100 text-slate-400 font-black rounded-2xl uppercase tracking-widest text-xs hover:bg-slate-200 transition-all">放棄歸戶</button>
+              <button @click="confirmLink" :disabled="!targetUser || !selectedPortfolioId || linking"
+                class="flex-[2] h-16 bg-indigo-600 text-white font-black rounded-2xl uppercase tracking-widest text-xs shadow-xl shadow-indigo-100 hover:bg-indigo-700 disabled:opacity-30 transition-all">
+                {{ linking ? '歸戶對齊中...' : '確認完成核對歸戶' }}
               </button>
             </div>
           </div>
@@ -359,8 +381,6 @@ import Navbar from '@/components/Navbar.vue'
 import { useToast } from '@/composables/useToast'
 import { supabase } from '@/lib/supabase'
 import { computed, onMounted, ref } from 'vue'
-
-// 核心狀態
 
 const loading = ref(true)
 const stagingItems = ref([])
@@ -377,7 +397,6 @@ const targetPortfolios = ref([])
 const fetchingPortfolios = ref(false)
 const selectedPortfolioId = ref(null)
 const linking = ref(false)
-const creatingPortfolio = ref(false)
 
 const stats = computed(() => {
   const pendingCount = stagingItems.value.length
@@ -389,10 +408,7 @@ const groupedStaging = computed(() => {
   const groups = {}
   stagingItems.value.forEach(item => {
     if (!groups[item.owner_name]) {
-      groups[item.owner_name] = {
-        owner_name: item.owner_name,
-        items: []
-      }
+      groups[item.owner_name] = { owner_name: item.owner_name, items: [] }
     }
     groups[item.owner_name].items.push(item)
   })
@@ -412,7 +428,6 @@ const fetchStagingData = async () => {
   let from = 0
   const PAGE_SIZE = 1000
   let hasMore = true
-
   try {
     while (hasMore) {
       const { data, error } = await supabase
@@ -421,23 +436,15 @@ const fetchStagingData = async () => {
         .eq('status', 'PENDING')
         .order('id')
         .range(from, from + PAGE_SIZE - 1)
-
       if (error) throw error
-
       if (data && data.length > 0) {
         allData = [...allData, ...data]
-        if (data.length < PAGE_SIZE) {
-          hasMore = false
-        } else {
-          from += PAGE_SIZE
-        }
-      } else {
-        hasMore = false
-      }
+        if (data.length < PAGE_SIZE) hasMore = false
+        else from += PAGE_SIZE
+      } else hasMore = false
     }
     stagingItems.value = allData
   } catch (err) {
-    console.error('載入資料失敗:', err)
     showToast('載入資料失敗', 'error')
   } finally {
     loading.value = false
@@ -451,7 +458,6 @@ const searchUsers = () => {
     userResults.value = []
     return
   }
-
   searchingUsers.value = true
   searchTimer = setTimeout(async () => {
     const { data, error } = await supabase
@@ -459,23 +465,9 @@ const searchUsers = () => {
       .select('id, email, full_name, nickname')
       .or(`email.ilike.%${userSearch.value}%,full_name.ilike.%${userSearch.value}%,nickname.ilike.%${userSearch.value}%`)
       .limit(10)
-
     if (!error) userResults.value = data
     searchingUsers.value = false
   }, 400)
-}
-
-// Default Category logic
-const categories = ref([])
-const convenienceStoreCategoryId = ref(null)
-
-const fetchCategoriesData = async () => {
-  const { data } = await supabase.from('souvenir_categories').select('*')
-  if (data) {
-    categories.value = data
-    const cat = data.find(c => c.name === '超商商品卡')
-    if (cat) convenienceStoreCategoryId.value = cat.id
-  }
 }
 
 const selectUser = async (user) => {
@@ -483,55 +475,23 @@ const selectUser = async (user) => {
   fetchingPortfolios.value = true
   targetPortfolios.value = []
   selectedPortfolioId.value = null
-
   try {
     const { data, error } = await supabase
       .from('portfolios')
       .select('*')
       .eq('user_id', user.id)
       .order('is_default', { ascending: false })
-
-    if (error) throw error
-    targetPortfolios.value = data || []
-    
-    // Auto select default if exists
-    const defaultPort = data?.find(p => p.is_default)
-    if (defaultPort) selectedPortfolioId.value = defaultPort.id
-    else if (data?.length > 0) selectedPortfolioId.value = data[0].id
-    else selectedPortfolioId.value = 'NEW_DEFAULT'
-    
+    if (!error) {
+      targetPortfolios.value = data || []
+      const defaultPort = data?.find(p => p.is_default)
+      if (defaultPort) selectedPortfolioId.value = defaultPort.id
+      else if (data?.length > 0) selectedPortfolioId.value = data[0].id
+      else selectedPortfolioId.value = 'NEW_DEFAULT'
+    }
   } catch (err) {
-    console.error('Fetch portfolios failed:', err)
     showToast('無法取得該用戶的帳戶清單', 'error')
   } finally {
     fetchingPortfolios.value = false
-  }
-}
-
-const createDefaultPortfolio = async () => {
-  if (!targetUser.value) return
-  creatingPortfolio.value = true
-  try {
-    const { data, error } = await supabase
-      .from('portfolios')
-      .insert({
-        user_id: targetUser.value.id,
-        name: '本人',
-        is_default: true
-      })
-      .select()
-      .single()
-
-    if (error) throw error
-    showToast('已成功建立預設帳戶', 'success')
-    
-    // Refresh list
-    await selectUser(targetUser.value)
-  } catch (err) {
-    console.error('Create portfolio failed:', err)
-    showToast('建立帳戶失敗', 'error')
-  } finally {
-    creatingPortfolio.value = false
   }
 }
 
@@ -552,32 +512,27 @@ const closeModal = () => {
   selectedPortfolioId.value = null
 }
 
+const convenienceStoreCategoryId = ref(null)
+const fetchCategoriesData = async () => {
+  const { data } = await supabase.from('souvenir_categories').select('*')
+  if (data) {
+    const cat = data.find(c => c.name === '超商商品卡')
+    if (cat) convenienceStoreCategoryId.value = cat.id
+  }
+}
+
 const confirmLink = async () => {
   if (!selectedGroup.value || !targetUser.value || !selectedPortfolioId.value) return
-
   linking.value = true
   try {
     const items = selectedGroup.value.items
     const userId = targetUser.value.id
     let portId = selectedPortfolioId.value
-
-    // 0. Handle NEW_DEFAULT portfolio creation
     if (portId === 'NEW_DEFAULT') {
-      const { data: newPort, error: portError } = await supabase
-        .from('portfolios')
-        .insert({
-          user_id: userId,
-          name: '本人',
-          is_default: true
-        })
-        .select()
-        .single()
-
+      const { data: newPort, error: portError } = await supabase.from('portfolios').insert({ user_id: userId, name: '本人', is_default: true }).select().single()
       if (portError) throw portError
       portId = newPort.id
     }
-
-    // 1. Get unique code+year combinations to check souvenirs
     const uniqueCombos = []
     const seen = new Set()
     items.forEach(item => {
@@ -587,29 +542,15 @@ const confirmLink = async () => {
         uniqueCombos.push({ code: item.stock_code, year: item.year, stock_name: item.stock_name })
       }
     })
-
-    // 2. Fetch existing souvenirs in bulk
-    // We search by year range and code
-    // Optimization: Since we usually have many items for the same year, we can filter by codes
     const codes = uniqueCombos.map(c => c.code)
-    const { data: existingSouvenirs, error: fetchError } = await supabase
-      .from('souvenirs')
-      .select('id, code, meeting_date')
-      .in('code', codes)
-
+    const { data: existingSouvenirs, error: fetchError } = await supabase.from('souvenirs').select('id, code, meeting_date').in('code', codes)
     if (fetchError) throw fetchError
-
-    // Map existing by key
     const souvenirMap = {}
     existingSouvenirs?.forEach(s => {
       const year = new Date(s.meeting_date).getFullYear()
-      const key = `${s.code}_${year}`
-      souvenirMap[key] = s.id
+      souvenirMap[`${s.code}_${year}`] = s.id
     })
-
-    // 3. Identify and create missing souvenirs in bulk
     const missingCombos = uniqueCombos.filter(c => !souvenirMap[`${c.code}_${c.year}`])
-
     if (missingCombos.length > 0) {
       const toInsert = missingCombos.map(c => ({
         code: c.code,
@@ -620,93 +561,39 @@ const confirmLink = async () => {
         classification_status: 'system_matched',
         doc_id: `AUTO_${c.code}_${c.year}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`
       }))
-
-      const { data: createdData, error: createError } = await supabase
-        .from('souvenirs')
-        .insert(toInsert)
-        .select('id, code, meeting_date')
-
+      const { data: createdData, error: createError } = await supabase.from('souvenirs').insert(toInsert).select('id, code, meeting_date')
       if (createError) throw createError
-
       createdData?.forEach(s => {
         const year = new Date(s.meeting_date).getFullYear()
-        const key = `${s.code}_${year}`
-        souvenirMap[key] = s.id
+        souvenirMap[`${s.code}_${year}`] = s.id
       })
     }
-
-    // 4. Bulk upsert user_collections (Deduplicated)
     const collectionsToUpsertMap = new Map()
     const inventoryToUpsertMap = new Map()
-
     items.forEach(item => {
       const souvenirId = souvenirMap[`${item.stock_code}_${item.year}`]
       if (souvenirId) {
-        // user_collections
         const collKey = `${portId}_${souvenirId}_holding`
-        if (!collectionsToUpsertMap.has(collKey)) {
-          collectionsToUpsertMap.set(collKey, {
-            user_id: userId,
-            portfolio_id: portId,
-            souvenir_id: souvenirId,
-            status: 'holding'
-          })
-        }
-
-        // user_inventory
+        collectionsToUpsertMap.set(collKey, { user_id: userId, portfolio_id: portId, souvenir_id: souvenirId, status: 'holding' })
         const invKey = `${portId}_${item.stock_code}`
-        if (!inventoryToUpsertMap.has(invKey)) {
-          inventoryToUpsertMap.set(invKey, {
-            user_id: userId,
-            portfolio_id: portId,
-            stock_code: item.stock_code,
-            stock_name: item.stock_name || '未知公司',
-            updated_at: new Date().toISOString()
-          })
-        }
+        inventoryToUpsertMap.set(invKey, { user_id: userId, portfolio_id: portId, stock_code: item.stock_code, stock_name: item.stock_name || '未知公司', updated_at: new Date().toISOString() })
       }
     })
-
     const collectionsToUpsert = Array.from(collectionsToUpsertMap.values())
     const inventoryToUpsert = Array.from(inventoryToUpsertMap.values())
-
-    if (collectionsToUpsert.length === 0) {
-      throw new Error('找不到可歸戶的紀念品資料')
-    }
-
-    // Upsert Collections
-    const { error: collError } = await supabase
-      .from('user_collections')
-      .upsert(collectionsToUpsert, { onConflict: 'portfolio_id,souvenir_id' })
-
+    if (collectionsToUpsert.length === 0) throw new Error('找不到可歸戶的紀念品資料')
+    const { error: collError } = await supabase.from('user_collections').upsert(collectionsToUpsert, { onConflict: 'portfolio_id,souvenir_id' })
     if (collError) throw collError
-
-    // Upsert Inventory
     if (inventoryToUpsert.length > 0) {
-      const { error: invError } = await supabase
-        .from('user_inventory')
-        .upsert(inventoryToUpsert, { onConflict: 'portfolio_id,stock_code' })
+      const { error: invError } = await supabase.from('user_inventory').upsert(inventoryToUpsert, { onConflict: 'portfolio_id,stock_code' })
       if (invError) throw invError
     }
-
-    // 5. Bulk update staging status
-    const stagingIds = items.map(i => i.id)
-    const { error: stageError } = await supabase
-      .from('inventory_staging')
-      .update({
-        status: 'IMPORTED',
-        matched_user_id: userId
-      })
-      .in('id', stagingIds)
-
+    const { error: stageError } = await supabase.from('inventory_staging').update({ status: 'IMPORTED', matched_user_id: userId }).in('id', items.map(i => i.id))
     if (stageError) throw stageError
-
     showToast(`成功歸戶 ${items.length} 筆資料`, 'success')
     closeModal()
     await fetchStagingData()
-
   } catch (e) {
-    console.error('歸戶錯誤:', e)
     showToast('歸戶過程發生錯誤: ' + (e.message || e), 'error')
   } finally {
     linking.value = false
@@ -720,59 +607,83 @@ onMounted(() => {
 </script>
 
 <style scoped>
-@keyframes modalScale {
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 2.25rem;
+  box-shadow: 0 10px 40px -10px rgba(31, 38, 135, 0.05);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(99, 102, 241, 0.1);
+  border-radius: 20px;
+}
+
+@keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: scale(0.9) translateY(40px);
+    transform: translateY(20px);
   }
 
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translateY(0);
   }
 }
 
-.animate-modal-scale {
-  animation: modalScale 0.6s cubic-bezier(0.23, 1, 0.32, 1) both;
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
-.stat-card {
-  @apply flex items-center p-6 sm:p-8 transition-all duration-500 hover:scale-[1.02] hover:shadow-indigo-500/10;
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scale(1.02);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
-.stat-icon {
-  @apply w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl flex items-center justify-center mr-4 sm:mr-6 shadow-lg;
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.glass-card {
-  @apply bg-white border border-gray-100 shadow-xl rounded-3xl sm:rounded-[2rem] transition-all duration-500;
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out forwards;
 }
 
-.user-option {
-  @apply flex items-center justify-between p-5 cursor-pointer bg-gray-50/50 hover:bg-indigo-50/80 transition-all rounded-[1.5rem] border-2 border-transparent;
+.animate-bounce-in {
+  animation: bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-.user-option.selected {
-  @apply bg-indigo-50 border-indigo-500 shadow-xl shadow-indigo-500/10;
+.delay-100 {
+  animation-delay: 0.1s;
 }
 
-.btn-primary {
-  @apply px-4 sm:px-10 py-3 sm:py-5 bg-indigo-600 text-white font-black rounded-xl sm:rounded-[1.5rem] hover:bg-indigo-700 hover:shadow-2xl hover:shadow-indigo-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest text-[10px] sm:text-xs;
-}
-
-.btn-secondary {
-  @apply px-4 sm:px-10 py-3 sm:py-5 bg-gray-100 text-gray-400 font-black rounded-xl sm:rounded-[1.5rem] hover:bg-gray-200 hover:text-gray-600 transition-all uppercase tracking-widest text-[10px] sm:text-xs;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-gray-200 rounded-full hover:bg-indigo-200 transition-colors;
+.delay-200 {
+  animation-delay: 0.2s;
 }
 </style>

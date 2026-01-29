@@ -118,6 +118,32 @@ export function usePortfolio() {
     }
   }
 
+  const updatePortfolio = async (id, name) => {
+    if (!user.value) return
+    
+    try {
+      const { data, error: updateError } = await supabase
+        .from('portfolios')
+        .update({ name })
+        .eq('id', id)
+        .eq('user_id', user.value.id)
+        .select()
+        .single()
+      
+      if (updateError) throw updateError
+      
+      // Update local state
+      const index = portfolios.value.findIndex(p => p.id === id)
+      if (index !== -1) {
+        portfolios.value[index] = data
+      }
+      return { data, error: null }
+    } catch (e) {
+      console.error('Update portfolio failed:', e)
+      return { data: null, error: e }
+    }
+  }
+
   // Auto fetch when user changes
   watch(() => user.value?.id, (newId) => {
     if (newId) {
@@ -138,6 +164,7 @@ export function usePortfolio() {
     fetchPortfolios,
     selectPortfolio,
     addPortfolio,
-    deletePortfolio
+    deletePortfolio,
+    updatePortfolio
   }
 }

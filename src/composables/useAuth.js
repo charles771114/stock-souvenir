@@ -24,17 +24,17 @@ export function useAuth() {
 
     try {
       // 1. 動態建構 Callback URL
-      // 優先使用環境變數 (適合正式環境固定網址)，否則使用當前 Origin (適合預覽/開發)
       const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin
-      const callbackUrl = `${siteUrl}${import.meta.env.BASE_URL}auth/callback`
+      const callbackUrl = `${siteUrl}${import.meta.env.BASE_URL.replace(/\/$/, '')}/auth/callback`
       
+      console.log('Initiating Google OAuth redirect to:', callbackUrl)
+
       const { data, error: signInError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: callbackUrl,
-          // 將目標路徑存在 query params 中，讓 Callback 頁面讀取
           queryParams: {
-            next: redirectPath
+            next: encodeURIComponent(redirectPath)
           }
         },
       })
@@ -43,8 +43,8 @@ export function useAuth() {
 
       return { data, error: null }
     } catch (e) {
-      console.error('登入失敗:', e)
-      error.value = e.message
+      console.error('[Auth] Google Login Exception:', e)
+      error.value = e.message || 'Login failed'
       return { data: null, error: e }
     } finally {
       loading.value = false
@@ -120,18 +120,26 @@ export function useAuth() {
 
     initAuthPromise = (async () => {
       loading.value = true
+      console.log('[Auth] Initializing authentication state...')
       try {
         // 取得當前 session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        if (sessionError) throw sessionError
+        if (sessionError) {
+          console.warn('[Auth] Session retrieval warning:', sessionError.message)
+          // Don't throw here, allow the app to load in guest mode
+        }
 
         if (session?.user) {
+          console.log('[Auth] Active session found for user:', session.user.id)
           user.value = session.user
           await fetchProfile(session.user.id)
+        } else {
+          console.log('[Auth] No active session found.')
         }
 
         // 監聽認證狀態變化
         supabase.auth.onAuthStateChange(async (event, session) => {
+          console.log(`[Auth] Auth state changed: ${event}`, session?.user?.id || 'no-user')
 
           if (session?.user) {
             // 避免重複 fetch 同一用戶的 profile
@@ -146,7 +154,7 @@ export function useAuth() {
         })
       } catch (e) {
         if (e.name !== 'AbortError') {
-          console.error('初始化認證失敗:', e)
+          console.error('[Auth] Initialization critical error:', e)
           error.value = e.message
         }
       } finally {
