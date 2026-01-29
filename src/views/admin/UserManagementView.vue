@@ -166,6 +166,20 @@
                   <p class="text-sm font-semibold text-gray-900">{{ user.collection_count || 0 }}</p>
                 </div>
               </div>
+
+              <!-- User Portfolios -->
+              <div class="mt-4 pt-4 border-t border-gray-100">
+                <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-2">持有的帳戶 ({{ user.portfolios.length }})</p>
+                <div class="flex flex-wrap gap-1.5">
+                  <div v-for="p in user.portfolios" :key="p.id"
+                    class="px-2 py-0.5 rounded text-[10px] font-bold border"
+                    :class="p.is_default ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-gray-50 text-gray-600 border-gray-100'"
+                  >
+                    {{ p.name }}
+                    <span v-if="p.is_default" class="text-[8px] opacity-70 ml-0.5">(預設)</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

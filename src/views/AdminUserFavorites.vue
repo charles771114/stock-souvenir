@@ -110,6 +110,7 @@
             <thead class="bg-gray-50">
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用戶</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">帳戶</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">代號</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">公司名稱</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">紀念品</th>
@@ -120,6 +121,12 @@
             <tbody class="bg-white divide-y divide-gray-200">
               <tr v-for="fav in favorites" :key="fav.collection_id" class="hover:bg-gray-50">
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ fav.full_name || fav.email }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" 
+                    :class="fav.is_default_portfolio ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-gray-50 text-gray-600 border border-gray-100'">
+                    {{ fav.portfolio_name }}
+                  </span>
+                </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ fav.stock_code }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fav.company_name }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fav.souvenir_item }}</td>
@@ -245,9 +252,11 @@ const fetchFavorites = async () => {
       .select(`
         id,
         user_id,
+        portfolio_id,
         souvenir_id,
         created_at,
         profiles!inner(email, full_name),
+        portfolios(name, is_default),
         souvenirs!inner(code, name, souvenir_item, meeting_date)
       `)
       .order('created_at', { ascending: false })
@@ -267,6 +276,8 @@ const fetchFavorites = async () => {
         user_id: item.user_id,
         email: item.profiles.email,
         full_name: item.profiles.full_name,
+        portfolio_name: item.portfolios?.name || '未知',
+        is_default_portfolio: item.portfolios?.is_default || false,
         stock_code: item.souvenirs.code,
         company_name: item.souvenirs.name,
         souvenir_item: item.souvenirs.souvenir_item,

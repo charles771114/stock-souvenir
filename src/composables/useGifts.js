@@ -2,15 +2,40 @@ import { supabase } from '@/lib/supabase'
 import { ref } from 'vue'
 import { useAuth } from './useAuth'
 import { useLocalStorageCache } from './useLocalStorageCache'
+import { usePortfolio } from './usePortfolio'
 
 export function useGifts() {
   const gifts = ref([])
   const myCollections = ref([])
+  const allUserCollections = ref([])
   const loading = ref(false)
   const error = ref(null)
 
   // 初始化快取
   const cache = useLocalStorageCache()
+  const { user } = useAuth()
+  const { currentPortfolioId, isCombinedView } = usePortfolio()
+
+  /**
+   * 去重輔助函數：根據股票代碼去重，優先保留 holding 狀態
+   */
+  const deduplicateCollections = (rawData) => {
+    const filtered = (rawData || []).filter(item => item.gift)
+    const uniqueMap = new Map()
+    
+    filtered.forEach(item => {
+      // 強制轉字串並修剪空白，確保 key 絕對一致
+      const code = String(item.gift?.code || '').trim()
+      const uniqueKey = code || item.souvenir_id
+      
+      // 優先保留 holding 狀態（已持股），如果兩者都有
+      if (!uniqueMap.has(uniqueKey) || item.status === 'holding') {
+        uniqueMap.set(uniqueKey, item)
+      }
+    })
+    
+    return Array.from(uniqueMap.values())
+  }
 
   /**
    * 取得指定年度紀念品的指紋（最後更新時間）
@@ -41,7 +66,6 @@ export function useGifts() {
 
     try {
       const currentYear = new Date().getFullYear()
-      const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
       const requestYear = filters.year
 
       // 檢查快取（僅當有指定年份且無其他篩選條件時）
@@ -69,32 +93,29 @@ export function useGifts() {
 
       // 呼叫 API
       let query = supabase
-        .from('souvenirs') // Updated table name
+        .from('souvenirs')
         .select('*')
-        .order('meeting_date', { ascending: false }) // Updated sort field
+        .order('meeting_date', { ascending: false })
         .order('updated_at', { ascending: false })
 
       // 套用篩選條件
       if (filters.year) {
-        // Assuming filters.year is a number like 2025
         const startDate = `${filters.year}-01-01`
         const endDate = `${filters.year}-12-31`
         query = query.gte('meeting_date', startDate).lte('meeting_date', endDate)
       }
 
       if (filters.companyCode) {
-        query = query.eq('code', filters.companyCode) // Updated column: company_code -> code
+        query = query.eq('code', filters.companyCode)
       }
 
       if (filters.companyName) {
-        query = query.ilike('name', `%${filters.companyName}%`) // Updated column: company_name -> name
+        query = query.ilike('name', `%${filters.companyName}%`)
       }
 
       if (filters.giftName) {
-        query = query.ilike('souvenir_item', `%${filters.giftName}%`) // Updated column: gift_name -> souvenir_item
+        query = query.ilike('souvenir_item', `%${filters.giftName}%`)
       }
-
-      // Note: 'gift_category' column was removed in new schema, removing filter for now or need to add it back if essential.
 
       const { data, error: fetchError } = await query
 
@@ -109,7 +130,6 @@ export function useGifts() {
           year: parseInt(requestYear, 10)
         }
 
-        // 當年度加入指紋標記
         if (requestYear === currentYear.toString()) {
           metadata.fingerprint = await getSouvenirFingerprint(requestYear)
         }
@@ -122,13 +142,11 @@ export function useGifts() {
       console.error('取得紀念品列表失敗:', e)
       error.value = e.message
 
-      // Fallback: 嘗試使用快取（即使過期）
       if (filters.year && !filters.companyCode && !filters.companyName && !filters.giftName) {
         const cacheKey = `gifts:${filters.year}`
         const cachedEntry = cache.getWithMetadata(cacheKey)
         if (cachedEntry) {
           gifts.value = cachedEntry.data
-          console.warn('Using cached data due to API error')
           return { data: cachedEntry.data, error: e, fromCache: true }
         }
       }
@@ -139,55 +157,27 @@ export function useGifts() {
     }
   }
 
-  /**
-   * 取得我的收藏
-   * @param {string|number} year - 指定年度（選填）
-   */
   const fetchMyCollections = async (year = null) => {
-    const { user: currentUser } = useAuth()
-    
     loading.value = true
     error.value = null
 
-    /**
-     * 去重輔助函數：根據股票代碼去重，優先保留 holding 狀態
-     */
-    const deduplicateCollections = (rawData) => {
-      const filtered = (rawData || []).filter(item => item.gift)
-      const uniqueMap = new Map()
-      
-      filtered.forEach(item => {
-        // 強制轉字串並修剪空白，確保 key 絕對一致
-        const code = String(item.gift?.code || '').trim()
-        const uniqueKey = code || item.souvenir_id
-        
-        // 優先保留 holding 狀態（已持股），如果兩者都有
-        if (!uniqueMap.has(uniqueKey) || item.status === 'holding') {
-          uniqueMap.set(uniqueKey, item)
-        }
-      })
-      
-      return Array.from(uniqueMap.values())
-    }
-
     try {
-      if (!currentUser.value) {
+      if (!user.value) {
         myCollections.value = []
         return { data: [], error: null }
       }
       
-      const userId = currentUser.value.id
+      const userId = user.value.id
       const currentYear = new Date().getFullYear().toString()
       const requestYear = year?.toString()
+      const currentPortId = isCombinedView.value ? 'combined' : currentPortfolioId.value
 
-      // 1. 檢查快取 (僅針對過去年度)
+      // 1. 檢查快取
       if (requestYear && requestYear !== currentYear) {
-        const cacheKey = `collections:${userId}:${requestYear}`
+        const cacheKey = `collections:${userId}:${currentPortId}:${requestYear}`
         const cachedEntry = cache.getWithMetadata(cacheKey)
         if (cachedEntry) {
-          // 對快取資料也進行一次去重
           const deduplicatedCache = deduplicateCollections(cachedEntry.data)
-          
           myCollections.value = deduplicatedCache
           loading.value = false
           return { data: deduplicatedCache, error: null, fromCache: true }
@@ -201,10 +191,18 @@ export function useGifts() {
           *,
           gift:souvenirs (*)
         `)
-        .eq('user_id', userId)
-        .in('status', ['collected', 'holding'])
+      
+      if (isCombinedView.value) {
+        query = query.eq('user_id', userId)
+      } else if (currentPortfolioId.value) {
+        query = query.eq('portfolio_id', currentPortfolioId.value)
+      } else {
+        myCollections.value = []
+        return { data: [], error: null }
+      }
 
-      // 套用年份篩選（如果指定）
+      query = query.in('status', ['collected', 'holding'])
+
       if (requestYear) {
         const startDate = `${requestYear}-01-01`
         const endDate = `${requestYear}-12-31`
@@ -216,13 +214,11 @@ export function useGifts() {
 
       if (fetchError) throw fetchError
 
-      // 3. 去重與更新
       const finalData = deduplicateCollections(data)
       myCollections.value = finalData
 
-      // 4. 儲存快取 (僅針對過去年度)
       if (requestYear && requestYear !== currentYear && finalData.length > 0) {
-        const cacheKey = `collections:${userId}:${requestYear}`
+        const cacheKey = `collections:${userId}:${currentPortId}:${requestYear}`
         const metadata = { year: requestYear }
         cache.set(cacheKey, finalData, metadata)
       }
@@ -237,45 +233,73 @@ export function useGifts() {
     }
   }
 
-  /**
-   * 加入收藏
-   * @param {string} giftId - 紀念品 ID
-   * @param {string} collectedDate - 收藏日期（可選）
-   */
-  const addToCollection = async (giftId, collectedDate = null) => {
+  const fetchAllUserCollections = async (year = null) => {
+    try {
+      if (!user.value) return { data: [], error: null }
+      
+      let query = supabase
+        .from('user_collections')
+        .select(`
+          *,
+          gift:souvenirs (*)
+        `)
+        .eq('user_id', user.value.id)
+        .in('status', ['collected', 'holding'])
+
+      if (year) {
+        const startDate = `${year}-01-01`
+        const endDate = `${year}-12-31`
+        query = query.gte('gift.meeting_date', startDate).lte('gift.meeting_date', endDate)
+      }
+
+      const { data, error: fetchError } = await query
+      if (fetchError) throw fetchError
+      
+      const uniqueData = deduplicateCollections(data)
+      allUserCollections.value = uniqueData
+      return { data: uniqueData, error: null }
+    } catch (e) {
+      console.error('取得全域收藏失敗:', e)
+      return { data: null, error: e }
+    }
+  }
+
+  const addToCollection = async (giftId) => {
     loading.value = true
     error.value = null
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('未登入')
+      if (!user.value) throw new Error('未登入')
+      if (isCombinedView.value || !currentPortfolioId.value) {
+        throw new Error('請先選擇一個特定的帳戶，不能在歸戶模式下新增')
+      }
 
       const { data, error: insertError } = await supabase
         .from('user_collections')
         .upsert({
-          user_id: user.id,
+          user_id: user.value.id,
+          portfolio_id: currentPortfolioId.value,
           souvenir_id: giftId,
-          // collected_date: collectedDate, // Removed from new schema or handled via 'created_at' or 'status'
           status: 'collected'
-        }, { onConflict: 'user_id,souvenir_id,status' })
+        }, { onConflict: 'portfolio_id,souvenir_id' })
         .select()
         .single()
 
       if (insertError) throw insertError
 
-      // 重新載入收藏列表
-      const { user: currentUser } = useAuth()
-      if (currentUser.value) {
-        const userId = currentUser.value.id
-        const cacheKeyPattern = `collections:${userId}:`
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i)
-          if (key && key.includes(cacheKeyPattern)) {
-            localStorage.removeItem(key)
-          }
+      // 清除相關快取
+      const userId = user.value.id
+      const currentPortId = currentPortfolioId.value
+      const cacheKeyPattern = `collections:${userId}:${currentPortId}:`
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key && key.includes(cacheKeyPattern)) {
+          localStorage.removeItem(key)
         }
       }
+      
       await fetchMyCollections()
+      await fetchAllUserCollections()
 
       return { data, error: null }
     } catch (e) {
@@ -287,10 +311,6 @@ export function useGifts() {
     }
   }
 
-  /**
-   * 移除收藏
-   * @param {string} collectionId - 收藏記錄 ID
-   */
   const removeFromCollection = async (collectionId) => {
     loading.value = true
     error.value = null
@@ -303,11 +323,10 @@ export function useGifts() {
 
       if (deleteError) throw deleteError
 
-      // 重新載入收藏列表並清除快取
-      const { user: currentUser } = useAuth()
-      if (currentUser.value) {
-        const userId = currentUser.value.id
-        const cacheKeyPattern = `collections:${userId}:`
+      if (user.value) {
+        const userId = user.value.id
+        const currentPortId = isCombinedView.value ? 'combined' : currentPortfolioId.value
+        const cacheKeyPattern = `collections:${userId}:${currentPortId}:`
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i)
           if (key && key.includes(cacheKeyPattern)) {
@@ -316,6 +335,7 @@ export function useGifts() {
         }
       }
       await fetchMyCollections()
+      await fetchAllUserCollections()
 
       return { error: null }
     } catch (e) {
@@ -327,11 +347,6 @@ export function useGifts() {
     }
   }
 
-  /**
-   * 更新收藏備註
-   * @param {string} collectionId - 收藏記錄 ID
-   * @param {string} note - 備註內容
-   */
   const updateCollectionNote = async (collectionId, note) => {
     loading.value = true
     error.value = null
@@ -346,7 +361,6 @@ export function useGifts() {
 
       if (updateError) throw updateError
 
-      // 更新本地資料
       const index = myCollections.value.findIndex(c => c.id === collectionId)
       if (index !== -1) {
         myCollections.value[index].notes = note
@@ -362,11 +376,6 @@ export function useGifts() {
     }
   }
 
-  /**
-   * 更新收藏日期
-   * @param {string} collectionId - 收藏記錄 ID
-   * @param {string} date - 日期
-   */
   const updateCollectionDate = async (collectionId, date) => {
     loading.value = true
     error.value = null
@@ -381,7 +390,6 @@ export function useGifts() {
 
       if (updateError) throw updateError
 
-      // 更新本地資料
       const index = myCollections.value.findIndex(c => c.id === collectionId)
       if (index !== -1) {
         myCollections.value[index].collected_date = date
@@ -397,44 +405,39 @@ export function useGifts() {
     }
   }
 
-  /**
-   * 檢查是否已收藏
-   * @param {string} giftId - 紀念品 ID
-   */
   const isInCollection = (giftId) => {
     return myCollections.value.some(c => c.souvenir_id === giftId)
   }
 
-  /**
-   * 取得收藏記錄
-   * @param {string} giftId - 紀念品 ID
-   */
   const getCollection = (giftId) => {
     return myCollections.value.find(c => c.souvenir_id === giftId)
   }
 
-  /**
-   * 取得使用者目前持有的股票代號列表（status 為 'holding'）
-   * @returns {Promise<Set<string>>} - 股票代號的 Set
-   */
   const fetchUserInventoryIds = async () => {
-    const { user: currentUser } = useAuth()
     try {
-      if (!currentUser.value) return new Set()
+      if (!user.value) return new Set()
 
-      const { data, error: dbError } = await supabase
+      let query = supabase
         .from('user_collections')
         .select(`
           souvenirs!inner (
             code
           )
         `)
-        .eq('user_id', currentUser.value.id)
+      
+      if (isCombinedView.value) {
+        query = query.eq('user_id', user.value.id)
+      } else if (currentPortfolioId.value) {
+        query = query.eq('portfolio_id', currentPortfolioId.value)
+      } else {
+        return new Set()
+      }
+
+      const { data, error: dbError } = await query
         .eq('status', 'holding')
 
       if (dbError) throw dbError
 
-      // 提取所有不重複的股票代號
       const codes = data?.map(d => d.souvenirs?.code).filter(Boolean) || []
       return new Set(codes)
     } catch (e) {
@@ -443,24 +446,12 @@ export function useGifts() {
     }
   }
 
-  /**
-   * 取得上一年度紀念品資料（用於參考顯示）
-   * @param {number|string} currentYear - 當前年度
-   * @returns {Promise<Map<string, object>>} - 以股票代號為 key 的 Map
-   */
   const fetchPreviousYearSouvenirs = async (currentYear) => {
-    // Guard: ensure year is valid
-    if (!currentYear) {
-      return new Map()
-    }
+    if (!currentYear) return new Map()
     const previousYear = parseInt(currentYear, 10) - 1
-    if (isNaN(previousYear)) {
-      console.warn('Invalid year for previous year lookup:', currentYear)
-      return new Map()
-    }
-    const cacheKey = `gifts:${previousYear}`
+    if (isNaN(previousYear)) return new Map()
     
-    // 嘗試從快取取得
+    const cacheKey = `gifts:${previousYear}`
     const cachedEntry = cache.getWithMetadata(cacheKey)
     if (cachedEntry?.data) {
       const souvenirMap = new Map()
@@ -472,7 +463,6 @@ export function useGifts() {
       return souvenirMap
     }
 
-    // 沒有快取，從 API 取得
     try {
       const startDate = `${previousYear}-01-01`
       const endDate = `${previousYear}-12-31`
@@ -496,12 +486,6 @@ export function useGifts() {
     }
   }
 
-  /**
-   * 為禮品列表加入上年度參考資料
-   * @param {Array} currentGifts - 當前年度禮品列表
-   * @param {Map} previousYearMap - 上年度資料 Map
-   * @returns {Array} - 加入 previousYearSouvenir 欄位的列表
-   */
   const enrichWithPreviousYear = (currentGifts, previousYearMap) => {
     return currentGifts.map(gift => {
       const needsReference = !gift.souvenir_item || 
@@ -518,13 +502,33 @@ export function useGifts() {
     })
   }
 
+  const reassignCollectionPortfolio = async (itemId, targetPortfolioId) => {
+    if (!user.value) return { success: false, error: '未登入' }
+    
+    try {
+      const { error: updateError } = await supabase
+        .from('user_collections')
+        .update({ portfolio_id: targetPortfolioId })
+        .eq('id', itemId)
+        .eq('user_id', user.value.id)
+
+      if (updateError) throw updateError
+      return { success: true }
+    } catch (e) {
+      console.error('Reassign collection failed:', e)
+      return { success: false, error: e.message }
+    }
+  }
+
   return {
     gifts,
     myCollections,
+    allUserCollections,
     loading,
     error,
     fetchAllGifts,
     fetchMyCollections,
+    fetchAllUserCollections,
     fetchUserInventoryIds,
     fetchPreviousYearSouvenirs,
     enrichWithPreviousYear,
@@ -532,6 +536,7 @@ export function useGifts() {
     removeFromCollection,
     updateCollectionNote,
     updateCollectionDate,
+    reassignCollectionPortfolio,
     isInCollection,
     getCollection,
   }

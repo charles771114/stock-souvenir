@@ -18,6 +18,18 @@
     <!-- Card Content -->
     <div class="p-5 flex-1 flex flex-col">
 
+      <!-- Multi-portfolio Aggregate Status -->
+      <div v-if="gift.collectedPortfolios && gift.collectedPortfolios.length > 0" 
+        class="flex flex-wrap gap-1 mb-2 pl-2">
+        <div v-for="port in gift.collectedPortfolios" :key="port.id"
+          class="px-1.5 py-0.5 rounded text-[9px] font-bold border transition-all hover:scale-105 cursor-help"
+          :class="port.status === 'holding' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-indigo-50 text-indigo-600 border-indigo-100'"
+          :title="`${port.name} (${port.status === 'holding' ? '已持有' : '收藏中'})`"
+        >
+          {{ port.initial }}
+        </div>
+      </div>
+
       <!-- Header: Code & Action -->
       <div class="flex justify-between items-start mb-3 pl-2">
         <div class="flex items-center space-x-2">

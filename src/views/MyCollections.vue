@@ -2,9 +2,28 @@
   <div class="min-h-screen bg-slate-50 flex flex-col">
     <Navbar />
 
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
+    <!-- Pull to Refresh Indicator -->
+    <div 
+      class="fixed top-0 left-0 right-0 z-50 flex items-center justify-center transition-transform duration-75 pointer-events-none"
+      :style="{ 
+        transform: `translateY(${pullDistance - 60}px)`,
+        opacity: pullDistance > 20 ? 1 : 0
+      }"
+    >
+      <div class="bg-white/90 backdrop-blur-md rounded-full p-3 shadow-2xl border border-indigo-100 flex items-center justify-center">
+        <div 
+          class="w-8 h-8 rounded-full border-4 border-indigo-100 border-t-indigo-600 transition-none"
+          :class="{ 'animate-spin': isRefreshing }"
+          :style="{ transform: isRefreshing ? 'none' : `rotate(${pullDistance * 3}deg)` }"
+        ></div>
+        <div v-if="!isRefreshing" class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-indigo-400 uppercase tracking-widest whitespace-nowrap">下拉重整</div>
+        <div v-else class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-indigo-600 uppercase tracking-widest whitespace-nowrap animate-pulse">更新中...</div>
+      </div>
+    </div>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full animate-fade-in-up">
       <!-- Header -->
-      <div class="mb-12 animate-fade-in-up">
+      <div class="mb-12">
         <h1
           class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 tracking-tighter">
           年度購股計畫
@@ -113,9 +132,16 @@
                     {{ item.gift?.code }}
                   </span>
                   <div class="flex flex-col">
-                    <h3 class="text-sm font-black text-slate-700 group-hover:text-indigo-600 transition-colors">
-                      {{ item.gift?.name }}
-                    </h3>
+                    <div class="flex items-center gap-2 font-black text-slate-700">
+                      <h3 class="text-sm group-hover:text-indigo-600 transition-colors">
+                        {{ item.gift?.name }}
+                      </h3>
+                      <!-- Portfolio Badge -->
+                      <span v-if="isCombinedView" 
+                        class="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200">
+                        {{ getPortfolioName(item.portfolio_id) }}
+                      </span>
+                    </div>
                     <p class="text-[11px] font-bold text-slate-400 mt-0.5 flex items-center gap-2">
                       <span>{{ item.gift?.souvenir_item }}</span>
                       <span v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)" 
@@ -140,8 +166,16 @@
                     <span class="text-[10px] font-black uppercase tracking-wider">{{ addingToInventory === item.souvenir_id ? '新增中...' : '新增到庫存' }}</span>
                   </button>
 
+                  <button @click="openMoveModal(item)"
+                    class="p-2.5 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all duration-300 border border-transparent hover:border-indigo-100"
+                    title="轉移帳戶">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                  </button>
+
                   <button @click="handleRemove(item.id)" :disabled="removing === item.id"
-                    class="p-2.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all duration-300 border border-transparent hover:border-rose-100">
+                    class="p-2.5 text-slate-300 hover:ローズ-500 hover:bg-rose-50 rounded-xl transition-all duration-300 border border-transparent hover:border-rose-100">
                     <i v-if="removing === item.id" class="fas fa-spinner fa-spin"></i>
                     <i v-else class="fas fa-trash-alt w-4 h-4"></i>
                   </button>
@@ -157,13 +191,29 @@
                   <span class="font-mono text-[10px] font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">
                     {{ item.gift?.code }}
                   </span>
-                  <button @click="handleRemove(item.id)" :disabled="removing === item.id"
-                    class="text-slate-300 hover:text-rose-500 transition-colors">
-                    <i v-if="removing === item.id" class="fas fa-spinner fa-spin"></i>
-                    <i v-else class="fas fa-trash-alt w-5 h-5"></i>
-                  </button>
+                  <div class="flex gap-1">
+                    <button @click="openMoveModal(item)"
+                      class="text-slate-300 hover:text-indigo-600 transition-colors"
+                      title="轉移帳戶">
+                      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                      </svg>
+                    </button>
+                    <button @click="handleRemove(item.id)" :disabled="removing === item.id"
+                      class="text-slate-300 hover:text-rose-500 transition-colors">
+                      <i v-if="removing === item.id" class="fas fa-spinner fa-spin"></i>
+                      <i v-else class="fas fa-trash-alt w-5 h-5"></i>
+                    </button>
+                  </div>
                 </div>
-                <h3 class="text-lg font-black text-slate-900 mb-2">{{ item.gift?.name }}</h3>
+                <div class="flex items-center gap-2 mb-2">
+                  <h3 class="text-lg font-black text-slate-900">{{ item.gift?.name }}</h3>
+                  <!-- Portfolio Badge -->
+                  <span v-if="isCombinedView" 
+                    class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
+                    {{ getPortfolioName(item.portfolio_id) }}
+                  </span>
+                </div>
                 <p class="text-sm text-slate-600 font-medium mb-6 line-clamp-2">
                   <span>{{ item.gift?.souvenir_item || '尚未公布' }}</span>
                   <br v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)" />
@@ -202,9 +252,16 @@
                     {{ item.gift?.code }}
                   </span>
                   <div class="flex flex-col">
-                    <h3 class="text-sm font-black text-slate-700 group-hover:text-emerald-600 transition-colors">
-                      {{ item.gift?.name }}
-                    </h3>
+                    <div class="flex items-center gap-2 font-black text-slate-700">
+                      <h3 class="text-sm group-hover:text-emerald-600 transition-colors">
+                        {{ item.gift?.name }}
+                      </h3>
+                      <!-- Portfolio Badge -->
+                      <span v-if="isCombinedView" 
+                        class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100/50">
+                        {{ getPortfolioName(item.portfolio_id) }}
+                      </span>
+                    </div>
                     <p class="text-[11px] font-bold text-slate-400 mt-0.5 flex items-center gap-2">
                       <span>{{ item.gift?.souvenir_item }}</span>
                       <span v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)" 
@@ -243,11 +300,20 @@
                   <span class="font-mono text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg">
                     {{ item.gift?.code }}
                   </span>
-                  <button @click="handleRemove(item.id)" :disabled="removing === item.id"
-                    class="text-slate-300 hover:text-rose-500 transition-colors">
-                    <i v-if="removing === item.id" class="fas fa-spinner fa-spin"></i>
-                    <i v-else class="fas fa-trash-alt w-5 h-5"></i>
-                  </button>
+                  <div class="flex gap-1">
+                    <button @click="openMoveModal(item)"
+                      class="text-slate-300 hover:text-indigo-600 transition-colors"
+                      title="轉移帳戶">
+                      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                      </svg>
+                    </button>
+                    <button @click="handleRemove(item.id)" :disabled="removing === item.id"
+                      class="text-slate-300 hover:text-rose-500 transition-colors">
+                      <i v-if="removing === item.id" class="fas fa-spinner fa-spin"></i>
+                      <i v-else class="fas fa-trash-alt w-5 h-5"></i>
+                    </button>
+                  </div>
                 </div>
                 <h3 class="text-lg font-black text-slate-900 mb-2">{{ item.gift?.name }}</h3>
                 <p class="text-sm text-slate-600 font-medium mb-6 line-clamp-2">
@@ -285,21 +351,40 @@
         </router-link>
       </div>
     </main>
+
+    <!-- Modals -->
+    <PortfolioMoveModal 
+      :is-open="isMoveModalOpen" 
+      :item="itemToMove" 
+      :loading="reassignLoading"
+      @close="isMoveModalOpen = false"
+      @confirm="handleReassign"
+    />
   </div>
 </template>
 
 <script setup>
 import Navbar from '@/components/Navbar.vue'
+import PortfolioMoveModal from '@/components/PortfolioMoveModal.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useCollection } from '@/composables/useCollection'
 import { useDialog } from '@/composables/useDialog'
 import { useGifts } from '@/composables/useGifts'
+import { usePortfolio } from '@/composables/usePortfolio'
+import { usePullRefresh } from '@/composables/usePullRefresh'
 import { useToast } from '@/composables/useToast'
 import { computed, onMounted, ref, watch } from 'vue'
+
+const { isCombinedView, portfolios, currentPortfolioId } = usePortfolio()
 
 const { confirm } = useDialog()
 const { showToast } = useToast()
 const { user } = useAuth()
+
+// Pull to Refresh
+const { pullDistance, isRefreshing } = usePullRefresh(async () => {
+  await fetchMyCollections(selectedYear.value)
+})
 const { addToCollection } = useCollection()
 
 const { 
@@ -308,7 +393,8 @@ const {
   fetchMyCollections, 
   fetchUserInventoryIds, 
   fetchPreviousYearSouvenirs,
-  removeFromCollection 
+  removeFromCollection,
+  reassignCollectionPortfolio
 } = useGifts()
 
 const selectedYear = ref(new Date().getFullYear().toString())
@@ -319,6 +405,14 @@ const previousYearSouvenirs = ref(new Map())
 const removing = ref(null)
 const addingToInventory = ref(null)  // 追蹤正在新增到庫存的項目
 const expandedCategories = ref({})
+const isMoveModalOpen = ref(false)
+const itemToMove = ref(null)
+const reassignLoading = ref(false)
+
+const getPortfolioName = (id) => {
+  const p = portfolios.value.find(p => p.id === id)
+  return p ? p.name : '未知帳戶'
+}
 
 // Helper to check if a souvenir string is a placeholder
 const isPlaceholder = (val) => {
@@ -449,6 +543,32 @@ const addToInventory = async (souvenirId) => {
   }
 }
 
+// Methods - Reassign
+const openMoveModal = (item) => {
+  itemToMove.value = item
+  isMoveModalOpen.value = true
+}
+
+const handleReassign = async (targetPortfolioId) => {
+  if (!itemToMove.value) return
+  
+  reassignLoading.value = true
+  try {
+    const { success, error } = await reassignCollectionPortfolio(itemToMove.value.id, targetPortfolioId)
+    if (success) {
+      showToast('已完成帳戶轉移', 'success')
+      isMoveModalOpen.value = false
+      await fetchMyCollections(selectedYear.value)
+    } else {
+      showToast(error || '轉移失敗', 'error')
+    }
+  } catch (err) {
+    showToast('轉移發生錯誤', 'error')
+  } finally {
+    reassignLoading.value = false
+  }
+}
+
 const handleRemove = async (id) => {
   if (await confirm('確定要從領取清單中移除這項紀念品嗎？', '移除收藏')) {
     removing.value = id
@@ -478,6 +598,12 @@ watch(user, (val) => {
 })
 
 watch(selectedYear, () => {
+  if (user.value) {
+    loadData()
+  }
+})
+
+watch(currentPortfolioId, () => {
   if (user.value) {
     loadData()
   }

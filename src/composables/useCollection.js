@@ -1,4 +1,5 @@
 import { useAuth } from '@/composables/useAuth'
+import { usePortfolio } from '@/composables/usePortfolio'
 import { supabase } from '@/lib/supabase'
 import { ref } from 'vue'
 import { useLocalStorageCache } from './useLocalStorageCache'
@@ -9,6 +10,7 @@ export function useCollection() {
     const error = ref(null)
 
     const { user } = useAuth()
+    const { currentPortfolioId, isCombinedView } = usePortfolio()
     const cache = useLocalStorageCache()
 
     /**
@@ -18,10 +20,19 @@ export function useCollection() {
         if (!user.value) return null
         try {
             // 檢查使用者持股的最近變動
-            const { data: invUpdate } = await supabase
+            let query = supabase
                 .from('user_inventory')
                 .select('updated_at')
-                .eq('user_id', user.value.id)
+            
+            if (isCombinedView.value) {
+                query = query.eq('user_id', user.value.id)
+            } else if (currentPortfolioId.value) {
+                query = query.eq('portfolio_id', currentPortfolioId.value)
+            } else {
+                return null
+            }
+
+            const { data: invUpdate } = await query
                 .order('updated_at', { ascending: false })
                 .limit(1)
                 .maybeSingle()
@@ -40,7 +51,13 @@ export function useCollection() {
         error.value = null
 
         try {
-            const cacheKey = `inventory:${user.value.id}`
+            const currentId = isCombinedView.value ? 'combined' : currentPortfolioId.value
+            if (!currentId) {
+                collection.value = []
+                return { data: [] }
+            }
+
+            const cacheKey = `inventory:${user.value.id}:${currentId}`
             const cachedEntry = cache.getWithMetadata(cacheKey)
 
             // 指紋檢查
@@ -52,10 +69,17 @@ export function useCollection() {
             }
 
             // 改為從 user_inventory 讀取跨年度持股
-            const { data, error: fetchError } = await supabase
+            let query = supabase
                 .from('user_inventory')
                 .select('*')
-                .eq('user_id', user.value.id)
+            
+            if (isCombinedView.value) {
+                query = query.eq('user_id', user.value.id)
+            } else {
+                query = query.eq('portfolio_id', currentPortfolioId.value)
+            }
+
+            const { data, error: fetchError } = await query
                 .order('created_at', { ascending: false })
 
             if (fetchError) throw fetchError
@@ -64,6 +88,7 @@ export function useCollection() {
             const formattedData = data.map(item => ({
                 id: item.id,
                 user_id: item.user_id,
+                portfolio_id: item.portfolio_id, // 新增欄位
                 status: 'holding',
                 created_at: item.created_at,
                 souvenir: {
@@ -94,16 +119,20 @@ export function useCollection() {
      */
     const addToInventory = async (stockCode, stockName) => {
         if (!user.value) return { success: false, error: '未登入' }
+        if (isCombinedView.value || !currentPortfolioId.value) {
+            return { success: false, error: '請先選擇一個特定的帳戶，不能在歸戶模式下新增' }
+        }
 
         try {
             const { data, error } = await supabase
                 .from('user_inventory')
                 .upsert({
                     user_id: user.value.id,
+                    portfolio_id: currentPortfolioId.value,
                     stock_code: stockCode,
                     stock_name: stockName,
                     updated_at: new Date().toISOString()
-                }, { onConflict: 'user_id,stock_code' })
+                }, { onConflict: 'portfolio_id,stock_code' })
                 .select()
                 .single()
 
@@ -117,6 +146,9 @@ export function useCollection() {
 
     const addToCollection = async (souvenirId, status = 'collected') => {
         if (!user.value) return { success: false, error: '未登入' }
+        if (isCombinedView.value || !currentPortfolioId.value) {
+            return { success: false, error: '請先選擇一個特定的帳戶，不能在歸戶模式下新增' }
+        }
 
         // 如果是標記為持股，則重新導向至 addToInventory (代碼需從 souvenir 取得)
         if (status === 'holding') {
@@ -135,9 +167,10 @@ export function useCollection() {
                 .from('user_collections')
                 .upsert({
                     user_id: user.value.id,
+                    portfolio_id: currentPortfolioId.value,
                     souvenir_id: souvenirId,
                     status
-                }, { onConflict: 'user_id,souvenir_id,status' })
+                }, { onConflict: 'portfolio_id,souvenir_id' })
                 .select()
                 .single()
 
@@ -190,13 +223,23 @@ export function useCollection() {
         error.value = null
 
         try {
-            const { data, error: fetchError } = await supabase
+            let query = supabase
                 .from('user_collections')
                 .select(`
-          *,
-          souvenir: souvenirs (*)
-        `)
-                .eq('user_id', user.value.id)
+                  *,
+                  souvenir: souvenirs (*)
+                `)
+            
+            if (isCombinedView.value) {
+                query = query.eq('user_id', user.value.id)
+            } else if (currentPortfolioId.value) {
+                query = query.eq('portfolio_id', currentPortfolioId.value)
+            } else {
+                collection.value = []
+                return { data: [] }
+            }
+
+            const { data, error: fetchError } = await query
                 .order('created_at', { ascending: false })
 
             if (fetchError) throw fetchError
@@ -210,6 +253,26 @@ export function useCollection() {
         }
     }
 
+    /**
+     * 轉移持股分身帳戶
+     */
+    const reassignInventoryPortfolio = async (itemId, targetPortfolioId) => {
+        if (!user.value) return { success: false, error: '未登入' }
+        try {
+            const { error: updateError } = await supabase
+                .from('user_inventory')
+                .update({ portfolio_id: targetPortfolioId })
+                .eq('id', itemId)
+                .eq('user_id', user.value.id)
+
+            if (updateError) throw updateError
+            return { success: true }
+        } catch (err) {
+            console.error('Reassign inventory failed:', err)
+            return { success: false, error: err.message }
+        }
+    }
+
     return {
         collection,
         loading,
@@ -219,6 +282,7 @@ export function useCollection() {
         addToInventory,
         addToCollection,
         removeFromCollection,
+        reassignInventoryPortfolio,
         clearAllCollections
     }
 }

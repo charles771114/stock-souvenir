@@ -242,13 +242,13 @@
                 </div>
               </div>
 
-              <div class="max-h-72 overflow-y-auto custom-scrollbar pr-2 space-y-3">
+              <!-- User Selection List -->
+              <div v-if="!targetUser" class="max-h-60 overflow-y-auto custom-scrollbar pr-2 space-y-3 mb-6">
                 <div v-if="userResults.length === 0 && userSearch && !searchingUsers"
                   class="p-10 text-center text-gray-400 font-bold border-2 border-dashed border-gray-100 rounded-[2rem]">
                   找不到符合條件的用戶
                 </div>
-                <div v-for="user in userResults" :key="user.id" @click="targetUser = user" class="user-option group"
-                  :class="{ 'selected': targetUser?.id === user.id }">
+                <div v-for="user in userResults" :key="user.id" @click="selectUser(user)" class="user-option group">
                   <div class="flex items-center gap-3 sm:gap-4">
                     <div
                       class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 font-black group-hover:bg-indigo-600 group-hover:text-white transition-all text-sm">
@@ -263,11 +263,45 @@
                         {{ user.email }}</div>
                     </div>
                   </div>
-                  <div v-if="targetUser?.id === user.id"
-                    class="text-indigo-600 bg-white shadow-md p-1 rounded-full shrink-0">
-                    <svg class="w-4 h-4 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                    </svg>
+                </div>
+              </div>
+
+              <!-- Selected User & Portfolio Selection -->
+              <div v-else class="space-y-6 mb-10">
+                <div class="flex items-center justify-between p-4 bg-indigo-600 rounded-3xl text-white shadow-xl shadow-indigo-100">
+                  <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-black">
+                      {{ targetUser.full_name?.charAt(0) || '?' }}
+                    </div>
+                    <div>
+                      <div class="font-black">{{ targetUser.full_name }}</div>
+                      <div class="text-[10px] opacity-70">{{ targetUser.email }}</div>
+                    </div>
+                  </div>
+                  <button @click="targetUser = null; targetPortfolios = []; selectedPortfolioId = null" class="text-[10px] font-black uppercase tracking-widest bg-white/10 px-3 py-1.5 rounded-lg hover:bg-white/20 transition-all">重選人員</button>
+                </div>
+
+                <div v-if="fetchingPortfolios" class="py-10 flex flex-col items-center gap-3">
+                  <div class="w-8 h-8 border-4 border-indigo-100 border-t-indigo-500 rounded-full animate-spin"></div>
+                  <p class="text-[10px] font-black text-indigo-300 uppercase tracking-widest">正在載入帳戶清單...</p>
+                </div>
+
+                <div v-else-if="targetPortfolios.length > 0" class="space-y-3">
+                  <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">選擇歸戶目標帳戶</label>
+                  <div class="grid grid-cols-1 gap-2">
+                    <button v-for="port in targetPortfolios" :key="port.id" 
+                      @click="selectedPortfolioId = port.id"
+                      class="flex items-center justify-between p-4 rounded-2xl border-2 transition-all"
+                      :class="selectedPortfolioId === port.id ? 'border-indigo-500 bg-indigo-50' : 'border-gray-50 bg-gray-50/50 hover:border-indigo-200 hover:bg-white'">
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black"
+                          :class="selectedPortfolioId === port.id ? 'bg-indigo-600 text-white' : 'bg-white text-gray-400'">
+                          {{ port.name.charAt(0) }}
+                        </div>
+                        <div class="text-sm font-black text-gray-900">{{ port.name }}</div>
+                      </div>
+                      <div v-if="port.is_default" class="text-[9px] font-black text-indigo-400 uppercase bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">預設</div>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -278,7 +312,7 @@
               <button type="button" @click="closeModal" class="btn-secondary flex-1 sm:flex-none">
                 取消
               </button>
-              <button type="button" @click="confirmLink" :disabled="!targetUser || linking"
+              <button type="button" @click="confirmLink" :disabled="!targetUser || !selectedPortfolioId || linking"
                 class="btn-primary flex-1 sm:flex-none">
                 <svg v-if="linking" class="animate-spin -ml-1 mr-2 h-4 w-4 sm:h-5 sm:w-5" fill="none"
                   viewBox="0 0 24 24">
@@ -287,7 +321,7 @@
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                   </path>
                 </svg>
-                {{ linking ? '處理中...' : '確認' }}
+                {{ linking ? '處理中...' : '確認歸戶' }}
               </button>
             </div>
           </div>
@@ -316,6 +350,9 @@ const userSearch = ref('')
 const userResults = ref([])
 const searchingUsers = ref(false)
 const targetUser = ref(null)
+const targetPortfolios = ref([])
+const fetchingPortfolios = ref(false)
+const selectedPortfolioId = ref(null)
 const linking = ref(false)
 
 const stats = computed(() => {
@@ -417,25 +454,60 @@ const fetchCategoriesData = async () => {
   }
 }
 
+const selectUser = async (user) => {
+  targetUser.value = user
+  fetchingPortfolios.value = true
+  targetPortfolios.value = []
+  selectedPortfolioId.value = null
+
+  try {
+    const { data, error } = await supabase
+      .from('portfolios')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('is_default', { ascending: false })
+
+    if (error) throw error
+    targetPortfolios.value = data || []
+    
+    // Auto select default if exists
+    const defaultPort = data?.find(p => p.is_default)
+    if (defaultPort) selectedPortfolioId.value = defaultPort.id
+    else if (data?.length > 0) selectedPortfolioId.value = data[0].id
+    
+  } catch (err) {
+    console.error('Fetch portfolios failed:', err)
+    showToast('無法取得該用戶的帳戶清單', 'error')
+  } finally {
+    fetchingPortfolios.value = false
+  }
+}
+
 const openLinkModal = (group) => {
   selectedGroup.value = group
   isModalOpen.value = true
   targetUser.value = null
+  targetPortfolios.value = []
+  selectedPortfolioId.value = null
   userSearch.value = ''
   userResults.value = []
 }
 
 const closeModal = () => {
   isModalOpen.value = false
+  targetUser.value = null
+  targetPortfolios.value = []
+  selectedPortfolioId.value = null
 }
 
 const confirmLink = async () => {
-  if (!selectedGroup.value || !targetUser.value) return
+  if (!selectedGroup.value || !targetUser.value || !selectedPortfolioId.value) return
 
   linking.value = true
   try {
     const items = selectedGroup.value.items
     const userId = targetUser.value.id
+    const portId = selectedPortfolioId.value
 
     // 1. Get unique code+year combinations to check souvenirs
     const uniqueCombos = []
@@ -497,32 +569,57 @@ const confirmLink = async () => {
 
     // 4. Bulk upsert user_collections (Deduplicated)
     const collectionsToUpsertMap = new Map()
+    const inventoryToUpsertMap = new Map()
+
     items.forEach(item => {
       const souvenirId = souvenirMap[`${item.stock_code}_${item.year}`]
       if (souvenirId) {
-        // We only need one record per (User + Stock Year + Status)
-        const uniqueKey = `${userId}_${souvenirId}_holding`
-        if (!collectionsToUpsertMap.has(uniqueKey)) {
-          collectionsToUpsertMap.set(uniqueKey, {
+        // user_collections
+        const collKey = `${portId}_${souvenirId}_holding`
+        if (!collectionsToUpsertMap.has(collKey)) {
+          collectionsToUpsertMap.set(collKey, {
             user_id: userId,
+            portfolio_id: portId,
             souvenir_id: souvenirId,
             status: 'holding'
+          })
+        }
+
+        // user_inventory
+        const invKey = `${portId}_${item.stock_code}`
+        if (!inventoryToUpsertMap.has(invKey)) {
+          inventoryToUpsertMap.set(invKey, {
+            user_id: userId,
+            portfolio_id: portId,
+            stock_code: item.stock_code,
+            stock_name: item.stock_name || '未知公司',
+            updated_at: new Date().toISOString()
           })
         }
       }
     })
 
     const collectionsToUpsert = Array.from(collectionsToUpsertMap.values())
+    const inventoryToUpsert = Array.from(inventoryToUpsertMap.values())
 
     if (collectionsToUpsert.length === 0) {
       throw new Error('找不到可歸戶的紀念品資料')
     }
 
+    // Upsert Collections
     const { error: collError } = await supabase
       .from('user_collections')
-      .upsert(collectionsToUpsert, { onConflict: 'user_id,souvenir_id,status' })
+      .upsert(collectionsToUpsert, { onConflict: 'portfolio_id,souvenir_id,status' })
 
     if (collError) throw collError
+
+    // Upsert Inventory
+    if (inventoryToUpsert.length > 0) {
+      const { error: invError } = await supabase
+        .from('user_inventory')
+        .upsert(inventoryToUpsert, { onConflict: 'portfolio_id,stock_code' })
+      if (invError) throw invError
+    }
 
     // 5. Bulk update staging status
     const stagingIds = items.map(i => i.id)

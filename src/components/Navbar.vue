@@ -57,7 +57,10 @@
         </div>
 
         <!-- User Menu -->
-        <div class="flex items-center">
+        <div class="flex items-center space-x-2 sm:space-x-4">
+          <!-- Portfolio Switcher -->
+          <PortfolioSwitcher v-if="user" />
+
           <!-- Logged In State -->
           <div v-if="user" class="flex items-center space-x-1.5 sm:space-x-3">
             <!-- User Info (Clickable) -->
@@ -174,6 +177,7 @@
 </template>
 
 <script setup>
+import PortfolioSwitcher from '@/components/PortfolioSwitcher.vue'
 import UserProfileModal from '@/components/UserProfileModal.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useAuthModal } from '@/composables/useAuthModal'

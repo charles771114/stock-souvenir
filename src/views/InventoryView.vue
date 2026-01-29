@@ -10,9 +10,28 @@
       </div>
     </div>
 
-    <Navbar class="relative z-10" />
+    <Navbar />
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+    <!-- Pull to Refresh Indicator -->
+    <div
+      class="fixed top-0 left-0 right-0 z-50 flex items-center justify-center transition-transform duration-75 pointer-events-none"
+      :style="{
+        transform: `translateY(${pullDistance - 60}px)`,
+        opacity: pullDistance > 20 ? 1 : 0
+      }"
+    >
+      <div class="bg-white/90 backdrop-blur-md rounded-full p-3 shadow-2xl border border-indigo-100 flex items-center justify-center">
+        <div
+          class="w-8 h-8 rounded-full border-4 border-indigo-100 border-t-indigo-600 transition-none"
+          :class="{ 'animate-spin': isRefreshing }"
+          :style="{ transform: isRefreshing ? 'none' : `rotate(${pullDistance * 3}deg)` }"
+        ></div>
+        <div v-if="!isRefreshing" class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-indigo-400 uppercase tracking-widest whitespace-nowrap">下拉重整</div>
+        <div v-else class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-indigo-600 uppercase tracking-widest whitespace-nowrap animate-pulse">更新中...</div>
+      </div>
+    </div>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-10 w-full animate-fade-in-up">
       <!-- Header -->
       <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6 animate-fade-in-up">
         <div>
@@ -251,11 +270,25 @@
                       </span>
                     </td>
                     <td class="px-8 py-6">
-                      <div class="text-sm font-black text-gray-700 group-hover:text-indigo-900 transition-colors">
-                        {{ item.souvenir?.name || '未知公司' }}
+                      <div class="flex items-center gap-2">
+                        <div class="text-sm font-black text-gray-700 group-hover:text-indigo-900 transition-colors">
+                          {{ item.souvenir?.name || '未知公司' }}
+                        </div>
+                        <!-- Portfolio Badge -->
+                        <span v-if="isCombinedView"
+                          class="text-[9px] font-bold px-1.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100/50">
+                          {{ getPortfolioName(item.portfolio_id) }}
+                        </span>
                       </div>
                     </td>
                     <td class="px-8 py-6 text-right">
+                      <button @click="openMoveModal(item)"
+                        class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                        title="轉移帳戶">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                      </button>
                       <button @click="deleteItem(item)"
                         class="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                         title="移除持股">
@@ -285,30 +318,47 @@
           </div>
         </div>
       </div>
-    </div>
+    </main>
 
     <!-- Modals -->
     <InventoryImportModal :is-open="isImportModalOpen" @close="closeImportModal" />
+    <PortfolioMoveModal
+      :is-open="isMoveModalOpen"
+      :item="itemToMove"
+      :loading="reassignLoading"
+      @close="isMoveModalOpen = false"
+      @confirm="handleReassign"
+    />
   </div>
 </template>
 
 <script setup>
 import InventoryImportModal from '@/components/InventoryImportModal.vue'
 import Navbar from '@/components/Navbar.vue'
+import PortfolioMoveModal from '@/components/PortfolioMoveModal.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useCollection } from '@/composables/useCollection'
 import { useDialog } from '@/composables/useDialog'
 import { usePDFScraper } from '@/composables/usePDFScraper'
+import { usePortfolio } from '@/composables/usePortfolio'
+import { usePullRefresh } from '@/composables/usePullRefresh'
 import { useToast } from '@/composables/useToast'
 import { supabase } from '@/lib/supabase'
 import { onMounted, ref, watch } from 'vue'
 
+const { portfolios, currentPortfolioId, isCombinedView } = usePortfolio() // Modified line
+
 // Composables
-const { collection, loading, fetchAllInventory, removeFromCollection, clearAllCollections, addToCollection } = useCollection()
+const { collection, loading, fetchAllInventory, removeFromCollection, clearAllCollections, addToCollection, reassignInventoryPortfolio } = useCollection()
 const { loading: scraperLoading, results: scraperResults, error: scraperError, processPDF } = usePDFScraper()
 const { confirm } = useDialog()
 const { showToast } = useToast()
 const { user } = useAuth()
+
+// Pull to Refresh
+const { pullDistance, isRefreshing } = usePullRefresh(async () => {
+  await fetchAllInventory()
+})
 
 // Watch for user auth state to fetch data
 watch(user, async (val) => {
@@ -317,14 +367,27 @@ watch(user, async (val) => {
   }
 }, { immediate: true })
 
+// Watch for portfolio changes to refresh view
+watch(currentPortfolioId, async () => {
+  await fetchAllInventory()
+})
+
 // State
 const isImportModalOpen = ref(false)
+const isMoveModalOpen = ref(false)
+const itemToMove = ref(null)
+const reassignLoading = ref(false)
 const selectedFile = ref(null)
 const isDragging = ref(false)
 const pdfPassword = ref('')
 
 // Aliases
 const inventoryItems = collection
+
+const getPortfolioName = (id) => {
+  const p = portfolios.value.find(p => p.id === id)
+  return p ? p.name : '未知帳戶'
+}
 
 // Methods - Scraper
 const handleFileChange = (e) => {
@@ -425,6 +488,32 @@ const addAllToInventory = async () => {
   }
 }
 
+// Methods - Reassign
+const openMoveModal = (item) => {
+  itemToMove.value = item
+  isMoveModalOpen.value = true
+}
+
+const handleReassign = async (targetPortfolioId) => {
+  if (!itemToMove.value) return
+  
+  reassignLoading.value = true
+  try {
+    const { success, error } = await reassignInventoryPortfolio(itemToMove.value.id, targetPortfolioId)
+    if (success) {
+      showToast('已完成帳戶轉移', 'success')
+      isMoveModalOpen.value = false
+      await fetchAllInventory()
+    } else {
+      showToast(error || '轉移失敗', 'error')
+    }
+  } catch (err) {
+    showToast('轉移發生錯誤', 'error')
+  } finally {
+    reassignLoading.value = false
+  }
+}
+
 // Methods - Inventory
 const closeImportModal = async (shouldRefresh) => {
   isImportModalOpen.value = false
@@ -434,12 +523,12 @@ const closeImportModal = async (shouldRefresh) => {
 const deleteItem = async (item) => {
   if (!item) return
   if (await confirm(`確定要移除「${item.souvenir?.name} (${item.souvenir?.code})」嗎？`, '移除庫存')) {
-    const { success, error } = await removeFromCollection(item.id, true)
+    const { success, error: deleteError } = await removeFromCollection(item.id, true)
     if (success) {
       showToast('已移除', 'success')
       await fetchAllInventory()
     } else {
-      showToast(error, 'error')
+      showToast(deleteError || '移除失敗', 'error')
     }
   }
 }

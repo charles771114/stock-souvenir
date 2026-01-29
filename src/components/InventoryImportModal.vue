@@ -37,8 +37,18 @@
                     </div>
                     <input v-model="searchQuery" @input="handleSearch" type="text"
                       class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
-                      placeholder="輸入股票代號（如：2330）或公司名稱（如：台積電）..." />
                   </div>
+                </div>
+
+                <!-- Portfolio Selection -->
+                <div v-if="portfolios.length > 1 || isCombinedView" class="animate-fade-in">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">選擇存入帳戶</label>
+                  <select v-model="targetPortfolioId"
+                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm bg-white">
+                    <option v-for="p in portfolios" :key="p.id" :value="p.id">
+                      {{ p.name }} {{ p.is_default ? '(預設)' : '' }}
+                    </option>
+                  </select>
                 </div>
 
                 <!-- Search Results -->
@@ -163,10 +173,11 @@
 
 <script setup>
 import { useCollection } from '@/composables/useCollection'
+import { usePortfolio } from '@/composables/usePortfolio'
 import { useStockAPI } from '@/composables/useStockAPI'
 import { useToast } from '@/composables/useToast'
 import { supabase } from '@/lib/supabase'
-import { ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   isOpen: Boolean
@@ -177,12 +188,14 @@ const emit = defineEmits(['close'])
 const { addToCollection } = useCollection()
 const { searchStock } = useStockAPI()
 const { showToast } = useToast()
+const { portfolios, currentPortfolioId, isCombinedView } = usePortfolio()
 
 const searchQuery = ref('')
 const searchResults = ref([])
 const stockResults = ref([])
 const loadingSearch = ref(false)
 const selectedItem = ref(null)
+const targetPortfolioId = ref(null)
 const submitting = ref(false)
 
 const form = ref({
@@ -275,7 +288,7 @@ const autoAddStock = async (stock) => {
     }
 
     // 加入庫存
-    const { success, error } = await addToCollection(souvenirId)
+    const { success, error } = await addToCollection(souvenirId, targetPortfolioId.value)
     if (!success) throw new Error(error)
 
     showToast(`已自動新增「${stock.name} (${stock.code})」到庫存`, 'success')
@@ -344,7 +357,7 @@ const handleSubmit = async () => {
     }
 
     // 加入庫存（status = 'holding'）
-    const { success, error } = await addToCollection(souvenirId)
+    const { success, error } = await addToCollection(souvenirId, targetPortfolioId.value)
 
     if (!success) throw new Error(error)
 
@@ -357,10 +370,23 @@ const handleSubmit = async () => {
   }
 }
 
+const syncPortfolio = () => {
+  if (currentPortfolioId.value && currentPortfolioId.value !== 'combined') {
+    targetPortfolioId.value = currentPortfolioId.value
+  } else if (portfolios.value.length > 0) {
+    const defaultP = portfolios.value.find(p => p.is_default)
+    targetPortfolioId.value = defaultP ? defaultP.id : portfolios.value[0].id
+  }
+}
+
 watch(() => props.isOpen, (val) => {
   if (val) {
-    // Focus input?
+    syncPortfolio()
   }
+})
+
+onMounted(() => {
+  syncPortfolio()
 })
 </script>
 

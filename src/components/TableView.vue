@@ -19,9 +19,21 @@
           <h3 class="text-sm font-black text-slate-900 truncate mb-1">
             {{ item.name }}
           </h3>
-          <p class="text-[11px] text-slate-600 font-medium line-clamp-1 mb-2">
+          <p class="text-[11px] text-slate-600 font-medium line-clamp-1 mb-1">
             {{ item.souvenir }}
           </p>
+
+          <!-- Aggregate Status (Mobile) -->
+          <div v-if="item.collectedPortfolios && item.collectedPortfolios.length > 0" 
+            class="flex flex-wrap gap-1 mb-2">
+            <div v-for="port in item.collectedPortfolios" :key="port.id"
+              class="px-1.5 py-0.5 rounded text-[8px] font-bold border"
+              :class="port.status === 'holding' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-indigo-50 text-indigo-600 border-indigo-100'"
+              :title="`${port.name} (${port.status === 'holding' ? '已持有' : '收藏中'})`"
+            >
+              {{ port.initial }}
+            </div>
+          </div>
           
           <!-- Dates Row (Mobile) -->
           <div class="flex items-center gap-3 mt-1 pt-2 border-t border-slate-100/50">
@@ -96,6 +108,17 @@
               </td>
               <td class="py-5 px-6">
                 <div class="text-sm font-black text-slate-800">{{ item.name }}</div>
+                <!-- Aggregate Status (Desktop Table) -->
+                <div v-if="item.collectedPortfolios && item.collectedPortfolios.length > 0" 
+                  class="flex flex-wrap gap-1 mt-1.5">
+                  <div v-for="port in item.collectedPortfolios" :key="port.id"
+                    class="px-1.5 py-0.5 rounded text-[8px] font-bold border cursor-help"
+                    :class="port.status === 'holding' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-indigo-50 text-indigo-600 border-indigo-100'"
+                    :title="`${port.name} (${port.status === 'holding' ? '已持有' : '收藏中'})`"
+                  >
+                    {{ port.initial }}
+                  </div>
+                </div>
               </td>
               <td class="py-5 px-6">
                 <span class="inline-flex px-2.5 py-1 rounded-lg text-[10px] font-black border uppercase tracking-wider" :class="getCategoryColor(item.categoryColor)">

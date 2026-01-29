@@ -22,17 +22,18 @@ export function useAdmin() {
           role, 
           created_at, 
           is_primary_admin,
-          user_collections(count)
+          user_collections(count),
+          portfolios(id, name, is_default)
         `)
         .order('created_at', { ascending: false })
 
       if (err) throw err
       
-
       users.value = data.map(profile => ({
         ...profile,
         is_admin: profile.role === 'admin',
         collection_count: profile.user_collections?.[0]?.count || 0,
+        portfolios: profile.portfolios || [],
         added_at: profile.added_at || profile.created_at // Fallback to created_at
       }))
     } catch (err) {

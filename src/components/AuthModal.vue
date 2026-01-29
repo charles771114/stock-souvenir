@@ -22,9 +22,9 @@
         >
           <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md w-full">
             <!-- Close Button -->
-            <button class="absolute top-3 right-3 z-[60] text-gray-400 hover:text-gray-600 bg-white/50 rounded-full p-1" @click="closeAuthModal">
-              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            <button class="absolute top-4 right-4 z-[60] text-gray-400 hover:text-gray-900 bg-gray-100/50 hover:bg-gray-200/80 backdrop-blur-md rounded-full p-2 transition-all duration-300 shadow-sm" @click="closeAuthModal">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
             

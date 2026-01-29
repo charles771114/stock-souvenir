@@ -261,15 +261,22 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import Navbar from '@/components/Navbar.vue'
 import TableView from '@/components/TableView.vue'
 import { useAuthModal } from '@/composables/useAuthModal'
-import { useCategories } from '@/composables/useCategories'; // New import
+import { useCategories } from '@/composables/useCategories'
 import { useGifts } from '@/composables/useGifts'
 import { usePagination } from '@/composables/usePagination'
+import { usePortfolio } from '@/composables/usePortfolio'; // Added
 import { useToast } from '@/composables/useToast'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-const { gifts, myCollections, loading, error, fetchAllGifts, fetchMyCollections, fetchUserInventoryIds, fetchPreviousYearSouvenirs, enrichWithPreviousYear, addToCollection, removeFromCollection, getCollection } = useGifts()
-const { categories, fetchCategories, matchCategory } = useCategories() // New composable usage
+const { 
+  gifts, myCollections, allUserCollections, loading, error, 
+  fetchAllGifts, fetchMyCollections, fetchAllUserCollections, 
+  fetchUserInventoryIds, fetchPreviousYearSouvenirs, enrichWithPreviousYear, 
+  addToCollection, removeFromCollection, getCollection 
+} = useGifts()
+const { portfolios, currentPortfolioId, isCombinedView } = usePortfolio() // Added
+const { categories, fetchCategories, matchCategory } = useCategories()
 const { showToast } = useToast()
 const { openAuthModal } = useAuthModal()
 const router = useRouter()
@@ -389,6 +396,17 @@ const mappedGifts = computed(() => {
     const match = matchCategory(souvenirToMatch)
     const categoryObj = categories.value.find(c => c.id === match.id)
 
+    const collectedIn = allUserCollections.value.filter(c => c.gift?.code === g.code)
+    const collectedPortfolios = collectedIn.map(c => {
+      const p = portfolios.value.find(port => port.id === c.portfolio_id)
+      return {
+        id: c.portfolio_id,
+        name: p ? p.name : '未知',
+        initial: p ? (p.name.charAt(0)) : '?',
+        status: c.status
+      }
+    })
+
     return {
       ...g, // Spread first to ensure no properties are lost
       id: g.id,
@@ -401,7 +419,8 @@ const mappedGifts = computed(() => {
       meeting: g.meeting_date,
       isCollected: isInCollection(g.id),
       isInInventory: userInventoryIds.value.has(g.code),
-      previousYearSouvenir: isPlaceholder(g.souvenir_item) ? prevSouvenir : null
+      previousYearSouvenir: isPlaceholder(g.souvenir_item) ? prevSouvenir : null,
+      collectedPortfolios
     }
   })
 })
@@ -480,6 +499,11 @@ const isInCollection = (giftId) => {
 }
 
 const handleToggleCollection = async (gift) => {
+  if (isCombinedView.value) {
+    showToast('請先選擇一個特定的帳戶，不能在歸戶模式下收藏', 'warning')
+    return
+  }
+
   try {
     const collection = getCollection(gift.id)
     if (collection) {
@@ -526,6 +550,12 @@ watch(filters, async (newVal, oldVal) => {
 
 watch(viewMode, () => reset())
 
+watch(currentPortfolioId, async () => {
+  await fetchMyCollections()
+  await fetchAllUserCollections(filters.value.year)
+  userInventoryIds.value = await fetchUserInventoryIds()
+})
+
 let searchTimeout = null
 const debouncedSearch = () => {
   clearTimeout(searchTimeout)
@@ -537,6 +567,7 @@ onMounted(async () => {
   await fetchCategories() // Fetch dynamic categories first
   await fetchAllGifts({ year: filters.value.year })
   await fetchMyCollections()
+  await fetchAllUserCollections(filters.value.year) // Load all collections for badges
   userInventoryIds.value = await fetchUserInventoryIds() // NEW: Load inventory state
   // Fetch previous year souvenirs for reference
   previousYearSouvenirs.value = await fetchPreviousYearSouvenirs(filters.value.year)
