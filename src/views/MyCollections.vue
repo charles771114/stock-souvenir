@@ -7,10 +7,10 @@
       <div class="mb-12 animate-fade-in-up">
         <h1
           class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 tracking-tighter">
-          我的購股領取計畫
+          年度購股領取計畫
         </h1>
         <p class="text-slate-400 mt-1 font-bold text-xs sm:text-sm uppercase tracking-wider">
-          追蹤感興趣的紀念品，並管理對應的持股庫存
+          追蹤喜愛的紀念品，規劃您的購股入袋清單
         </p>
       </div>
 
@@ -330,9 +330,9 @@ const filteredCollections = computed(() => {
     const meetingDate = item.gift?.meeting_date
     if (!meetingDate?.startsWith(selectedYear.value)) return false
     
-    // 嚴格過濾：名稱必須「明確」
+    // 嚴格過濾：名稱必須「明確」，但排除 (開會55日前...) 的情況以便追蹤待買標的
     const name = item.gift?.souvenir_item || ''
-    const isVague = name.includes('開會55日前再行公告') || name === '尚未公布' || name === ''
+    const isVague = name === '尚未公布' || name === ''
     
     return !isVague
   })

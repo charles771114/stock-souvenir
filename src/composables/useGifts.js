@@ -209,10 +209,12 @@ export function useGifts() {
       const uniqueMap = new Map()
       
       filteredData.forEach(item => {
-        const souvenirId = item.souvenir_id
+        // 使用股票代碼作為唯一鍵，處理資料庫中可能重複的紀念品紀錄
+        const uniqueKey = item.gift?.code || item.souvenir_id
+        
         // 優先保留 holding 狀態（在庫），如果兩者都有
-        if (!uniqueMap.has(souvenirId) || item.status === 'holding') {
-          uniqueMap.set(souvenirId, item)
+        if (!uniqueMap.has(uniqueKey) || item.status === 'holding') {
+          uniqueMap.set(uniqueKey, item)
         }
       })
 
