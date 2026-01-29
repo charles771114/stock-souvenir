@@ -3,21 +3,23 @@
     <Navbar />
 
     <!-- Pull to Refresh Indicator -->
-    <div 
+    <div
       class="fixed top-0 left-0 right-0 z-50 flex items-center justify-center transition-transform duration-75 pointer-events-none"
-      :style="{ 
+      :style="{
         transform: `translateY(${pullDistance - 60}px)`,
         opacity: pullDistance > 20 ? 1 : 0
-      }"
-    >
-      <div class="bg-white/90 backdrop-blur-md rounded-full p-3 shadow-2xl border border-indigo-100 flex items-center justify-center">
-        <div 
-          class="w-8 h-8 rounded-full border-4 border-indigo-100 border-t-indigo-600 transition-none"
+      }">
+      <div
+        class="bg-white/90 backdrop-blur-md rounded-full p-3 shadow-2xl border border-indigo-100 flex items-center justify-center">
+        <div class="w-8 h-8 rounded-full border-4 border-indigo-100 border-t-indigo-600 transition-none"
           :class="{ 'animate-spin': isRefreshing }"
-          :style="{ transform: isRefreshing ? 'none' : `rotate(${pullDistance * 3}deg)` }"
-        ></div>
-        <div v-if="!isRefreshing" class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-indigo-400 uppercase tracking-widest whitespace-nowrap">下拉重整</div>
-        <div v-else class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-indigo-600 uppercase tracking-widest whitespace-nowrap animate-pulse">更新中...</div>
+          :style="{ transform: isRefreshing ? 'none' : `rotate(${pullDistance * 3}deg)` }"></div>
+        <div v-if="!isRefreshing"
+          class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-indigo-400 uppercase tracking-widest whitespace-nowrap">
+          下拉重整</div>
+        <div v-else
+          class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-indigo-600 uppercase tracking-widest whitespace-nowrap animate-pulse">
+          更新中...</div>
       </div>
     </div>
 
@@ -47,10 +49,11 @@
         </div>
 
         <div class="flex items-center gap-6">
-          <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100">
+          <p
+            class="text-[10px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100">
             {{ selectedYear }} 年度計畫總計: {{ filteredCollections.length }}
           </p>
-          <button @click="showStats = !showStats" 
+          <button @click="showStats = !showStats"
             class="text-[10px] font-black text-slate-400 hover:text-indigo-500 transition-colors uppercase tracking-widest flex items-center gap-1.5 px-2 py-1 hover:bg-slate-100 rounded-lg">
             {{ showStats ? '收起統計' : '展開統計' }}
             <i class="fas" :class="showStats ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
@@ -67,7 +70,7 @@
               class="backdrop-blur-md px-4 py-2 rounded-xl flex items-center justify-between gap-3 shadow-sm hover:shadow-md transition-all duration-300 group/stat cursor-pointer"
               @click="toggleCategory(stat.name)"
               :class="stat.isCard ? 'bg-indigo-50/80 border border-indigo-200/50 text-indigo-700 hover:bg-indigo-100' : 'bg-white/50 border border-white/40 text-slate-600 hover:bg-white'">
-              
+
               <div class="flex items-center gap-2">
                 <div v-if="stat.isCard" class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></div>
                 <span class="text-[11px] font-black tracking-tight">{{ stat.name }}</span>
@@ -80,18 +83,20 @@
 
             <!-- Sub Items (L2: Denomination) -->
             <transition name="expand">
-              <div v-if="isCategoryExpanded(stat.name) && stat.subItems.length > 0" class="flex flex-col gap-2 px-3 border-l-2 border-slate-100 ml-4">
+              <div v-if="isCategoryExpanded(stat.name) && stat.subItems.length > 0"
+                class="flex flex-col gap-2 px-3 border-l-2 border-slate-100 ml-4">
                 <div v-for="sub in stat.subItems" :key="sub.label" class="flex flex-col gap-1">
                   <div class="flex items-center justify-between group/sub">
                     <span class="text-[10px] font-bold text-slate-500">{{ sub.label }}</span>
-                    <span class="text-[10px] font-black text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{{ sub.count }}</span>
+                    <span class="text-[10px] font-black text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{{ sub.count
+                      }}</span>
                   </div>
                   <!-- L3: Companies with Inventory Status -->
                   <div class="flex flex-wrap gap-1.5">
                     <div v-for="company in sub.companies" :key="company.name"
                       class="flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-md border transition-all"
-                      :class="company.inInventory 
-                        ? 'bg-emerald-50 border-emerald-100 text-emerald-600' 
+                      :class="company.inInventory
+                        ? 'bg-emerald-50 border-emerald-100 text-emerald-600'
                         : 'bg-slate-50 border-slate-100 text-slate-400'">
                       <span>{{ company.name }}</span>
                       <i v-if="company.inInventory" class="fas fa-check-circle text-[8px]"></i>
@@ -118,17 +123,20 @@
           <div class="flex items-center gap-3 mb-4 px-2">
             <div class="w-1 h-6 bg-indigo-500 rounded-full"></div>
             <h2 class="text-lg font-black text-slate-700 tracking-tight">待買進標的</h2>
-            <span class="text-[10px] font-black bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-lg border border-indigo-100">
+            <span
+              class="text-[10px] font-black bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-lg border border-indigo-100">
               {{ groupedCollections.planned.length }}
             </span>
           </div>
-          
+
           <div v-if="isCurrentYear" class="flex flex-col gap-3">
             <div v-for="item in groupedCollections.planned" :key="item.id" class="animate-fade-in-up">
-              <div class="glass-card flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 hover:bg-white transition-all duration-300 border-white/50 group">
+              <div
+                class="glass-card flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 hover:bg-white transition-all duration-300 border-white/50 group">
                 <!-- 左側資訊 -->
                 <div class="flex items-center gap-4 sm:gap-6 flex-grow">
-                  <span class="font-mono text-[10px] font-black text-indigo-500 bg-indigo-50 px-2.5 py-1 rounded-lg shrink-0">
+                  <span
+                    class="font-mono text-[10px] font-black text-indigo-500 bg-indigo-50 px-2.5 py-1 rounded-lg shrink-0">
                     {{ item.gift?.code }}
                   </span>
                   <div class="flex flex-col">
@@ -137,14 +145,14 @@
                         {{ item.gift?.name }}
                       </h3>
                       <!-- Portfolio Badge -->
-                      <span v-if="isCombinedView" 
+                      <span v-if="isCombinedView"
                         class="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200">
                         {{ getPortfolioName(item.portfolio_id) }}
                       </span>
                     </div>
                     <p class="text-[11px] font-bold text-slate-400 mt-0.5 flex items-center gap-2">
                       <span>{{ item.gift?.souvenir_item }}</span>
-                      <span v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)" 
+                      <span v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)"
                         class="text-[10px] text-slate-300 italic font-medium">
                         (去年: {{ previousYearSouvenirs.get(item.gift?.code) }})
                       </span>
@@ -153,26 +161,25 @@
                 </div>
 
                 <!-- 右側操作 -->
-                <div class="flex items-center justify-between sm:justify-end gap-6 mt-4 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-50">
+                <div
+                  class="flex items-center justify-between sm:justify-end gap-6 mt-4 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-50">
                   <button @click="addToInventory(item.souvenir_id)" :disabled="addingToInventory === item.souvenir_id"
                     class="flex items-center gap-1.5 px-3 py-1 bg-slate-50 text-slate-400 rounded-full border border-slate-100 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all duration-300 cursor-pointer group">
-                    <svg v-if="addingToInventory === item.souvenir_id" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <svg v-if="addingToInventory === item.souvenir_id" class="w-3.5 h-3.5 animate-spin" fill="none"
+                      viewBox="0 0 24 24">
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                      </path>
                     </svg>
-                    <svg v-else class="w-3.5 h-3.5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg v-else class="w-3.5 h-3.5 group-hover:scale-110 transition-transform" fill="none"
+                      viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
                     </svg>
-                    <span class="text-[10px] font-black uppercase tracking-wider">{{ addingToInventory === item.souvenir_id ? '新增中...' : '新增到庫存' }}</span>
+                    <span class="text-[10px] font-black uppercase tracking-wider">{{ addingToInventory ===
+                      item.souvenir_id ? '新增中...' : '新增到庫存' }}</span>
                   </button>
 
-                  <button @click="openMoveModal(item)"
-                    class="p-2.5 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all duration-300 border border-transparent hover:border-indigo-100"
-                    title="轉移帳戶">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                    </svg>
-                  </button>
 
                   <button @click="handleRemove(item.id)" :disabled="removing === item.id"
                     class="p-2.5 text-slate-300 hover:ローズ-500 hover:bg-rose-50 rounded-xl transition-all duration-300 border border-transparent hover:border-rose-100">
@@ -192,13 +199,6 @@
                     {{ item.gift?.code }}
                   </span>
                   <div class="flex gap-1">
-                    <button @click="openMoveModal(item)"
-                      class="text-slate-300 hover:text-indigo-600 transition-colors"
-                      title="轉移帳戶">
-                      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                      </svg>
-                    </button>
                     <button @click="handleRemove(item.id)" :disabled="removing === item.id"
                       class="text-slate-300 hover:text-rose-500 transition-colors">
                       <i v-if="removing === item.id" class="fas fa-spinner fa-spin"></i>
@@ -209,7 +209,7 @@
                 <div class="flex items-center gap-2 mb-2">
                   <h3 class="text-lg font-black text-slate-900">{{ item.gift?.name }}</h3>
                   <!-- Portfolio Badge -->
-                  <span v-if="isCombinedView" 
+                  <span v-if="isCombinedView"
                     class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
                     {{ getPortfolioName(item.portfolio_id) }}
                   </span>
@@ -217,7 +217,7 @@
                 <p class="text-sm text-slate-600 font-medium mb-6 line-clamp-2">
                   <span>{{ item.gift?.souvenir_item || '尚未公布' }}</span>
                   <br v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)" />
-                  <span v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)" 
+                  <span v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)"
                     class="text-xs text-slate-400 italic">
                     (去年: {{ previousYearSouvenirs.get(item.gift?.code) }})
                   </span>
@@ -225,7 +225,8 @@
                 <div class="pt-4 border-t border-slate-50 flex items-center justify-between">
                   <div class="flex flex-col">
                     <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">開會日期</span>
-                    <span class="text-xs font-black font-mono text-slate-600">{{ item.gift?.meeting_date || '-' }}</span>
+                    <span class="text-xs font-black font-mono text-slate-600">{{ item.gift?.meeting_date || '-'
+                      }}</span>
                   </div>
                 </div>
               </div>
@@ -238,17 +239,20 @@
           <div class="flex items-center gap-3 mb-4 px-2">
             <div class="w-1 h-6 bg-emerald-500 rounded-full"></div>
             <h2 class="text-lg font-black text-slate-700 tracking-tight">已入袋持股</h2>
-            <span class="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-lg border border-emerald-100">
+            <span
+              class="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-lg border border-emerald-100">
               {{ groupedCollections.inventory.length }}
             </span>
           </div>
 
           <div v-if="isCurrentYear" class="flex flex-col gap-3">
             <div v-for="item in groupedCollections.inventory" :key="item.id" class="animate-fade-in-up">
-              <div class="glass-card border-emerald-100/50 hover:border-emerald-200/50 bg-emerald-50/20 flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 hover:bg-white transition-all duration-300 group">
+              <div
+                class="glass-card border-emerald-100/50 hover:border-emerald-200/50 bg-emerald-50/20 flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 hover:bg-white transition-all duration-300 group">
                 <!-- 左側資訊 -->
                 <div class="flex items-center gap-4 sm:gap-6 flex-grow">
-                  <span class="font-mono text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg shrink-0">
+                  <span
+                    class="font-mono text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg shrink-0">
                     {{ item.gift?.code }}
                   </span>
                   <div class="flex flex-col">
@@ -257,14 +261,14 @@
                         {{ item.gift?.name }}
                       </h3>
                       <!-- Portfolio Badge -->
-                      <span v-if="isCombinedView" 
+                      <span v-if="isCombinedView"
                         class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100/50">
                         {{ getPortfolioName(item.portfolio_id) }}
                       </span>
                     </div>
                     <p class="text-[11px] font-bold text-slate-400 mt-0.5 flex items-center gap-2">
                       <span>{{ item.gift?.souvenir_item }}</span>
-                      <span v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)" 
+                      <span v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)"
                         class="text-[10px] text-emerald-400/60 italic font-medium">
                         (去年: {{ previousYearSouvenirs.get(item.gift?.code) }})
                       </span>
@@ -273,16 +277,18 @@
                 </div>
 
                 <!-- 右側狀態 -->
-                <div class="flex items-center justify-between sm:justify-end gap-6 mt-4 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-50">
+                <div
+                  class="flex items-center justify-between sm:justify-end gap-6 mt-4 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-50">
                   <div class="flex items-center shrink-0">
-                    <div class="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100/50 shadow-sm">
+                    <div
+                      class="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100/50 shadow-sm">
                       <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                       </svg>
                       <span class="text-[10px] font-black uppercase tracking-wider">已持有</span>
                     </div>
                   </div>
-                  
+
                   <button @click="handleRemove(item.id)" :disabled="removing === item.id"
                     class="p-2.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all duration-300 border border-transparent hover:border-rose-100">
                     <i v-if="removing === item.id" class="fas fa-spinner fa-spin"></i>
@@ -295,19 +301,13 @@
           <!-- 卡片式 (其他年度 - 在庫項目) -->
           <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div v-for="item in groupedCollections.inventory" :key="item.id" class="animate-fade-in-up">
-              <div class="glass-card border-emerald-100/50 p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              <div
+                class="glass-card border-emerald-100/50 p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                 <div class="flex justify-between items-start mb-4">
                   <span class="font-mono text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg">
                     {{ item.gift?.code }}
                   </span>
                   <div class="flex gap-1">
-                    <button @click="openMoveModal(item)"
-                      class="text-slate-300 hover:text-indigo-600 transition-colors"
-                      title="轉移帳戶">
-                      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                      </svg>
-                    </button>
                     <button @click="handleRemove(item.id)" :disabled="removing === item.id"
                       class="text-slate-300 hover:text-rose-500 transition-colors">
                       <i v-if="removing === item.id" class="fas fa-spinner fa-spin"></i>
@@ -322,7 +322,8 @@
                 <div class="pt-4 border-t border-slate-50 flex items-center justify-between">
                   <div class="flex flex-col">
                     <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">狀態</span>
-                    <span class="text-[10px] font-black text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded shadow-sm">已持有</span>
+                    <span
+                      class="text-[10px] font-black text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded shadow-sm">已持有</span>
                   </div>
                 </div>
               </div>
@@ -352,20 +353,11 @@
       </div>
     </main>
 
-    <!-- Modals -->
-    <PortfolioMoveModal 
-      :is-open="isMoveModalOpen" 
-      :item="itemToMove" 
-      :loading="reassignLoading"
-      @close="isMoveModalOpen = false"
-      @confirm="handleReassign"
-    />
   </div>
 </template>
 
 <script setup>
 import Navbar from '@/components/Navbar.vue'
-import PortfolioMoveModal from '@/components/PortfolioMoveModal.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useCollection } from '@/composables/useCollection'
 import { useDialog } from '@/composables/useDialog'
@@ -387,14 +379,13 @@ const { pullDistance, isRefreshing } = usePullRefresh(async () => {
 })
 const { addToCollection } = useCollection()
 
-const { 
-  myCollections, 
-  loading, 
-  fetchMyCollections, 
-  fetchUserInventoryIds, 
+const {
+  myCollections,
+  loading,
+  fetchMyCollections,
+  fetchUserInventoryIds,
   fetchPreviousYearSouvenirs,
-  removeFromCollection,
-  reassignCollectionPortfolio
+  removeFromCollection
 } = useGifts()
 
 const selectedYear = ref(new Date().getFullYear().toString())
@@ -405,9 +396,6 @@ const previousYearSouvenirs = ref(new Map())
 const removing = ref(null)
 const addingToInventory = ref(null)  // 追蹤正在新增到庫存的項目
 const expandedCategories = ref({})
-const isMoveModalOpen = ref(false)
-const itemToMove = ref(null)
-const reassignLoading = ref(false)
 
 const getPortfolioName = (id) => {
   const p = portfolios.value.find(p => p.id === id)
@@ -423,7 +411,7 @@ const isPlaceholder = (val) => {
 
 const toggleCategory = (name) => {
   if (expandedCategories.value[name] === undefined) {
-    expandedCategories.value[name] = true 
+    expandedCategories.value[name] = true
   }
   expandedCategories.value[name] = !expandedCategories.value[name]
 }
@@ -445,11 +433,11 @@ const filteredCollections = computed(() => {
   return myCollections.value.filter(item => {
     const meetingDate = item.gift?.meeting_date
     if (!meetingDate?.startsWith(selectedYear.value)) return false
-    
+
     // 嚴格過濾：名稱必須「明確」，但排除 (開會55日前...) 的情況以便追蹤待買標的
     const name = item.gift?.souvenir_item || ''
     const isVague = name === '尚未公布' || name === ''
-    
+
     return !isVague
   })
 })
@@ -466,19 +454,19 @@ const groupedCollections = computed(() => {
 
 const souvenirCounts = computed(() => {
   const groups = {} // { mainName: { isCard, subItems: { label: { count, companies: Map<name, inInventory> } } } }
-  
+
   filteredCollections.value.forEach(item => {
     let name = item.gift?.souvenir_item || '尚未公布'
     const companyName = item.gift?.name || '未知公司'
     const inInventory = inventoryIds.value.has(item.gift?.code)
-    
+
     const isPending = name.includes('開會55日前再行公告') || name === '尚未公布'
     const prevSouvenir = previousYearSouvenirs.value.get(item.gift?.code)
-    
+
     const parsed = name.match(/^(.*?)(\d+.*)$/)
     const mainName = isPending ? '名稱待公告項目' : (parsed ? parsed[1].trim() : name)
     const subLabel = isPending && prevSouvenir ? `${name} (預計：${prevSouvenir})` : (isPending ? name : (parsed ? parsed[2].trim() : '其他'))
-    
+
     if (!groups[mainName]) {
       groups[mainName] = {
         total: 0,
@@ -486,7 +474,7 @@ const souvenirCounts = computed(() => {
         subItems: {}
       }
     }
-    
+
     groups[mainName].total++
     if (!groups[mainName].subItems[subLabel]) {
       groups[mainName].subItems[subLabel] = { count: 0, companies: new Map() }
@@ -495,15 +483,15 @@ const souvenirCounts = computed(() => {
     // We use a Map to store unique companies and their inventory status
     groups[mainName].subItems[subLabel].companies.set(companyName, inInventory)
   })
-  
+
   return Object.entries(groups)
-    .map(([name, data]) => ({ 
-      name, 
+    .map(([name, data]) => ({
+      name,
       total: data.total,
       isCard: data.isCard,
       subItems: Object.entries(data.subItems)
-        .map(([label, subData]) => ({ 
-          label, 
+        .map(([label, subData]) => ({
+          label,
           count: subData.count,
           companies: Array.from(subData.companies.entries()).map(([compName, invStatus]) => ({
             name: compName,
@@ -540,32 +528,6 @@ const addToInventory = async (souvenirId) => {
     showToast('加入失敗', 'error')
   } finally {
     addingToInventory.value = null
-  }
-}
-
-// Methods - Reassign
-const openMoveModal = (item) => {
-  itemToMove.value = item
-  isMoveModalOpen.value = true
-}
-
-const handleReassign = async (targetPortfolioId) => {
-  if (!itemToMove.value) return
-  
-  reassignLoading.value = true
-  try {
-    const { success, error } = await reassignCollectionPortfolio(itemToMove.value.id, targetPortfolioId)
-    if (success) {
-      showToast('已完成帳戶轉移', 'success')
-      isMoveModalOpen.value = false
-      await fetchMyCollections(selectedYear.value)
-    } else {
-      showToast(error || '轉移失敗', 'error')
-    }
-  } catch (err) {
-    showToast('轉移發生錯誤', 'error')
-  } finally {
-    reassignLoading.value = false
   }
 }
 
@@ -631,16 +593,21 @@ watch(currentPortfolioId, () => {
   animation: fade-in-up 0.5s ease-out forwards;
 }
 
-.expand-enter-active, .expand-leave-active {
+.expand-enter-active,
+.expand-leave-active {
   transition: all 0.3s ease;
   overflow: hidden;
 }
-.expand-enter-from, .expand-leave-to {
+
+.expand-enter-from,
+.expand-leave-to {
   opacity: 0;
   transform: translateY(-10px);
   max-height: 0;
 }
-.expand-enter-to, .expand-leave-from {
+
+.expand-enter-to,
+.expand-leave-from {
   opacity: 1;
   transform: translateY(0);
   max-height: 500px;
