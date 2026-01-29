@@ -209,8 +209,8 @@ export function useGifts() {
       const uniqueMap = new Map()
       
       filteredData.forEach(item => {
-        // 使用股票代碼作為唯一鍵，處理資料庫中可能重複的紀念品紀錄
-        const uniqueKey = item.gift?.code || item.souvenir_id
+        // 使用股票代碼作為唯一鍵，並強制轉為字串避免型別不一致導致去重失敗
+        const uniqueKey = String(item.gift?.code || item.souvenir_id)
         
         // 優先保留 holding 狀態（在庫），如果兩者都有
         if (!uniqueMap.has(uniqueKey) || item.status === 'holding') {
@@ -222,7 +222,7 @@ export function useGifts() {
       myCollections.value = finalData
 
       // 3. 儲存快取
-      if (requestYear && filteredData.length > 0) {
+      if (requestYear && finalData.length > 0) {
         const cacheKey = `collections:${userId}:${requestYear}`
         const metadata = { year: requestYear }
         
@@ -231,10 +231,10 @@ export function useGifts() {
           metadata.fingerprint = await getSouvenirFingerprint(requestYear)
         }
         
-        cache.set(cacheKey, filteredData, metadata)
+        cache.set(cacheKey, finalData, metadata)
       }
 
-      return { data: filteredData, error: null, fromCache: false }
+      return { data: finalData, error: null, fromCache: false }
     } catch (e) {
       console.error('取得收藏列表失敗:', e)
       error.value = e.message

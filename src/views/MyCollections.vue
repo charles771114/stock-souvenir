@@ -7,7 +7,7 @@
       <div class="mb-12 animate-fade-in-up">
         <h1
           class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 tracking-tighter">
-          年度購股領取計畫
+          年度購股計畫
         </h1>
         <p class="text-slate-400 mt-1 font-bold text-xs sm:text-sm uppercase tracking-wider">
           追蹤喜愛的紀念品，規劃您的購股入袋清單
@@ -209,7 +209,7 @@
                       <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                       </svg>
-                      <span class="text-[10px] font-black uppercase tracking-wider">已經在庫存</span>
+                      <span class="text-[10px] font-black uppercase tracking-wider">已持有</span>
                     </div>
                   </div>
                   
@@ -263,7 +263,7 @@
           </svg>
         </div>
         <h4 class="text-xl font-bold text-slate-900 mb-2">
-          {{ selectedYear }} 年度尚無預計標的
+          {{ selectedYear }} 年度尚無待買標的
         </h4>
         <p class="text-sm text-slate-400 max-w-xs mb-8">您可以前往「紀念品目錄」挑選感興趣的紀念品加入清單。</p>
         <router-link to="/gifts"
