@@ -25,6 +25,7 @@ export function usePortfolio() {
       const { data, error: fetchError } = await supabase
         .from('portfolios')
         .select('*')
+        .eq('user_id', user.value.id)
         .order('is_default', { ascending: false })
         .order('name')
       
@@ -84,6 +85,39 @@ export function usePortfolio() {
     }
   }
 
+  const deletePortfolio = async (id) => {
+    if (!user.value) return
+    
+    try {
+      const { error: deleteError } = await supabase
+        .from('portfolios')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.value.id) // Security check
+      
+      if (deleteError) throw deleteError
+      
+      // Update local state
+      portfolios.value = portfolios.value.filter(p => p.id !== id)
+      
+      // If deleted portfolio was selected, switch to default
+      if (currentPortfolioId.value === id) {
+        const defaultP = portfolios.value.find(p => p.is_default)
+        if (defaultP) {
+          selectPortfolio(defaultP.id)
+        } else if (portfolios.value.length > 0) {
+          selectPortfolio(portfolios.value[0].id)
+        } else {
+          selectPortfolio(null)
+        }
+      }
+      return { error: null }
+    } catch (e) {
+      console.error('Delete portfolio failed:', e)
+      return { error: e }
+    }
+  }
+
   // Auto fetch when user changes
   watch(() => user.value?.id, (newId) => {
     if (newId) {
@@ -103,6 +137,7 @@ export function usePortfolio() {
     error,
     fetchPortfolios,
     selectPortfolio,
-    addPortfolio
+    addPortfolio,
+    deletePortfolio
   }
 }
