@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
+import { defineConfig } from 'vite'
 
 export default defineConfig({
   base: '/',
@@ -25,6 +25,18 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/mopsov/, ''),
       },
     },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-xlsx': ['xlsx'],
+          'vendor-pdfjs': ['pdfjs-dist'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000, // Optional: increase limit since we know we have large chunks
   },
   test: {
     environment: 'jsdom',

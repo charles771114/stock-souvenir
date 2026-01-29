@@ -1,10 +1,6 @@
-import * as pdfjsLib from 'pdfjs-dist'
 import { ref } from 'vue'
 
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url'
-
-// Set worker path using local worker with Vite ?url suffix for reliability
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker
 
 export function usePDFScraper() {
   const loading = ref(false)
@@ -22,6 +18,11 @@ export function usePDFScraper() {
     results.value = []
 
     try {
+      // Lazy load pdfjs-dist library
+      const pdfjsLib = await import('pdfjs-dist')
+      // Set worker path
+      pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker
+
       const arrayBuffer = await file.arrayBuffer()
       const loadingTask = pdfjsLib.getDocument({
         data: arrayBuffer,
