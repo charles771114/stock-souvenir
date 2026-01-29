@@ -18,16 +18,18 @@
       :style="{
         transform: `translateY(${pullDistance - 60}px)`,
         opacity: pullDistance > 20 ? 1 : 0
-      }"
-    >
-      <div class="bg-white/90 backdrop-blur-md rounded-full p-3 shadow-2xl border border-indigo-100 flex items-center justify-center">
-        <div
-          class="w-8 h-8 rounded-full border-4 border-indigo-100 border-t-indigo-600 transition-none"
+      }">
+      <div
+        class="bg-white/90 backdrop-blur-md rounded-full p-3 shadow-2xl border border-indigo-100 flex items-center justify-center">
+        <div class="w-8 h-8 rounded-full border-4 border-indigo-100 border-t-indigo-600 transition-none"
           :class="{ 'animate-spin': isRefreshing }"
-          :style="{ transform: isRefreshing ? 'none' : `rotate(${pullDistance * 3}deg)` }"
-        ></div>
-        <div v-if="!isRefreshing" class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-indigo-400 uppercase tracking-widest whitespace-nowrap">下拉重整</div>
-        <div v-else class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-indigo-600 uppercase tracking-widest whitespace-nowrap animate-pulse">更新中...</div>
+          :style="{ transform: isRefreshing ? 'none' : `rotate(${pullDistance * 3}deg)` }"></div>
+        <div v-if="!isRefreshing"
+          class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-indigo-400 uppercase tracking-widest whitespace-nowrap">
+          下拉重整</div>
+        <div v-else
+          class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-indigo-600 uppercase tracking-widest whitespace-nowrap animate-pulse">
+          更新中...</div>
       </div>
     </div>
 
@@ -36,11 +38,11 @@
       <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6 animate-fade-in-up">
         <div>
           <h1
-            class="text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-900 via-purple-800 to-indigo-900 tracking-tighter mb-2">
-            我的庫存
+            class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 tracking-tighter mb-2">
+            我的庫存清單
           </h1>
-          <p class="text-sm text-gray-400 font-bold uppercase tracking-[0.3em] ml-1">
-            Security Inventory & Scraper
+          <p class="text-slate-400 mt-1 font-bold text-xs sm:text-sm uppercase tracking-wider">
+            管理持股庫存與自動化 PDF 抓取
           </p>
         </div>
 
@@ -286,7 +288,8 @@
                         class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
                         title="轉移帳戶">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                         </svg>
                       </button>
                       <button @click="deleteItem(item)"
@@ -322,13 +325,8 @@
 
     <!-- Modals -->
     <InventoryImportModal :is-open="isImportModalOpen" @close="closeImportModal" />
-    <PortfolioMoveModal
-      :is-open="isMoveModalOpen"
-      :item="itemToMove"
-      :loading="reassignLoading"
-      @close="isMoveModalOpen = false"
-      @confirm="handleReassign"
-    />
+    <PortfolioMoveModal :is-open="isMoveModalOpen" :item="itemToMove" :loading="reassignLoading"
+      @close="isMoveModalOpen = false" @confirm="handleReassign" />
   </div>
 </template>
 
@@ -496,7 +494,7 @@ const openMoveModal = (item) => {
 
 const handleReassign = async (targetPortfolioId) => {
   if (!itemToMove.value) return
-  
+
   reassignLoading.value = true
   try {
     const { success, error } = await reassignInventoryPortfolio(itemToMove.value.id, targetPortfolioId)
