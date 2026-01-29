@@ -89,7 +89,7 @@
                   <div class="flex items-center justify-between group/sub">
                     <span class="text-[10px] font-bold text-slate-500">{{ sub.label }}</span>
                     <span class="text-[10px] font-black text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{{ sub.count
-                      }}</span>
+                    }}</span>
                   </div>
                   <!-- L3: Companies with Inventory Status -->
                   <div class="flex flex-wrap gap-1.5">
@@ -150,8 +150,11 @@
                         {{ getPortfolioName(item.portfolio_id) }}
                       </span>
                     </div>
-                    <p class="text-[11px] font-bold text-slate-400 mt-0.5 flex items-center gap-2">
+                    <p class="text-[11px] font-bold text-slate-400 mt-0.5 flex flex-wrap items-center gap-2">
                       <span>{{ item.gift?.souvenir_item }}</span>
+                      <span v-if="item.gift?.last_buy_date"
+                        class="text-[9px] font-black text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100 uppercase tracking-tighter">最後買進:
+                        {{ item.gift?.last_buy_date }}</span>
                       <span v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)"
                         class="text-[10px] text-slate-300 italic font-medium">
                         (去年: {{ previousYearSouvenirs.get(item.gift?.code) }})
@@ -216,6 +219,9 @@
                 </div>
                 <p class="text-sm text-slate-600 font-medium mb-6 line-clamp-2">
                   <span>{{ item.gift?.souvenir_item || '尚未公布' }}</span>
+                  <span v-if="item.gift?.last_buy_date"
+                    class="block text-[10px] font-black text-rose-500 mt-1 uppercase tracking-widest">最後買進: {{
+                      item.gift?.last_buy_date }}</span>
                   <br v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)" />
                   <span v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)"
                     class="text-xs text-slate-400 italic">
@@ -226,7 +232,7 @@
                   <div class="flex flex-col">
                     <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">開會日期</span>
                     <span class="text-xs font-black font-mono text-slate-600">{{ item.gift?.meeting_date || '-'
-                      }}</span>
+                    }}</span>
                   </div>
                 </div>
               </div>
@@ -266,8 +272,11 @@
                         {{ getPortfolioName(item.portfolio_id) }}
                       </span>
                     </div>
-                    <p class="text-[11px] font-bold text-slate-400 mt-0.5 flex items-center gap-2">
+                    <p class="text-[11px] font-bold text-slate-400 mt-0.5 flex flex-wrap items-center gap-2">
                       <span>{{ item.gift?.souvenir_item }}</span>
+                      <span v-if="item.gift?.last_buy_date"
+                        class="text-[9px] font-black text-emerald-500/60 bg-emerald-50/50 px-1.5 py-0.5 rounded border border-emerald-100/50 uppercase tracking-tighter">最後買進:
+                        {{ item.gift?.last_buy_date }}</span>
                       <span v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)"
                         class="text-[10px] text-emerald-400/60 italic font-medium">
                         (去年: {{ previousYearSouvenirs.get(item.gift?.code) }})
@@ -318,6 +327,9 @@
                 <h3 class="text-lg font-black text-slate-900 mb-2">{{ item.gift?.name }}</h3>
                 <p class="text-sm text-slate-600 font-medium mb-6 line-clamp-2">
                   {{ item.gift?.souvenir_item || '尚未公布' }}
+                  <span v-if="item.gift?.last_buy_date"
+                    class="block text-[10px] font-black text-emerald-400 mt-1 uppercase tracking-widest opacity-60">最後買進:
+                    {{ item.gift?.last_buy_date }}</span>
                 </p>
                 <div class="pt-4 border-t border-slate-50 flex items-center justify-between">
                   <div class="flex flex-col">
@@ -409,6 +421,15 @@ const isPlaceholder = (val) => {
   return s === '' || s === '尚未公布' || s.includes('再行公告') || s === '尚未公告'
 }
 
+// Helper to check if a date is expired (past the last buy date)
+const isExpired = (dateString) => {
+  if (!dateString) return false
+  // 設置最後買進日當天的 23:59:59 為截止點
+  const target = new Date(dateString).setHours(23, 59, 59, 999)
+  const now = new Date().getTime()
+  return target < now
+}
+
 const toggleCategory = (name) => {
   if (expandedCategories.value[name] === undefined) {
     expandedCategories.value[name] = true
@@ -437,8 +458,15 @@ const filteredCollections = computed(() => {
     // 嚴格過濾：名稱必須「明確」，但排除 (開會55日前...) 的情況以便追蹤待買標的
     const name = item.gift?.souvenir_item || ''
     const isVague = name === '尚未公布' || name === ''
+    if (isVague) return false
 
-    return !isVague
+    // 自動移除已過期但尚未買進的「待買進標的」
+    if (item.status === 'collected') {
+      const lastBuyDate = item.gift?.last_buy_date
+      if (isExpired(lastBuyDate)) return false
+    }
+
+    return true
   })
 })
 
