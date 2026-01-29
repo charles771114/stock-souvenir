@@ -403,47 +403,13 @@ const addAllToInventory = async () => {
 
   try {
     for (const item of scraperResults.value) {
-      // 0. Skip if already in inventory
       if (existingCodes.has(item.code)) {
         skipCount++
         continue
       }
 
-      // 1. Try to find souvenir by code
-      const { data: souvenir, error: findError } = await supabase
-        .from('souvenirs')
-        .select('id')
-        .eq('code', item.code)
-        .order('meeting_date', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      let souvenirId
-      if (souvenir) {
-        souvenirId = souvenir.id
-      } else {
-        // Create placeholder souvenir if not found (needed to link collection)
-        const { data: newSouvenir, error: insertError } = await supabase
-          .from('souvenirs')
-          .insert({
-            code: item.code,
-            name: item.name,
-            doc_id: `${item.code}_${new Date().getFullYear()}_auto`,
-            meeting_date: `${new Date().getFullYear()}-06-01` // Default placeholder
-          })
-          .select()
-          .single()
-
-        if (insertError) {
-          console.warn(`Failed to create souvenir for ${item.code}:`, insertError)
-          skipCount++
-          continue
-        }
-        souvenirId = newSouvenir.id
-      }
-
-      // 2. Add to collection
-      const { success } = await addToCollection(souvenirId)
+      // 1. Directly add to user_inventory (consolidated portfolio)
+      const { success } = await addToInventory(item.code, item.name)
       if (success) successCount++
       else skipCount++
     }
@@ -468,7 +434,7 @@ const closeImportModal = async (shouldRefresh) => {
 const deleteItem = async (item) => {
   if (!item) return
   if (await confirm(`確定要移除「${item.souvenir?.name} (${item.souvenir?.code})」嗎？`, '移除庫存')) {
-    const { success, error } = await removeFromCollection(item.id)
+    const { success, error } = await removeFromCollection(item.id, true)
     if (success) {
       showToast('已移除', 'success')
       await fetchAllInventory()
