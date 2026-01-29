@@ -417,7 +417,8 @@ export function useGifts() {
     try {
       if (!user.value) return new Set()
 
-      let query = supabase
+      // 1. 從 user_collections 取得 (status = 'holding')
+      let collQuery = supabase
         .from('user_collections')
         .select(`
           souvenirs!inner (
@@ -425,21 +426,39 @@ export function useGifts() {
           )
         `)
       
+      // 2. 從新的 user_inventory 表取得
+      let invQuery = supabase
+        .from('user_inventory')
+        .select('stock_code')
+
       if (isCombinedView.value) {
-        query = query.eq('user_id', user.value.id)
+        collQuery = collQuery.eq('user_id', user.value.id)
+        invQuery = invQuery.eq('user_id', user.value.id)
       } else if (currentPortfolioId.value) {
-        query = query.eq('portfolio_id', currentPortfolioId.value)
+        collQuery = collQuery.eq('portfolio_id', currentPortfolioId.value)
+        invQuery = invQuery.eq('portfolio_id', currentPortfolioId.value)
       } else {
         return new Set()
       }
 
-      const { data, error: dbError } = await query
-        .eq('status', 'holding')
+      const [collRes, invRes] = await Promise.all([
+        collQuery.eq('status', 'holding'),
+        invQuery
+      ])
 
-      if (dbError) throw dbError
+      const codes = new Set()
+      
+      // 收集來自 user_collections 的代號
+      collRes.data?.forEach(d => {
+        if (d.souvenirs?.code) codes.add(String(d.souvenirs.code).trim())
+      })
 
-      const codes = data?.map(d => d.souvenirs?.code).filter(Boolean) || []
-      return new Set(codes)
+      // 收集來自 user_inventory 的代號
+      invRes.data?.forEach(d => {
+        if (d.stock_code) codes.add(String(d.stock_code).trim())
+      })
+
+      return codes
     } catch (e) {
       console.error('取得持股代號失敗:', e)
       return new Set()

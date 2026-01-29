@@ -473,10 +473,14 @@ const filteredCollections = computed(() => {
 const hasFilteredItems = computed(() => filteredCollections.value.length > 0)
 
 const groupedCollections = computed(() => {
-  // 領取計畫：狀態為 collected 且名稱明確（已在 filteredCollections 中過濾過）
-  const planned = filteredCollections.value.filter(item => item.status === 'collected')
-  // 在庫項目：狀態為 holding 且名稱明確
-  const inventory = filteredCollections.value.filter(item => item.status === 'holding')
+  // 領取計畫：狀態為 collected 且尚未持有
+  const planned = filteredCollections.value.filter(item =>
+    item.status === 'collected' && !inventoryIds.value.has(item.gift?.code)
+  )
+  // 在庫項目：狀態為 holding，或是雖然是 collected 但在庫存中已存在
+  const inventory = filteredCollections.value.filter(item =>
+    item.status === 'holding' || (item.status === 'collected' && inventoryIds.value.has(item.gift?.code))
+  )
   return { planned, inventory }
 })
 
@@ -543,7 +547,7 @@ const souvenirCounts = computed(() => {
 const addToInventory = async (souvenirId) => {
   addingToInventory.value = souvenirId
   try {
-    const { success, error } = await addToCollection(souvenirId)
+    const { success, error } = await addToCollection(souvenirId, 'holding')
     if (success) {
       showToast('已加入庫存', 'success')
       // 重新載入庫存狀態
