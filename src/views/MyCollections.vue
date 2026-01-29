@@ -376,7 +376,7 @@ const souvenirCounts = computed(() => {
   filteredCollections.value.forEach(item => {
     let name = item.gift?.souvenir_item || '尚未公布'
     const companyName = item.gift?.name || '未知公司'
-    const inInventory = inventoryIds.value.has(item.souvenir_id)
+    const inInventory = inventoryIds.value.has(item.gift?.code)
     
     const isPending = name.includes('開會55日前再行公告') || name === '尚未公布'
     const prevSouvenir = previousYearSouvenirs.value.get(item.gift?.code)

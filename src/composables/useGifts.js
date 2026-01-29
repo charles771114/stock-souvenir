@@ -414,23 +414,31 @@ export function useGifts() {
   }
 
   /**
-   * 取得使用者庫存項目 ID 列表（僅 collected 狀態）
-   * @returns {Promise<Set>} - 庫存項目 ID 的 Set
+   * 取得使用者目前持有的股票代號列表（status 為 'holding'）
+   * @returns {Promise<Set<string>>} - 股票代號的 Set
    */
   const fetchUserInventoryIds = async () => {
     const { user: currentUser } = useAuth()
     try {
       if (!currentUser.value) return new Set()
 
-      const { data } = await supabase
+      const { data, error: dbError } = await supabase
         .from('user_collections')
-        .select('souvenir_id')
+        .select(`
+          souvenirs!inner (
+            code
+          )
+        `)
         .eq('user_id', currentUser.value.id)
-        .eq('status', 'holding') // Now tracking inventory as 'holding'
+        .eq('status', 'holding')
 
-      return new Set(data?.map(d => d.souvenir_id) || [])
+      if (dbError) throw dbError
+
+      // 提取所有不重複的股票代號
+      const codes = data?.map(d => d.souvenirs?.code).filter(Boolean) || []
+      return new Set(codes)
     } catch (e) {
-      console.error('取得庫存ID失敗:', e)
+      console.error('取得持股代號失敗:', e)
       return new Set()
     }
   }

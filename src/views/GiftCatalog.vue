@@ -335,7 +335,7 @@ const filteredGifts = computed(() => {
     // Only show items that are in collection BUT NOT in inventory
     result = result.filter(g => {
       const isInMyCollection = collectionIds.includes(g.id)
-      const isInInventory = userInventoryIds.value.has(g.id)
+      const isInInventory = userInventoryIds.value.has(g.code)
       return isInMyCollection && !isInInventory
     })
   }
@@ -400,7 +400,7 @@ const mappedGifts = computed(() => {
       lastBuy: g.last_buy_date,
       meeting: g.meeting_date,
       isCollected: isInCollection(g.id),
-      isInInventory: userInventoryIds.value.has(g.id),
+      isInInventory: userInventoryIds.value.has(g.code),
       previousYearSouvenir: isPlaceholder(g.souvenir_item) ? prevSouvenir : null
     }
   })
