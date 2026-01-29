@@ -284,14 +284,6 @@
                       </div>
                     </td>
                     <td class="px-8 py-6 text-right">
-                      <button @click="openMoveModal(item)"
-                        class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
-                        title="轉移帳戶">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                        </svg>
-                      </button>
                       <button @click="deleteItem(item)"
                         class="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                         title="移除持股">
@@ -325,15 +317,12 @@
 
     <!-- Modals -->
     <InventoryImportModal :is-open="isImportModalOpen" @close="closeImportModal" />
-    <PortfolioMoveModal :is-open="isMoveModalOpen" :item="itemToMove" :loading="reassignLoading"
-      @close="isMoveModalOpen = false" @confirm="handleReassign" />
   </div>
 </template>
 
 <script setup>
 import InventoryImportModal from '@/components/InventoryImportModal.vue'
 import Navbar from '@/components/Navbar.vue'
-import PortfolioMoveModal from '@/components/PortfolioMoveModal.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useCollection } from '@/composables/useCollection'
 import { useDialog } from '@/composables/useDialog'
@@ -347,7 +336,7 @@ import { onMounted, ref, watch } from 'vue'
 const { portfolios, currentPortfolioId, isCombinedView } = usePortfolio() // Modified line
 
 // Composables
-const { collection, loading, fetchAllInventory, removeFromCollection, clearAllCollections, addToCollection, reassignInventoryPortfolio } = useCollection()
+const { collection, loading, fetchAllInventory, removeFromCollection, clearAllCollections, addToCollection } = useCollection()
 const { loading: scraperLoading, results: scraperResults, error: scraperError, processPDF } = usePDFScraper()
 const { confirm } = useDialog()
 const { showToast } = useToast()
@@ -355,7 +344,7 @@ const { user } = useAuth()
 
 // Pull to Refresh
 const { pullDistance, isRefreshing } = usePullRefresh(async () => {
-  await fetchAllInventory()
+  await fetchAllInventory(true)
 })
 
 // Watch for user auth state to fetch data
@@ -372,9 +361,6 @@ watch(currentPortfolioId, async () => {
 
 // State
 const isImportModalOpen = ref(false)
-const isMoveModalOpen = ref(false)
-const itemToMove = ref(null)
-const reassignLoading = ref(false)
 const selectedFile = ref(null)
 const isDragging = ref(false)
 const pdfPassword = ref('')
@@ -483,32 +469,6 @@ const addAllToInventory = async () => {
     showToast('批次新增失敗', 'error')
   } finally {
     loading.value = false
-  }
-}
-
-// Methods - Reassign
-const openMoveModal = (item) => {
-  itemToMove.value = item
-  isMoveModalOpen.value = true
-}
-
-const handleReassign = async (targetPortfolioId) => {
-  if (!itemToMove.value) return
-
-  reassignLoading.value = true
-  try {
-    const { success, error } = await reassignInventoryPortfolio(itemToMove.value.id, targetPortfolioId)
-    if (success) {
-      showToast('已完成帳戶轉移', 'success')
-      isMoveModalOpen.value = false
-      await fetchAllInventory()
-    } else {
-      showToast(error || '轉移失敗', 'error')
-    }
-  } catch (err) {
-    showToast('轉移發生錯誤', 'error')
-  } finally {
-    reassignLoading.value = false
   }
 }
 

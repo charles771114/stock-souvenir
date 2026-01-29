@@ -44,7 +44,7 @@ export function useCollection() {
         }
     }
 
-    const fetchAllInventory = async () => {
+    const fetchAllInventory = async (forceRefresh = false) => {
         if (!user.value) return
 
         loading.value = true
@@ -60,15 +60,17 @@ export function useCollection() {
             const cacheKey = `inventory:${user.value.id}:${currentId}`
             const cachedEntry = cache.getWithMetadata(cacheKey)
 
-            // 指紋檢查
-            const fingerprint = await getInventoryFingerprint()
-            if (cachedEntry && cachedEntry.fingerprint === fingerprint) {
-                collection.value = cachedEntry.data
-                loading.value = false
-                return { data: cachedEntry.data, fromCache: true }
+            // Step 1: Check cache if not forcing refresh
+            if (!forceRefresh) {
+              const fingerprint = await getInventoryFingerprint()
+              if (cachedEntry && cachedEntry.fingerprint === fingerprint) {
+                  collection.value = cachedEntry.data
+                  loading.value = false
+                  return { data: cachedEntry.data, fromCache: true }
+              }
             }
 
-            // 改為從 user_inventory 讀取跨年度持股
+            // Step 2: Fetch from DB
             let query = supabase
                 .from('user_inventory')
                 .select('*')
@@ -84,11 +86,10 @@ export function useCollection() {
 
             if (fetchError) throw fetchError
 
-            // 格式化回傳格式以相容舊有元件 (模擬 souvenir 結構)
             const formattedData = data.map(item => ({
                 id: item.id,
                 user_id: item.user_id,
-                portfolio_id: item.portfolio_id, // 新增欄位
+                portfolio_id: item.portfolio_id,
                 status: 'holding',
                 created_at: item.created_at,
                 souvenir: {
@@ -99,9 +100,10 @@ export function useCollection() {
 
             collection.value = formattedData || []
 
-            // 儲存快取
-            if (fingerprint) {
-                cache.set(cacheKey, formattedData, { fingerprint })
+            // Step 3: Update cache with new fingerprint
+            const newFingerprint = await getInventoryFingerprint()
+            if (newFingerprint) {
+                cache.set(cacheKey, formattedData, { fingerprint: newFingerprint })
             }
 
             return { data: formattedData, fromCache: false }
@@ -137,6 +139,11 @@ export function useCollection() {
                 .single()
 
             if (error) throw error
+            
+            // Invalidate cache immediately on change
+            const currentId = isCombinedView.value ? 'combined' : currentPortfolioId.value
+            cache.remove(`inventory:${user.value.id}:${currentId}`)
+            
             return { success: true, data }
         } catch (err) {
             console.error('Add to inventory failed:', err)
@@ -150,7 +157,6 @@ export function useCollection() {
             return { success: false, error: '請先選擇一個特定的帳戶，不能在歸戶模式下新增' }
         }
 
-        // 如果是標記為持股，則重新導向至 addToInventory (代碼需從 souvenir 取得)
         if (status === 'holding') {
             const { data: souvenir } = await supabase
                 .from('souvenirs')
@@ -193,6 +199,13 @@ export function useCollection() {
                 .eq('user_id', user.value.id)
 
             if (delError) throw delError
+            
+            // Invalidate cache if inventory item removed
+            if (isInventory) {
+              const currentId = isCombinedView.value ? 'combined' : currentPortfolioId.value
+              cache.remove(`inventory:${user.value.id}:${currentId}`)
+            }
+            
             return { success: true }
         } catch (err) {
             console.error('Remove failed:', err)
@@ -210,6 +223,13 @@ export function useCollection() {
                 .eq('user_id', user.value.id)
 
             if (delError) throw delError
+            
+            // Invalidate ALL inventory caches for this user
+            if (onlyInventory) {
+              const allKeys = Object.keys(localStorage)
+              allKeys.filter(k => k.startsWith(`inventory:${user.value.id}:`)).forEach(k => cache.remove(k))
+            }
+            
             return { success: true }
         } catch (err) {
             console.error('Clear failed:', err)
@@ -253,26 +273,6 @@ export function useCollection() {
         }
     }
 
-    /**
-     * 轉移持股分身帳戶
-     */
-    const reassignInventoryPortfolio = async (itemId, targetPortfolioId) => {
-        if (!user.value) return { success: false, error: '未登入' }
-        try {
-            const { error: updateError } = await supabase
-                .from('user_inventory')
-                .update({ portfolio_id: targetPortfolioId })
-                .eq('id', itemId)
-                .eq('user_id', user.value.id)
-
-            if (updateError) throw updateError
-            return { success: true }
-        } catch (err) {
-            console.error('Reassign inventory failed:', err)
-            return { success: false, error: err.message }
-        }
-    }
-
     return {
         collection,
         loading,
@@ -282,7 +282,6 @@ export function useCollection() {
         addToInventory,
         addToCollection,
         removeFromCollection,
-        reassignInventoryPortfolio,
         clearAllCollections
     }
 }
