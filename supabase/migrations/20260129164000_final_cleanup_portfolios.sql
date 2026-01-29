@@ -16,7 +16,6 @@ SET is_default = false
 WHERE id IN (SELECT id FROM ranked_portfolios WHERE default_rank > 1);
 
 -- 2. Delete any portfolio named "本人" that is NOT the default one
--- (Sometimes we have many named "本人" but only some are default)
 -- Keep only the one that is currently default.
 DELETE FROM public.portfolios p
 WHERE name = '本人'
@@ -42,14 +41,10 @@ WHERE id IN (
 );
 
 -- 4. Apply the UNIQUE INDEX (Conditional for is_default)
+-- This is the "ultimate" fix that prevents future duplicates.
 DROP INDEX IF EXISTS idx_portfolios_one_default_per_user;
 CREATE UNIQUE INDEX idx_portfolios_one_default_per_user 
 ON public.portfolios (user_id) 
 WHERE (is_default = true);
-
--- 5. Extra: Apply UNIQUE INDEX for name per user (Optional but good)
--- Un-comment if you want to prevent same-name portfolios
--- DROP INDEX IF EXISTS idx_portfolios_name_per_user;
--- CREATE UNIQUE INDEX idx_portfolios_name_per_user ON public.portfolios (user_id, name);
 
 COMMIT;
