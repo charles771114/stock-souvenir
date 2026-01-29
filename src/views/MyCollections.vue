@@ -356,14 +356,11 @@ const souvenirCounts = computed(() => {
     const companyName = item.gift?.name || '未知公司'
     const inInventory = inventoryIds.value.has(item.souvenir_id)
     
-    // Filter out unwanted items
-    if (name.includes('開會55日前再行公告') || name === '尚未公布') {
-      return
-    }
-
+    const isPending = name.includes('開會55日前再行公告') || name === '尚未公布'
+    
     const parsed = name.match(/^(.*?)(\d+.*)$/)
-    const mainName = parsed ? parsed[1].trim() : name
-    const subLabel = parsed ? parsed[2].trim() : '其他'
+    const mainName = isPending ? '名稱待公告項目' : (parsed ? parsed[1].trim() : name)
+    const subLabel = isPending ? name : (parsed ? parsed[2].trim() : '其他')
     
     if (!groups[mainName]) {
       groups[mainName] = {

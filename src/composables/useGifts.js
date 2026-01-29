@@ -180,28 +180,17 @@ export function useGifts() {
       const currentYear = new Date().getFullYear().toString()
       const requestYear = year?.toString()
 
-      // 1. 檢查快取
-      if (requestYear) {
+      // 1. 檢查快取 (僅針對過去年度)
+      if (requestYear && requestYear !== currentYear) {
         const cacheKey = `collections:${userId}:${requestYear}`
         const cachedEntry = cache.getWithMetadata(cacheKey)
         if (cachedEntry) {
-          // 對快取資料也進行一次去重（處理舊版本快取中的重複項）
+          // 對快取資料也進行一次去重
           const deduplicatedCache = deduplicateCollections(cachedEntry.data)
           
-          // 過去年度：永久快取
-          if (requestYear !== currentYear) {
-            myCollections.value = deduplicatedCache
-            loading.value = false
-            return { data: deduplicatedCache, error: null, fromCache: true }
-          }
-
-          // 當年度：指紋檢查（確保禮品資訊更新能即時反映）
-          const fingerprint = await getSouvenirFingerprint(requestYear)
-          if (fingerprint && cachedEntry.fingerprint === fingerprint) {
-            myCollections.value = deduplicatedCache
-            loading.value = false
-            return { data: deduplicatedCache, error: null, fromCache: true }
-          }
+          myCollections.value = deduplicatedCache
+          loading.value = false
+          return { data: deduplicatedCache, error: null, fromCache: true }
         }
       }
 
@@ -231,13 +220,10 @@ export function useGifts() {
       const finalData = deduplicateCollections(data)
       myCollections.value = finalData
 
-      // 4. 儲存快取
-      if (requestYear && finalData.length > 0) {
+      // 4. 儲存快取 (僅針對過去年度)
+      if (requestYear && requestYear !== currentYear && finalData.length > 0) {
         const cacheKey = `collections:${userId}:${requestYear}`
         const metadata = { year: requestYear }
-        if (requestYear === currentYear) {
-          metadata.fingerprint = await getSouvenirFingerprint(requestYear)
-        }
         cache.set(cacheKey, finalData, metadata)
       }
 
