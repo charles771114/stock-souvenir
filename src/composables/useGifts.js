@@ -149,6 +149,27 @@ export function useGifts() {
     loading.value = true
     error.value = null
 
+    /**
+     * 去重輔助函數：根據股票代碼去重，優先保留 holding 狀態
+     */
+    const deduplicateCollections = (rawData) => {
+      const filtered = (rawData || []).filter(item => item.gift)
+      const uniqueMap = new Map()
+      
+      filtered.forEach(item => {
+        // 強制轉字串並修剪空白，確保 key 絕對一致
+        const code = String(item.gift?.code || '').trim()
+        const uniqueKey = code || item.souvenir_id
+        
+        // 優先保留 holding 狀態（已持股），如果兩者都有
+        if (!uniqueMap.has(uniqueKey) || item.status === 'holding') {
+          uniqueMap.set(uniqueKey, item)
+        }
+      })
+      
+      return Array.from(uniqueMap.values())
+    }
+
     try {
       if (!currentUser.value) {
         myCollections.value = []
@@ -164,19 +185,22 @@ export function useGifts() {
         const cacheKey = `collections:${userId}:${requestYear}`
         const cachedEntry = cache.getWithMetadata(cacheKey)
         if (cachedEntry) {
+          // 對快取資料也進行一次去重（處理舊版本快取中的重複項）
+          const deduplicatedCache = deduplicateCollections(cachedEntry.data)
+          
           // 過去年度：永久快取
           if (requestYear !== currentYear) {
-            myCollections.value = cachedEntry.data
+            myCollections.value = deduplicatedCache
             loading.value = false
-            return { data: cachedEntry.data, error: null, fromCache: true }
+            return { data: deduplicatedCache, error: null, fromCache: true }
           }
 
           // 當年度：指紋檢查（確保禮品資訊更新能即時反映）
           const fingerprint = await getSouvenirFingerprint(requestYear)
           if (fingerprint && cachedEntry.fingerprint === fingerprint) {
-            myCollections.value = cachedEntry.data
+            myCollections.value = deduplicatedCache
             loading.value = false
-            return { data: cachedEntry.data, error: null, fromCache: true }
+            return { data: deduplicatedCache, error: null, fromCache: true }
           }
         }
       }
@@ -189,13 +213,12 @@ export function useGifts() {
           gift:souvenirs (*)
         `)
         .eq('user_id', userId)
-        .in('status', ['collected', 'holding']) // Get both gift collections and inventory holdings
+        .in('status', ['collected', 'holding'])
 
       // 套用年份篩選（如果指定）
       if (requestYear) {
         const startDate = `${requestYear}-01-01`
         const endDate = `${requestYear}-12-31`
-        // 篩選關聯表 souvenirs 的 meeting_date
         query = query.gte('gift.meeting_date', startDate).lte('gift.meeting_date', endDate)
       }
 
@@ -204,33 +227,17 @@ export function useGifts() {
 
       if (fetchError) throw fetchError
 
-      // 過濾 null gift 並去重 (優先保留 collected 狀態，如果兩者都有)
-      const filteredData = (data || []).filter(item => item.gift)
-      const uniqueMap = new Map()
-      
-      filteredData.forEach(item => {
-        // 使用股票代碼作為唯一鍵，並強制轉為字串避免型別不一致導致去重失敗
-        const uniqueKey = String(item.gift?.code || item.souvenir_id)
-        
-        // 優先保留 holding 狀態（在庫），如果兩者都有
-        if (!uniqueMap.has(uniqueKey) || item.status === 'holding') {
-          uniqueMap.set(uniqueKey, item)
-        }
-      })
-
-      const finalData = Array.from(uniqueMap.values())
+      // 3. 去重與更新
+      const finalData = deduplicateCollections(data)
       myCollections.value = finalData
 
-      // 3. 儲存快取
+      // 4. 儲存快取
       if (requestYear && finalData.length > 0) {
         const cacheKey = `collections:${userId}:${requestYear}`
         const metadata = { year: requestYear }
-        
-        // 當年度加入指紋
         if (requestYear === currentYear) {
           metadata.fingerprint = await getSouvenirFingerprint(requestYear)
         }
-        
         cache.set(cacheKey, finalData, metadata)
       }
 
