@@ -182,13 +182,10 @@ export function useGifts() {
     try {
       if (!user.value) return []
 
-      // 1. 查詢 user_inventory 並關聯 souvenirs
+      // 1. 查詢 user_inventory
       let invQuery = supabase
         .from('user_inventory')
-        .select(`
-          *,
-          souvenir:souvenirs!user_inventory_stock_code_fkey (*)
-        `)
+        .select('*')
       
       if (isCombinedView.value) {
         invQuery = invQuery.eq('user_id', user.value.id)
@@ -201,37 +198,71 @@ export function useGifts() {
       const { data: inventoryData, error: invError } = await invQuery
 
       if (invError) {
-        console.error('查詢庫存紀念品失敗:', invError)
+        console.error('查詢庫存失敗:', invError)
         return []
       }
 
-      // 2. 過濾：只保留有明確紀念品的項目
-      const validItems = inventoryData?.filter(inv => {
-        const gift = inv.souvenir
-        if (!gift) return false
-        
-        // 必須有明確的紀念品名稱
-        const hasValidName = gift.souvenir_item && 
-                            gift.souvenir_item !== '尚未公布' && 
-                            gift.souvenir_item !== ''
-        
-        // 必須符合年份（如果有指定）
-        const matchesYear = !year || gift.meeting_date?.startsWith(year)
-        
-        return hasValidName && matchesYear
-      }) || []
+      if (!inventoryData || inventoryData.length === 0) return []
 
-      // 3. 轉換為與 user_collections 相同的格式
-      return validItems.map(inv => ({
-        id: `inv_${inv.id}`, // 加上前綴避免與 user_collections 的 ID 衝突
-        user_id: inv.user_id,
-        portfolio_id: inv.portfolio_id,
-        souvenir_id: inv.souvenir?.id,
-        status: 'holding',
-        created_at: inv.created_at,
-        gift: inv.souvenir,
-        _source: 'inventory' // 標記來源
-      }))
+      // 2. 取得所有庫存的股票代號
+      const stockCodes = inventoryData.map(inv => inv.stock_code).filter(Boolean)
+      
+      if (stockCodes.length === 0) return []
+
+      // 3. 查詢對應的紀念品資料
+      let souvenirQuery = supabase
+        .from('souvenirs')
+        .select('*')
+        .in('code', stockCodes)
+
+      // 如果有指定年份，加上年份過濾
+      if (year) {
+        const startDate = `${year}-01-01`
+        const endDate = `${year}-12-31`
+        souvenirQuery = souvenirQuery
+          .gte('meeting_date', startDate)
+          .lte('meeting_date', endDate)
+      }
+
+      const { data: souvenirData, error: souvenirError } = await souvenirQuery
+
+      if (souvenirError) {
+        console.error('查詢紀念品失敗:', souvenirError)
+        return []
+      }
+
+      // 4. 建立 stock_code -> souvenir 的映射
+      const souvenirMap = new Map()
+      souvenirData?.forEach(s => {
+        const code = String(s.code).trim()
+        // 只保留有明確紀念品名稱的
+        if (s.souvenir_item && s.souvenir_item !== '尚未公布' && s.souvenir_item !== '') {
+          souvenirMap.set(code, s)
+        }
+      })
+
+      // 5. 合併 inventory 和 souvenir 資料
+      const validItems = inventoryData
+        .map(inv => {
+          const code = String(inv.stock_code).trim()
+          const souvenir = souvenirMap.get(code)
+          
+          if (!souvenir) return null
+
+          return {
+            id: `inv_${inv.id}`,
+            user_id: inv.user_id,
+            portfolio_id: inv.portfolio_id,
+            souvenir_id: souvenir.id,
+            status: 'holding',
+            created_at: inv.created_at,
+            gift: souvenir,
+            _source: 'inventory'
+          }
+        })
+        .filter(Boolean)
+
+      return validItems
     } catch (e) {
       console.error('取得庫存紀念品失敗:', e)
       return []
