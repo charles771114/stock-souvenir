@@ -94,28 +94,24 @@
           <div v-for="user in filteredUsers" :key="user.id"
             class="glass-card p-8 group hover:border-indigo-200 transition-all flex flex-col">
             <div class="flex items-start justify-between mb-8">
-              <div class="flex items-center gap-4">
-                <div class="relative">
-                  <div
-                    class="h-16 w-16 rounded-[1.75rem] border-4 border-white shadow-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white font-black text-2xl group-hover:scale-105 transition-transform duration-500">
-                    {{ user.email.charAt(0).toUpperCase() }}
-                  </div>
-                  <div v-if="user.is_primary_admin"
-                    class="absolute -top-1 -right-1 w-6 h-6 bg-amber-400 rounded-lg border-2 border-white flex items-center justify-center shadow-md animate-bounce shadow-amber-200">
-                    <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <div class="flex flex-col gap-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <h3 class="text-xl font-black text-slate-800 truncate tracking-tight">
+                    {{ user.full_name || user.email.split('@')[0] }}
+                  </h3>
+                  <span v-if="isCurrentUser(user.email)"
+                    class="text-[8px] font-black bg-indigo-600 text-white px-1.5 py-0.5 rounded uppercase tracking-widest leading-none">自己</span>
+                </div>
+                <p class="text-xs font-bold text-slate-400 truncate">{{ user.email }}</p>
+                <div v-if="user.is_primary_admin" class="mt-2">
+                  <span
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-600 text-[9px] font-black uppercase tracking-widest border border-amber-100 shadow-sm shadow-amber-100/50">
+                    <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
                       <path
                         d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
-                  </div>
-                </div>
-                <div class="min-w-0">
-                  <div class="flex items-center gap-2 mb-1">
-                    <h3 class="text-base font-black text-slate-800 truncate leading-none">{{ user.email.split('@')[0] }}
-                    </h3>
-                    <span v-if="isCurrentUser(user.email)"
-                      class="text-[8px] font-black bg-indigo-600 text-white px-1.5 py-0.5 rounded uppercase tracking-widest">自己</span>
-                  </div>
-                  <p class="text-[10px] font-bold text-slate-400 truncate">{{ user.email }}</p>
+                    主管理員
+                  </span>
                 </div>
               </div>
             </div>
@@ -208,28 +204,19 @@
           <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div v-for="admin in adminEmails" :key="admin.email"
               class="glass-card p-6 flex items-center justify-between group hover:border-indigo-200 transition-all">
-              <div class="flex items-center gap-5">
-                <div class="relative">
-                  <div
-                    class="h-14 w-14 rounded-2xl bg-slate-900 flex items-center justify-center text-white font-black text-xl shadow-xl group-hover:scale-105 transition-transform duration-500">
-                    {{ admin.email.charAt(0).toUpperCase() }}
-                  </div>
-                  <div v-if="admin.is_primary_admin"
-                    class="absolute -top-1 -right-1 w-5 h-5 bg-amber-400 rounded-lg border-2 border-white flex items-center justify-center shadow-md shadow-amber-200">
-                    <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  </div>
-                </div>
-                <div>
+              <div class="flex items-center gap-2">
+                <div class="flex flex-col min-w-0">
                   <div class="flex items-center gap-2 mb-1">
-                    <span class="text-sm font-black text-slate-800">{{ admin.email }}</span>
+                    <span class="text-sm font-black text-slate-800">{{ admin.full_name || admin.email.split('@')[0]
+                      }}</span>
                     <span v-if="isCurrentUser(admin.email)"
                       class="text-[8px] font-black bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded uppercase tracking-widest border border-indigo-100 shadow-sm leading-none">Your
                       Account</span>
+                    <span v-if="admin.is_primary_admin"
+                      class="text-[8px] font-black bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded uppercase tracking-widest border border-amber-100 shadow-sm leading-none">Primary</span>
                   </div>
-                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">加入日期: {{
+                  <p class="text-xs font-bold text-slate-400">{{ admin.email }}</p>
+                  <p class="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-1">加入日期: {{
                     formatDate(admin.added_at) }}</p>
                 </div>
               </div>
