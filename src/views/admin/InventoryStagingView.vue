@@ -286,9 +286,11 @@
                   <p class="text-[10px] font-black text-indigo-300 uppercase tracking-widest">正在載入帳戶清單...</p>
                 </div>
 
-                <div v-else-if="targetPortfolios.length > 0" class="space-y-3">
-                  <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">選擇歸戶目標帳戶</label>
-                  <div class="grid grid-cols-1 gap-2">
+                <div v-else class="space-y-4">
+                  <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">歸戶目標帳戶</label>
+                  
+                  <!-- Existing Portfolios -->
+                  <div v-if="targetPortfolios.length > 0" class="grid grid-cols-1 gap-2">
                     <button v-for="port in targetPortfolios" :key="port.id" 
                       @click="selectedPortfolioId = port.id"
                       class="flex items-center justify-between p-4 rounded-2xl border-2 transition-all"
@@ -302,6 +304,27 @@
                       </div>
                       <div v-if="port.is_default" class="text-[9px] font-black text-indigo-400 uppercase bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">預設</div>
                     </button>
+                  </div>
+
+                  <!-- New Portfolio Inferred -->
+                  <div v-else @click="selectedPortfolioId = 'NEW_DEFAULT'"
+                    class="flex items-center justify-between p-6 rounded-3xl border-2 border-dashed border-indigo-200 bg-indigo-50/30 cursor-pointer hover:bg-indigo-50 transition-all">
+                    <div class="flex items-center gap-4">
+                      <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div class="text-sm font-black text-gray-900">自動建立新帳戶 (本人)</div>
+                        <div class="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">該用戶目前無帳戶，歸戶時將自動建立</div>
+                      </div>
+                    </div>
+                    <div class="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center">
+                      <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -354,6 +377,7 @@ const targetPortfolios = ref([])
 const fetchingPortfolios = ref(false)
 const selectedPortfolioId = ref(null)
 const linking = ref(false)
+const creatingPortfolio = ref(false)
 
 const stats = computed(() => {
   const pendingCount = stagingItems.value.length
@@ -474,12 +498,40 @@ const selectUser = async (user) => {
     const defaultPort = data?.find(p => p.is_default)
     if (defaultPort) selectedPortfolioId.value = defaultPort.id
     else if (data?.length > 0) selectedPortfolioId.value = data[0].id
+    else selectedPortfolioId.value = 'NEW_DEFAULT'
     
   } catch (err) {
     console.error('Fetch portfolios failed:', err)
     showToast('無法取得該用戶的帳戶清單', 'error')
   } finally {
     fetchingPortfolios.value = false
+  }
+}
+
+const createDefaultPortfolio = async () => {
+  if (!targetUser.value) return
+  creatingPortfolio.value = true
+  try {
+    const { data, error } = await supabase
+      .from('portfolios')
+      .insert({
+        user_id: targetUser.value.id,
+        name: '本人',
+        is_default: true
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    showToast('已成功建立預設帳戶', 'success')
+    
+    // Refresh list
+    await selectUser(targetUser.value)
+  } catch (err) {
+    console.error('Create portfolio failed:', err)
+    showToast('建立帳戶失敗', 'error')
+  } finally {
+    creatingPortfolio.value = false
   }
 }
 
@@ -507,7 +559,23 @@ const confirmLink = async () => {
   try {
     const items = selectedGroup.value.items
     const userId = targetUser.value.id
-    const portId = selectedPortfolioId.value
+    let portId = selectedPortfolioId.value
+
+    // 0. Handle NEW_DEFAULT portfolio creation
+    if (portId === 'NEW_DEFAULT') {
+      const { data: newPort, error: portError } = await supabase
+        .from('portfolios')
+        .insert({
+          user_id: userId,
+          name: '本人',
+          is_default: true
+        })
+        .select()
+        .single()
+
+      if (portError) throw portError
+      portId = newPort.id
+    }
 
     // 1. Get unique code+year combinations to check souvenirs
     const uniqueCombos = []
@@ -609,7 +677,7 @@ const confirmLink = async () => {
     // Upsert Collections
     const { error: collError } = await supabase
       .from('user_collections')
-      .upsert(collectionsToUpsert, { onConflict: 'portfolio_id,souvenir_id,status' })
+      .upsert(collectionsToUpsert, { onConflict: 'portfolio_id,souvenir_id' })
 
     if (collError) throw collError
 
