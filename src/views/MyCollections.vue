@@ -116,8 +116,12 @@
                     <h3 class="text-sm font-black text-slate-700 group-hover:text-indigo-600 transition-colors">
                       {{ item.gift?.name }}
                     </h3>
-                    <p class="text-[11px] font-bold text-slate-400 mt-0.5">
-                      {{ item.gift?.souvenir_item }}
+                    <p class="text-[11px] font-bold text-slate-400 mt-0.5 flex items-center gap-2">
+                      <span>{{ item.gift?.souvenir_item }}</span>
+                      <span v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)" 
+                        class="text-[10px] text-slate-300 italic font-medium">
+                        (去年: {{ previousYearSouvenirs.get(item.gift?.code) }})
+                      </span>
                     </p>
                   </div>
                 </div>
@@ -161,7 +165,12 @@
                 </div>
                 <h3 class="text-lg font-black text-slate-900 mb-2">{{ item.gift?.name }}</h3>
                 <p class="text-sm text-slate-600 font-medium mb-6 line-clamp-2">
-                  {{ item.gift?.souvenir_item || '尚未公布' }}
+                  <span>{{ item.gift?.souvenir_item || '尚未公布' }}</span>
+                  <br v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)" />
+                  <span v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)" 
+                    class="text-xs text-slate-400 italic">
+                    (去年: {{ previousYearSouvenirs.get(item.gift?.code) }})
+                  </span>
                 </p>
                 <div class="pt-4 border-t border-slate-50 flex items-center justify-between">
                   <div class="flex flex-col">
@@ -196,8 +205,12 @@
                     <h3 class="text-sm font-black text-slate-700 group-hover:text-emerald-600 transition-colors">
                       {{ item.gift?.name }}
                     </h3>
-                    <p class="text-[11px] font-bold text-slate-400 mt-0.5">
-                      {{ item.gift?.souvenir_item }}
+                    <p class="text-[11px] font-bold text-slate-400 mt-0.5 flex items-center gap-2">
+                      <span>{{ item.gift?.souvenir_item }}</span>
+                      <span v-if="isPlaceholder(item.gift?.souvenir_item) && previousYearSouvenirs.get(item.gift?.code)" 
+                        class="text-[10px] text-emerald-400/60 italic font-medium">
+                        (去年: {{ previousYearSouvenirs.get(item.gift?.code) }})
+                      </span>
                     </p>
                   </div>
                 </div>
@@ -294,6 +307,7 @@ const {
   loading, 
   fetchMyCollections, 
   fetchUserInventoryIds, 
+  fetchPreviousYearSouvenirs,
   removeFromCollection 
 } = useGifts()
 
@@ -301,9 +315,17 @@ const selectedYear = ref(new Date().getFullYear().toString())
 const showStats = ref(true)
 const showOtherYears = ref(false)
 const inventoryIds = ref(new Set())
+const previousYearSouvenirs = ref(new Map())
 const removing = ref(null)
 const addingToInventory = ref(null)  // 追蹤正在新增到庫存的項目
 const expandedCategories = ref({})
+
+// Helper to check if a souvenir string is a placeholder
+const isPlaceholder = (val) => {
+  if (!val) return true
+  const s = String(val).trim()
+  return s === '' || s === '尚未公布' || s.includes('再行公告') || s === '尚未公告'
+}
 
 const toggleCategory = (name) => {
   if (expandedCategories.value[name] === undefined) {
@@ -357,10 +379,11 @@ const souvenirCounts = computed(() => {
     const inInventory = inventoryIds.value.has(item.souvenir_id)
     
     const isPending = name.includes('開會55日前再行公告') || name === '尚未公布'
+    const prevSouvenir = previousYearSouvenirs.value.get(item.gift?.code)
     
     const parsed = name.match(/^(.*?)(\d+.*)$/)
     const mainName = isPending ? '名稱待公告項目' : (parsed ? parsed[1].trim() : name)
-    const subLabel = isPending ? name : (parsed ? parsed[2].trim() : '其他')
+    const subLabel = isPending && prevSouvenir ? `${name} (預計：${prevSouvenir})` : (isPending ? name : (parsed ? parsed[2].trim() : '其他'))
     
     if (!groups[mainName]) {
       groups[mainName] = {
@@ -444,6 +467,8 @@ const loadData = async () => {
   if (user.value) {
     await fetchMyCollections(selectedYear.value)
     inventoryIds.value = await fetchUserInventoryIds()
+    // Fetch previous year data for hints
+    previousYearSouvenirs.value = await fetchPreviousYearSouvenirs(selectedYear.value)
   }
 }
 
