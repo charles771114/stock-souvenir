@@ -168,7 +168,7 @@
                     class="group hover:bg-slate-50/50 transition-colors">
                     <td class="px-8 py-5 min-w-[200px]">
                       <div class="font-black text-slate-800 text-sm leading-none mb-1">{{ fav.full_name || 'Anonymous'
-                        }}</div>
+                      }}</div>
                       <div class="text-[10px] font-bold text-indigo-400 truncate">{{ fav.email }}</div>
                     </td>
                     <td class="px-6 py-5 whitespace-nowrap">
@@ -191,7 +191,7 @@
                     </td>
                     <td class="px-6 py-5 whitespace-nowrap">
                       <span class="text-[10px] font-bold text-slate-500 font-mono">{{ formatDate(fav.meeting_date)
-                        }}</span>
+                      }}</span>
                     </td>
                     <td class="px-6 py-5 whitespace-nowrap">
                       <span v-if="fav.last_buy_date" :class="[
@@ -217,7 +217,7 @@
                     </td>
                     <td class="px-6 py-5 whitespace-nowrap">
                       <span class="text-[10px] font-bold text-slate-400">持有於: {{ formatDate(fav.collected_at)
-                        }}</span>
+                      }}</span>
                     </td>
                   </tr>
                 </tbody>
@@ -248,7 +248,7 @@
                 <div class="p-4 rounded-xl bg-slate-50 mb-4 border border-slate-100">
                   <div class="flex items-center gap-2 mb-2">
                     <span class="px-2 py-0.5 rounded-md bg-slate-900 text-white font-black text-[9px]">{{ fav.stock_code
-                      }}</span>
+                    }}</span>
                     <span class="text-sm font-black text-slate-800">{{ fav.company_name }}</span>
                   </div>
                   <p class="text-[11px] font-bold text-slate-500">{{ fav.souvenir_item }}</p>
@@ -256,9 +256,9 @@
 
                 <div class="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
                   <div class="text-slate-300">開會: <span class="text-slate-600 font-mono">{{ formatDate(fav.meeting_date)
-                      }}</span></div>
+                  }}</span></div>
                   <div class="text-indigo-300">收藏: <span class="text-indigo-400 italic">{{ formatDate(fav.collected_at)
-                      }}</span></div>
+                  }}</span></div>
                 </div>
               </div>
             </div>
@@ -283,10 +283,10 @@
                         </svg>
                       </div>
                       <div>
-                        <span class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Impact
-                          Users</span>
+                        <span
+                          class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">影響使用者數</span>
                         <span class="text-2xl font-black text-slate-800 tracking-tighter">{{ uniqueUsersInResults
-                          }}</span>
+                        }}</span>
                       </div>
                     </div>
 
@@ -300,10 +300,9 @@
                       </div>
                       <div>
                         <span
-                          class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Different
-                          Companies</span>
+                          class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">涉及公司數</span>
                         <span class="text-2xl font-black text-slate-800 tracking-tighter">{{ uniqueCompaniesInResults
-                          }}</span>
+                        }}</span>
                       </div>
                     </div>
                   </div>
@@ -311,8 +310,7 @@
 
                 <!-- Souvenir Item Breakdown Chips -->
                 <div v-if="souvenirSummary.length > 0" class="lg:max-w-md w-full">
-                  <span class="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-4 block">Demand
-                    Analysis</span>
+                  <span class="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-4 block">需求分析</span>
                   <div class="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-3 custom-scrollbar">
                     <div v-for="item in souvenirSummary" :key="item.name"
                       class="flex items-center gap-2 pl-3 pr-1 py-1 bg-white rounded-xl border border-white group/chip hover:border-indigo-200 transition-all shadow-sm">
