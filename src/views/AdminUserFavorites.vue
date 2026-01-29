@@ -154,7 +154,13 @@
                       開會日期</th>
                     <th
                       class="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                      收藏時間</th>
+                      最後買進日</th>
+                    <th
+                      class="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                      資料來源</th>
+                    <th
+                      class="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                      持有時間</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
@@ -162,7 +168,7 @@
                     class="group hover:bg-slate-50/50 transition-colors">
                     <td class="px-8 py-5 min-w-[200px]">
                       <div class="font-black text-slate-800 text-sm leading-none mb-1">{{ fav.full_name || 'Anonymous'
-                      }}</div>
+                        }}</div>
                       <div class="text-[10px] font-bold text-indigo-400 truncate">{{ fav.email }}</div>
                     </td>
                     <td class="px-6 py-5 whitespace-nowrap">
@@ -185,11 +191,33 @@
                     </td>
                     <td class="px-6 py-5 whitespace-nowrap">
                       <span class="text-[10px] font-bold text-slate-500 font-mono">{{ formatDate(fav.meeting_date)
-                      }}</span>
+                        }}</span>
                     </td>
                     <td class="px-6 py-5 whitespace-nowrap">
-                      <span class="text-[10px] font-bold text-indigo-400 italic">收藏於: {{ formatDate(fav.collected_at)
-                      }}</span>
+                      <span v-if="fav.last_buy_date" :class="[
+                        'text-[9px] font-black px-2 py-1 rounded border inline-flex items-center gap-1',
+                        getUrgencyColor(getUrgencyLevel(fav.last_buy_date))
+                      ]">
+                        <span v-if="getUrgencyLevel(fav.last_buy_date) === 'urgent'">🔴</span>
+                        <span v-else-if="getUrgencyLevel(fav.last_buy_date) === 'warning'">🟡</span>
+                        {{ fav.last_buy_date }}
+                        <span v-if="getDaysRemaining(fav.last_buy_date) > 0" class="font-mono">
+                          ({{ getDaysRemaining(fav.last_buy_date) }}天)
+                        </span>
+                      </span>
+                      <span v-else class="text-[10px] text-slate-300">-</span>
+                    </td>
+                    <td class="px-6 py-5 whitespace-nowrap">
+                      <span :class="[
+                        'px-2 py-1 text-[9px] font-black rounded border',
+                        fav._source === 'collection' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                      ]">
+                        {{ fav._source === 'collection' ? '手動追蹤' : 'PDF匠入' }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-5 whitespace-nowrap">
+                      <span class="text-[10px] font-bold text-slate-400">持有於: {{ formatDate(fav.collected_at)
+                        }}</span>
                     </td>
                   </tr>
                 </tbody>
@@ -220,7 +248,7 @@
                 <div class="p-4 rounded-xl bg-slate-50 mb-4 border border-slate-100">
                   <div class="flex items-center gap-2 mb-2">
                     <span class="px-2 py-0.5 rounded-md bg-slate-900 text-white font-black text-[9px]">{{ fav.stock_code
-                    }}</span>
+                      }}</span>
                     <span class="text-sm font-black text-slate-800">{{ fav.company_name }}</span>
                   </div>
                   <p class="text-[11px] font-bold text-slate-500">{{ fav.souvenir_item }}</p>
@@ -228,9 +256,9 @@
 
                 <div class="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
                   <div class="text-slate-300">開會: <span class="text-slate-600 font-mono">{{ formatDate(fav.meeting_date)
-                  }}</span></div>
+                      }}</span></div>
                   <div class="text-indigo-300">收藏: <span class="text-indigo-400 italic">{{ formatDate(fav.collected_at)
-                  }}</span></div>
+                      }}</span></div>
                 </div>
               </div>
             </div>
@@ -258,7 +286,7 @@
                         <span class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Impact
                           Users</span>
                         <span class="text-2xl font-black text-slate-800 tracking-tighter">{{ uniqueUsersInResults
-                        }}</span>
+                          }}</span>
                       </div>
                     </div>
 
@@ -275,7 +303,7 @@
                           class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Different
                           Companies</span>
                         <span class="text-2xl font-black text-slate-800 tracking-tighter">{{ uniqueCompaniesInResults
-                        }}</span>
+                          }}</span>
                       </div>
                     </div>
                   </div>
@@ -543,7 +571,7 @@ const formatDate = (dateString) => {
 }
 
 const exportCSV = () => {
-  const headers = ['用戶', 'Email', '帳戶', '代號', '公司名稱', '紀念品', '開會日期', '收藏時間']
+  const headers = ['用戶', 'Email', '帳戶', '代號', '公司名稱', '紀念品', '開會日期', '最後買進日', '資料來源', '持有時間']
   const rows = favorites.value.map(f => [
     f.full_name || '匿名用戶',
     f.email,
@@ -552,6 +580,8 @@ const exportCSV = () => {
     f.company_name,
     f.souvenir_item,
     formatDate(f.meeting_date),
+    f.last_buy_date || '-',
+    f._source === 'collection' ? '手動追蹤' : 'PDF匠入',
     formatDate(f.collected_at)
   ])
 
@@ -559,10 +589,11 @@ const exportCSV = () => {
   const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
   const link = document.createElement('a')
   link.href = URL.createObjectURL(blob)
-  link.download = `user_favorites_report_${new Date().toISOString().slice(0, 10)}.csv`
+  link.download = `user_holdings_report_${new Date().toISOString().slice(0, 10)}.csv`
   link.click()
-  showToast('分析報表已匯出', 'success')
+  showToast('分析報表已匠出', 'success')
 }
+
 
 watch([selectedUser, selectedYear], fetchFavorites)
 
