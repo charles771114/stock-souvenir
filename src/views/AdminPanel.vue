@@ -171,8 +171,8 @@
                 <span
                   class="text-xs font-black text-indigo-100 group-hover:text-indigo-600 transition-colors">#06</span>
               </div>
-              <h3 class="text-xl font-black text-slate-800 group-hover:text-indigo-600 transition-colors mb-2">收藏熱度</h3>
-              <p class="text-xs text-slate-400 font-medium leading-relaxed">全站紀念品收藏熱門程度與趨勢分析</p>
+                <h3 class="text-xl font-black text-slate-800 group-hover:text-indigo-600 transition-colors mb-2">入袋持股統計</h3>
+                <p class="text-xs text-slate-400 font-medium leading-relaxed">全站紀念品入袋持股統計與分析</p>
             </div>
             <div class="card-arrow">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

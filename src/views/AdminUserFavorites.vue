@@ -20,10 +20,10 @@
           </div>
           <h1
             class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 tracking-tighter mb-2">
-            已入袋持股總覽
+            已入袋持股統計
           </h1>
           <p class="text-slate-400 font-bold text-xs sm:text-sm uppercase tracking-wider">
-            全域持股統計、使用者資產分布與領取記錄
+            依使用者歸戶 -> 物品清單 -> 公司明細 (可展開)
           </p>
         </div>
 
@@ -35,53 +35,6 @@
           </svg>
           匯出 CSV
         </button>
-      </div>
-
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-12 animate-fade-in-up delay-100">
-        <div class="glass-card p-6 sm:p-8 flex flex-col justify-between group overflow-hidden relative">
-          <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <svg class="w-16 h-16 text-indigo-600" fill="currentColor" viewBox="0 0 24 24">
-              <path
-                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-          </div>
-          <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">總持股筆數</span>
-          <div class="flex items-end gap-2">
-            <span class="text-4xl font-black text-slate-800 tracking-tighter">{{ stats.totalCollections }}</span>
-            <span class="text-[10px] font-black text-emerald-500 mb-1.5 uppercase tracking-widest">+ Live</span>
-          </div>
-        </div>
-
-        <div
-          class="glass-card p-6 sm:p-8 flex flex-col justify-between group overflow-hidden relative border-amber-100/20">
-          <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <svg class="w-16 h-16 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-          </div>
-          <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">持股使用者數</span>
-          <div class="flex items-end gap-2">
-            <span class="text-4xl font-black text-slate-800 tracking-tighter">{{ stats.activeUsers }}</span>
-            <span class="text-[10px] font-black text-slate-400 mb-1.5 uppercase tracking-widest">位使用者</span>
-          </div>
-        </div>
-
-        <div
-          class="glass-card p-6 sm:p-8 flex flex-col justify-between group overflow-hidden relative border-purple-100/20">
-          <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <svg class="w-16 h-16 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-          </div>
-          <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">人均持股數</span>
-          <div class="flex items-end gap-2">
-            <span class="text-4xl font-black text-slate-800 tracking-tighter">{{ avgCollections }}</span>
-            <span class="text-[10px] font-black text-slate-400 mb-1.5 uppercase tracking-widest">個項目</span>
-          </div>
-        </div>
       </div>
 
       <!-- Combined Filter & Table View -->
@@ -114,13 +67,13 @@
         </div>
 
         <!-- Content Area -->
-        <div class="glass-card overflow-hidden p-0">
-          <div v-if="loading" class="py-24 flex flex-col items-center gap-6">
+        <div class="">
+          <div v-if="loading" class="py-24 flex flex-col items-center gap-6 glass-card">
             <div class="w-16 h-16 border-8 border-indigo-50 border-t-indigo-600 rounded-full animate-spin"></div>
             <p class="text-sm font-black text-indigo-300 uppercase tracking-[0.2em] animate-pulse">正在篩選數據...</p>
           </div>
 
-          <div v-else-if="favorites.length === 0" class="py-24 text-center">
+          <div v-else-if="aggregatedData.length === 0" class="py-24 text-center glass-card">
             <div
               class="w-20 h-20 bg-slate-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 border border-slate-100 text-slate-200">
               <svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -131,199 +84,84 @@
             <p class="text-sm font-black text-slate-300 uppercase tracking-widest">暫無收藏資料</p>
           </div>
 
-          <div v-else>
-            <!-- Desktop Table -->
-            <div class="hidden lg:block overflow-x-auto">
-              <table class="w-full border-separate border-spacing-0">
-                <thead>
-                  <tr class="bg-slate-50/50">
-                    <th
-                      class="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                      用戶資訊</th>
-                    <th
-                      class="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                      帳戶</th>
-                    <th
-                      class="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                      公司/代號</th>
-                    <th
-                      class="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                      相關紀念品</th>
-                    <th
-                      class="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                      開會日期</th>
-                    <th
-                      class="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                      最後買進日</th>
-                    <th
-                      class="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                      資料來源</th>
-                    <th
-                      class="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                      持有時間</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-50">
-                  <tr v-for="fav in favorites" :key="fav.collection_id"
-                    class="group hover:bg-slate-50/50 transition-colors">
-                    <td class="px-8 py-5 min-w-[200px]">
-                      <div class="font-black text-slate-800 text-sm leading-none mb-1">{{ fav.full_name || 'Anonymous'
-                      }}</div>
-                      <div class="text-[10px] font-bold text-indigo-400 truncate">{{ fav.email }}</div>
-                    </td>
-                    <td class="px-6 py-5 whitespace-nowrap">
-                      <span
-                        :class="['px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-tighter border transition-all',
-                          fav.is_default_portfolio ? 'bg-indigo-50 text-indigo-600 border-indigo-100 shadow-sm' : 'bg-slate-100 text-slate-400 border-slate-200 opacity-60']">
-                        {{ fav.portfolio_name }}
-                      </span>
-                    </td>
-                    <td class="px-6 py-5">
-                      <div class="flex items-center gap-2">
-                        <div
-                          class="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-[10px]">
-                          {{ fav.stock_code }}</div>
-                        <div class="text-xs font-black text-slate-700">{{ fav.company_name }}</div>
-                      </div>
-                    </td>
-                    <td class="px-6 py-5">
-                      <div class="text-xs font-black text-slate-800 tracking-tight">{{ fav.souvenir_item }}</div>
-                    </td>
-                    <td class="px-6 py-5 whitespace-nowrap">
-                      <span class="text-[10px] font-bold text-slate-500 font-mono">{{ formatDate(fav.meeting_date)
-                      }}</span>
-                    </td>
-                    <td class="px-6 py-5 whitespace-nowrap">
-                      <span v-if="fav.last_buy_date" :class="[
-                        'text-[9px] font-black px-2 py-1 rounded border inline-flex items-center gap-1',
-                        getUrgencyColor(getUrgencyLevel(fav.last_buy_date))
-                      ]">
-                        <span v-if="getUrgencyLevel(fav.last_buy_date) === 'urgent'">🔴</span>
-                        <span v-else-if="getUrgencyLevel(fav.last_buy_date) === 'warning'">🟡</span>
-                        {{ fav.last_buy_date }}
-                        <span v-if="getDaysRemaining(fav.last_buy_date) > 0" class="font-mono">
-                          ({{ getDaysRemaining(fav.last_buy_date) }}天)
-                        </span>
-                      </span>
-                      <span v-else class="text-[10px] text-slate-300">-</span>
-                    </td>
-                    <td class="px-6 py-5 whitespace-nowrap">
-                      <span :class="[
-                        'px-2 py-1 text-[9px] font-black rounded border',
-                        fav._source === 'collection' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                      ]">
-                        {{ fav._source === 'collection' ? '手動追蹤' : 'PDF匠入' }}
-                      </span>
-                    </td>
-                    <td class="px-6 py-5 whitespace-nowrap">
-                      <span class="text-[10px] font-bold text-slate-400">持有於: {{ formatDate(fav.collected_at)
-                      }}</span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Mobile/Tablet Cards -->
-            <div class="lg:hidden p-6 sm:p-8 space-y-4">
-              <div v-for="fav in favorites" :key="fav.collection_id"
-                class="p-6 bg-white border border-slate-100 rounded-2xl shadow-sm hover:border-indigo-200 transition-all">
-                <div class="flex items-center justify-between mb-4">
-                  <div class="flex items-center gap-3">
-                    <div
-                      class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-indigo-100">
-                      {{ fav.email.charAt(0).toUpperCase() }}</div>
-                    <div class="min-w-0">
-                      <div class="text-sm font-black text-slate-800 truncate leading-none mb-1">{{ fav.full_name ||
-                        '匿名用戶' }}</div>
-                      <div class="text-[10px] font-bold text-indigo-400 truncate">{{ fav.email }}</div>
-                    </div>
-                  </div>
-                  <span
-                    :class="['px-2.5 py-1 text-[9px] font-black rounded-lg border uppercase tracking-widest', fav.is_default_portfolio ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-slate-50 text-slate-400 border-slate-100']">
-                    {{ fav.portfolio_name }}
-                  </span>
-                </div>
-
-                <div class="p-4 rounded-xl bg-slate-50 mb-4 border border-slate-100">
-                  <div class="flex items-center gap-2 mb-2">
-                    <span class="px-2 py-0.5 rounded-md bg-slate-900 text-white font-black text-[9px]">{{ fav.stock_code
-                    }}</span>
-                    <span class="text-sm font-black text-slate-800">{{ fav.company_name }}</span>
-                  </div>
-                  <p class="text-[11px] font-bold text-slate-500">{{ fav.souvenir_item }}</p>
-                </div>
-
-                <div class="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
-                  <div class="text-slate-300">開會: <span class="text-slate-600 font-mono">{{ formatDate(fav.meeting_date)
-                  }}</span></div>
-                  <div class="text-indigo-300">收藏: <span class="text-indigo-400 italic">{{ formatDate(fav.collected_at)
-                  }}</span></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Enhanced Summary Footer -->
-            <div
-              class="bg-gradient-to-br from-white via-indigo-50/20 to-purple-50/20 p-8 sm:p-10 border-t border-slate-100">
-              <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-10">
-                <div class="flex-1">
-                  <div class="flex items-center gap-3 mb-6">
-                    <div class="w-1.5 h-6 bg-indigo-600 rounded-full"></div>
-                    <h2 class="text-xl font-black text-slate-800 tracking-tight uppercase">目前數據摘要</h2>
-                  </div>
-
-                  <div class="flex flex-wrap gap-6 sm:gap-12">
+          <div v-else class="space-y-6">
+            <!-- User Card Loop -->
+             <div v-for="userGroup in aggregatedData" :key="userGroup.user_id" 
+                  class="glass-card overflow-hidden transition-all hover:shadow-lg hover:border-indigo-100">
+                <!-- User Header -->
+                <div class="p-6 sm:p-8 bg-slate-50/50 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div class="flex items-center gap-4">
-                      <div
-                        class="w-12 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-indigo-600 shadow-sm">
-                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" />
-                        </svg>
-                      </div>
-                      <div>
-                        <span
-                          class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">影響使用者數</span>
-                        <span class="text-2xl font-black text-slate-800 tracking-tighter">{{ uniqueUsersInResults
-                        }}</span>
-                      </div>
+                        <div>
+                            <div class="text-base font-black text-slate-800 leading-tight mb-1">
+                                {{ userGroup.full_name || '匿名用戶' }}
+                            </div>
+                            <div class="text-[11px] font-bold text-indigo-400 uppercase tracking-wider font-mono">
+                                {{ userGroup.email }}
+                            </div>
+                        </div>
                     </div>
-
-                    <div class="flex items-center gap-4">
-                      <div
-                        class="w-12 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-purple-600 shadow-sm">
-                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                            d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <span
-                          class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">涉及公司數</span>
-                        <span class="text-2xl font-black text-slate-800 tracking-tighter">{{ uniqueCompaniesInResults
-                        }}</span>
-                      </div>
+                    <div class="flex items-center gap-4 bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm">
+                         <div class="text-right">
+                            <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">持有品項</span>
+                            <span class="text-lg font-black text-slate-800">{{ userGroup.items.length }}</span>
+                         </div>
+                         <div class="w-px h-8 bg-slate-100"></div>
+                         <div class="text-right">
+                             <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">總數量</span>
+                             <span class="text-lg font-black text-indigo-600">{{ userGroup.totalCount }}</span>
+                         </div>
                     </div>
-                  </div>
                 </div>
 
-                <!-- Souvenir Item Breakdown Chips -->
-                <div v-if="souvenirSummary.length > 0" class="lg:max-w-md w-full">
-                  <span class="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-4 block">需求分析</span>
-                  <div class="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-3 custom-scrollbar">
-                    <div v-for="item in souvenirSummary" :key="item.name"
-                      class="flex items-center gap-2 pl-3 pr-1 py-1 bg-white rounded-xl border border-white group/chip hover:border-indigo-200 transition-all shadow-sm">
-                      <span class="text-[10px] font-black text-slate-600 truncate">{{ item.name }}</span>
-                      <span
-                        class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 text-[10px] font-black group-hover/chip:bg-indigo-600 group-hover/chip:text-white transition-all">
-                        {{ item.count }}
-                      </span>
+                <!-- Items List -->
+                <div class="divide-y divide-slate-50">
+                    <div v-for="item in userGroup.items" :key="item.souvenir_item" class="group">
+                        <!-- Item Summary Row -->
+                         <div class="px-6 sm:px-8 py-4 flex items-center justify-between hover:bg-indigo-50/30 transition-colors cursor-pointer"
+                              @click="toggleDetails(userGroup.user_id, item.souvenir_item)">
+                            <div class="flex items-center gap-4">
+                                <div class="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-300 group-hover:text-indigo-400 group-hover:border-indigo-200 transition-all">
+                                    <svg class="w-4 h-4 transition-transform duration-300" 
+                                         :class="{ 'rotate-180': isExpanded(userGroup.user_id, item.souvenir_item) }"
+                                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                                <span class="text-sm font-black text-slate-700 group-hover:text-indigo-700 transition-colors">
+                                    {{ item.souvenir_item }}
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-black group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                                    {{ item.count }} 個
+                                </span>
+                            </div>
+                         </div>
+
+                        <!-- Expandable Details (Company List) -->
+                         <div v-if="isExpanded(userGroup.user_id, item.souvenir_item)" class="bg-slate-50 border-y border-slate-100/50 px-6 sm:px-8 py-4 animate-fade-in shadow-inner">
+                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                 <div v-for="comp in item.companies" :key="comp.id" 
+                                      class="bg-white border border-slate-100 rounded-xl p-3 flex items-center gap-3 shadow-sm hover:border-indigo-200 transition-all">
+                                     <span class="px-2 py-1 rounded-md bg-slate-100 text-slate-600 font-mono text-[10px] font-black tracking-tight shrink-0 border border-slate-200">
+                                         {{ comp.stock_code }}
+                                     </span>
+                                     <div class="min-w-0">
+                                         <div class="text-xs font-black text-slate-800 truncate">{{ comp.company_name }}</div>
+                                         <div class="flex items-center gap-2 mt-1">
+                                             <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 uppercase tracking-tighter">
+                                                 {{ comp.portfolio_name }}
+                                             </span>
+                                             <span class="text-[9px] text-slate-300">|</span>
+                                             <span class="text-[9px] font-mono text-slate-400">{{ formatDate(comp.meeting_date) }}</span>
+                                         </div>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
                     </div>
-                  </div>
                 </div>
-              </div>
-            </div>
+             </div>
           </div>
         </div>
       </div>
@@ -339,39 +177,71 @@ import { computed, onMounted, ref, watch } from 'vue'
 
 const { showToast } = useToast()
 
-const favorites = ref([])
+const rawFavorites = ref([])
 const users = ref([])
 const loading = ref(false)
 const selectedUser = ref('')
 const selectedYear = ref(new Date().getFullYear().toString())
 
-const stats = computed(() => {
-  const totalCollections = favorites.value.length
-  const uniqueUsers = new Set(favorites.value.map(f => f.user_id)).size
-  return {
-    totalCollections,
-    activeUsers: uniqueUsers,
-  }
-})
+// 展開狀態管理 (Set 存: "userId_itemName")
+const expandedItems = ref(new Set())
 
-const avgCollections = computed(() => {
-  return stats.value.activeUsers > 0
-    ? (stats.value.totalCollections / stats.value.activeUsers).toFixed(1)
-    : '0.0'
-})
+const isExpanded = (userId, itemName) => {
+    return expandedItems.value.has(`${userId}_${itemName}`)
+}
 
-const uniqueUsersInResults = computed(() => new Set(favorites.value.map(f => f.user_id)).size)
-const uniqueCompaniesInResults = computed(() => new Set(favorites.value.map(f => f.stock_code)).size)
+const toggleDetails = (userId, itemName) => {
+    const key = `${userId}_${itemName}`
+    if (expandedItems.value.has(key)) {
+        expandedItems.value.delete(key)
+    } else {
+        expandedItems.value.add(key)
+    }
+}
 
-const souvenirSummary = computed(() => {
-  const summary = {}
-  favorites.value.forEach(f => {
-    const item = f.souvenir_item || '未指定'
-    summary[item] = (summary[item] || 0) + 1
-  })
-  return Object.entries(summary)
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count)
+// 🆕 第一層聚合: User -> Items -> Companies
+const aggregatedData = computed(() => {
+    const userMap = new Map()
+
+    rawFavorites.value.forEach(fav => {
+        // 1. 取得或建立 User Group
+        if (!userMap.has(fav.user_id)) {
+            userMap.set(fav.user_id, {
+                user_id: fav.user_id,
+                email: fav.email,
+                full_name: fav.full_name,
+                itemsMap: new Map(), // 用 Item Name 當 Key
+                totalCount: 0
+            })
+        }
+
+        const userGroup = userMap.get(fav.user_id)
+        
+        // 2. 取得或建立 Item Group
+        const itemName = fav.souvenir_item
+        if (!userGroup.itemsMap.has(itemName)) {
+            userGroup.itemsMap.set(itemName, {
+                souvenir_item: itemName,
+                count: 0,
+                companies: []
+            })
+        }
+
+        const itemGroup = userGroup.itemsMap.get(itemName)
+
+        // 3. 加入詳細資料
+        itemGroup.companies.push(fav)
+        itemGroup.count++
+        userGroup.totalCount++
+    })
+
+    // 轉換 Map 為 Array
+    return Array.from(userMap.values())
+        .map(user => ({
+            ...user,
+            items: Array.from(user.itemsMap.values()).sort((a, b) => b.count - a.count)
+        }))
+        .sort((a, b) => b.totalCount - a.totalCount)
 })
 
 const fetchUsers = async () => {
@@ -391,7 +261,7 @@ const fetchFavorites = async () => {
         portfolios(name, is_default),
         souvenirs!inner(code, name, souvenir_item, meeting_date, last_buy_date)
       `)
-      .eq('status', 'holding')  // 🆕 只查詢已入袋
+      .eq('status', 'holding')  // 只查詢已入袋
       .order('created_at', { ascending: false })
 
     if (selectedUser.value) collQuery = collQuery.eq('profiles.email', selectedUser.value)
@@ -508,7 +378,7 @@ const fetchFavorites = async () => {
       })
     }
 
-    favorites.value = results
+    rawFavorites.value = results
   } catch (e) {
     console.error(e)
     showToast('載入資料失敗', 'error')
@@ -517,7 +387,7 @@ const fetchFavorites = async () => {
   }
 }
 
-// 🆕 去重邏輯
+// 去重邏輯
 const deduplicateHoldings = (holdings) => {
   const map = new Map()
 
@@ -534,34 +404,6 @@ const deduplicateHoldings = (holdings) => {
   return Array.from(map.values())
 }
 
-// 🆕 計算距離最後買進日的剩餘天數
-const getDaysRemaining = (dateString) => {
-  if (!dateString) return null
-  const target = new Date(dateString).setHours(23, 59, 59, 999)
-  const now = new Date().getTime()
-  const diff = target - now
-  return Math.ceil(diff / (1000 * 60 * 60 * 24))
-}
-
-// 🆕 取得緊急程度
-const getUrgencyLevel = (dateString) => {
-  const days = getDaysRemaining(dateString)
-  if (days === null || days < 0) return null
-  if (days <= 3) return 'urgent'
-  if (days <= 7) return 'warning'
-  return 'normal'
-}
-
-// 🆕 取得緊急程度的顏色樣式
-const getUrgencyColor = (level) => {
-  switch (level) {
-    case 'urgent': return 'text-red-500 bg-red-50 border-red-200'
-    case 'warning': return 'text-amber-500 bg-amber-50 border-amber-200'
-    case 'normal': return 'text-emerald-500 bg-emerald-50 border-emerald-200'
-    default: return 'text-slate-400 bg-slate-50 border-slate-200'
-  }
-}
-
 const formatDate = (dateString) => {
   if (!dateString) return '-'
   const date = new Date(dateString)
@@ -569,27 +411,36 @@ const formatDate = (dateString) => {
 }
 
 const exportCSV = () => {
-  const headers = ['用戶', 'Email', '帳戶', '代號', '公司名稱', '紀念品', '開會日期', '最後買進日', '資料來源', '持有時間']
-  const rows = favorites.value.map(f => [
-    f.full_name || '匿名用戶',
-    f.email,
-    f.portfolio_name,
-    f.stock_code,
-    f.company_name,
-    f.souvenir_item,
-    formatDate(f.meeting_date),
-    f.last_buy_date || '-',
-    f._source === 'collection' ? '手動追蹤' : 'PDF匠入',
-    formatDate(f.collected_at)
-  ])
+    // 輸出 CSV 時，可以選擇展開所有詳細資料，或是僅輸出聚合資料
+    // 這裡我們輸出詳細資料，但排序依照 User -> Item
+    const headers = ['用戶', 'Email', '紀念品', '股票代號', '公司名稱', '帳戶']
+    
+    // 為了 export 方便，我們可以從 aggregatedData 反解，或是直接用 rawFavorites 排序
+    // 直接用 rawFavorites 排序最快，但為了符合視覺的聚合感，我們依照聚合後的順序來產出
+    
+    const rows = []
+    aggregatedData.value.forEach(user => {
+        user.items.forEach(item => {
+            item.companies.forEach(comp => {
+                rows.push([
+                    user.full_name || '匿名用戶',
+                    user.email,
+                    item.souvenir_item,
+                    comp.stock_code,
+                    comp.company_name,
+                    comp.portfolio_name
+                ])
+            })
+        })
+    })
 
   const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n')
   const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
   const link = document.createElement('a')
   link.href = URL.createObjectURL(blob)
-  link.download = `user_holdings_report_${new Date().toISOString().slice(0, 10)}.csv`
+  link.download = `user_souvenir_details_${new Date().toISOString().slice(0, 10)}.csv`
   link.click()
-  showToast('分析報表已匠出', 'success')
+  showToast('分析報表已匯出', 'success')
 }
 
 

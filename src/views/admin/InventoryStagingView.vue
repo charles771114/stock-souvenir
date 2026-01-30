@@ -364,7 +364,7 @@
             <div class="mt-12 flex gap-4">
               <button @click="closeModal"
                 class="flex-1 h-16 bg-slate-100 text-slate-400 font-black rounded-2xl uppercase tracking-widest text-xs hover:bg-slate-200 transition-all">放棄歸戶</button>
-              <button @click="confirmLink" :disabled="!targetUser || !selectedPortfolioId || linking"
+              <button @click="confirmLink" :disabled="linking"
                 class="flex-[2] h-16 bg-indigo-600 text-white font-black rounded-2xl uppercase tracking-widest text-xs shadow-xl shadow-indigo-100 hover:bg-indigo-700 disabled:opacity-30 transition-all">
                 {{ linking ? '歸戶對齊中...' : '確認完成核對歸戶' }}
               </button>
@@ -522,17 +522,31 @@ const fetchCategoriesData = async () => {
 }
 
 const confirmLink = async () => {
-  if (!selectedGroup.value || !targetUser.value || !selectedPortfolioId.value) return
+  console.log('Confirm link triggered')
+  if (!selectedGroup.value || !targetUser.value || !selectedPortfolioId.value) {
+    console.warn('Missing required fields:', { 
+      group: selectedGroup.value, 
+      user: targetUser.value, 
+      portfolio: selectedPortfolioId.value 
+    })
+    showToast('請先選擇目標使用者及帳戶（請點選其中一個帳戶卡片）', 'warning')
+    return
+  }
+  
   linking.value = true
   try {
     const items = selectedGroup.value.items
     const userId = targetUser.value.id
     let portId = selectedPortfolioId.value
+    console.log('Linking start:', { itemsCount: items.length, userId, portId })
+
     if (portId === 'NEW_DEFAULT') {
       const { data: newPort, error: portError } = await supabase.from('portfolios').insert({ user_id: userId, name: '本人', is_default: true }).select().single()
       if (portError) throw portError
       portId = newPort.id
+      console.log('Created new portfolio:', portId)
     }
+
     const uniqueCombos = []
     const seen = new Set()
     items.forEach(item => {
@@ -542,16 +556,27 @@ const confirmLink = async () => {
         uniqueCombos.push({ code: item.stock_code, year: item.year, stock_name: item.stock_name })
       }
     })
+
     const codes = uniqueCombos.map(c => c.code)
     const { data: existingSouvenirs, error: fetchError } = await supabase.from('souvenirs').select('id, code, meeting_date').in('code', codes)
     if (fetchError) throw fetchError
+
     const souvenirMap = {}
     existingSouvenirs?.forEach(s => {
       const year = new Date(s.meeting_date).getFullYear()
       souvenirMap[`${s.code}_${year}`] = s.id
     })
+
     const missingCombos = uniqueCombos.filter(c => !souvenirMap[`${c.code}_${c.year}`])
+    console.log('Missing combos to create:', missingCombos)
+
     if (missingCombos.length > 0) {
+      // Check convenience store category id
+      if (!convenienceStoreCategoryId.value) {
+         console.warn('Convenience Store Category ID is missing, fetching...')
+         await fetchCategoriesData()
+      }
+      
       const toInsert = missingCombos.map(c => ({
         code: c.code,
         name: c.stock_name || '未知公司',
@@ -561,39 +586,54 @@ const confirmLink = async () => {
         classification_status: 'system_matched',
         doc_id: `AUTO_${c.code}_${c.year}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`
       }))
+      
       const { data: createdData, error: createError } = await supabase.from('souvenirs').insert(toInsert).select('id, code, meeting_date')
       if (createError) throw createError
+      
       createdData?.forEach(s => {
         const year = new Date(s.meeting_date).getFullYear()
         souvenirMap[`${s.code}_${year}`] = s.id
       })
     }
+
     const collectionsToUpsertMap = new Map()
     const inventoryToUpsertMap = new Map()
+
     items.forEach(item => {
       const souvenirId = souvenirMap[`${item.stock_code}_${item.year}`]
       if (souvenirId) {
         const collKey = `${portId}_${souvenirId}_holding`
         collectionsToUpsertMap.set(collKey, { user_id: userId, portfolio_id: portId, souvenir_id: souvenirId, status: 'holding' })
+        
         const invKey = `${portId}_${item.stock_code}`
         inventoryToUpsertMap.set(invKey, { user_id: userId, portfolio_id: portId, stock_code: item.stock_code, stock_name: item.stock_name || '未知公司', updated_at: new Date().toISOString() })
       }
     })
+
     const collectionsToUpsert = Array.from(collectionsToUpsertMap.values())
     const inventoryToUpsert = Array.from(inventoryToUpsertMap.values())
+    
+    console.log('Upserting collections:', collectionsToUpsert.length)
+    console.log('Upserting inventory:', inventoryToUpsert.length)
+
     if (collectionsToUpsert.length === 0) throw new Error('找不到可歸戶的紀念品資料')
+    
     const { error: collError } = await supabase.from('user_collections').upsert(collectionsToUpsert, { onConflict: 'portfolio_id,souvenir_id' })
     if (collError) throw collError
+
     if (inventoryToUpsert.length > 0) {
       const { error: invError } = await supabase.from('user_inventory').upsert(inventoryToUpsert, { onConflict: 'portfolio_id,stock_code' })
       if (invError) throw invError
     }
+
     const { error: stageError } = await supabase.from('inventory_staging').update({ status: 'IMPORTED', matched_user_id: userId }).in('id', items.map(i => i.id))
     if (stageError) throw stageError
+
     showToast(`成功歸戶 ${items.length} 筆資料`, 'success')
     closeModal()
     await fetchStagingData()
   } catch (e) {
+    console.error('Confirm Link Error:', e)
     showToast('歸戶過程發生錯誤: ' + (e.message || e), 'error')
   } finally {
     linking.value = false
