@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS public.user_inventory (
 ALTER TABLE public.user_inventory ENABLE ROW LEVEL SECURITY;
 
 -- 3. Add RLS Policies
+DROP POLICY IF EXISTS "Users can CRUD own inventory" ON public.user_inventory;
 CREATE POLICY "Users can CRUD own inventory" 
   ON public.user_inventory FOR ALL 
   USING (auth.uid() = user_id);
@@ -35,8 +36,11 @@ SELECT DISTINCT ON (uc.user_id, s.code)
 FROM public.user_collections uc
 JOIN public.souvenirs s ON uc.souvenir_id = s.id
 WHERE uc.status = 'holding'
-ORDER BY uc.user_id, s.code, uc.updated_at DESC
-ON CONFLICT (user_id, stock_code) DO NOTHING;
+AND NOT EXISTS (
+  SELECT 1 FROM public.user_inventory ui 
+  WHERE ui.user_id = uc.user_id AND ui.stock_code = s.code
+)
+ORDER BY uc.user_id, s.code, uc.updated_at DESC;
 
 -- 5. Add trigger for updated_at
 CREATE OR REPLACE FUNCTION public.handle_updated_at()

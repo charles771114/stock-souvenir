@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS public.portfolios (
 -- 2. Enable RLS on portfolios
 ALTER TABLE public.portfolios ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can CRUD own portfolios" ON public.portfolios;
 CREATE POLICY "Users can CRUD own portfolios" 
   ON public.portfolios FOR ALL 
   USING (auth.uid() = user_id);
@@ -43,10 +44,15 @@ DECLARE
     new_portfolio_id uuid;
 BEGIN
     FOR user_record IN SELECT id FROM public.profiles LOOP
-        -- Create a default "本人" portfolio for each user
-        INSERT INTO public.portfolios (user_id, name, is_default)
-        VALUES (user_record.id, '本人', true)
-        RETURNING id INTO new_portfolio_id;
+        -- Check if default portfolio already exists
+        SELECT id INTO new_portfolio_id FROM public.portfolios WHERE user_id = user_record.id AND is_default = true LIMIT 1;
+
+        -- If not exists, create it
+        IF new_portfolio_id IS NULL THEN
+            INSERT INTO public.portfolios (user_id, name, is_default)
+            VALUES (user_record.id, '本人', true)
+            RETURNING id INTO new_portfolio_id;
+        END IF;
 
         -- Update user_inventory to point to this new portfolio
         UPDATE public.user_inventory 
@@ -91,12 +97,24 @@ WHERE id IN (
 -- For user_inventory
 ALTER TABLE public.user_inventory ALTER COLUMN portfolio_id SET NOT NULL;
 ALTER TABLE public.user_inventory DROP CONSTRAINT IF EXISTS user_inventory_user_id_stock_code_key;
-ALTER TABLE public.user_inventory ADD CONSTRAINT user_inventory_portfolio_stock_unique UNIQUE(portfolio_id, stock_code);
+
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'user_inventory_portfolio_stock_unique') THEN
+        ALTER TABLE public.user_inventory ADD CONSTRAINT user_inventory_portfolio_stock_unique UNIQUE(portfolio_id, stock_code);
+    END IF;
+END $$;
 
 -- For user_collections
 ALTER TABLE public.user_collections ALTER COLUMN portfolio_id SET NOT NULL;
 ALTER TABLE public.user_collections DROP CONSTRAINT IF EXISTS user_collections_user_id_souvenir_id_key;
-ALTER TABLE public.user_collections ADD CONSTRAINT user_collections_portfolio_souvenir_unique UNIQUE(portfolio_id, souvenir_id);
+
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'user_collections_portfolio_souvenir_unique') THEN
+        ALTER TABLE public.user_collections ADD CONSTRAINT user_collections_portfolio_souvenir_unique UNIQUE(portfolio_id, souvenir_id);
+    END IF;
+END $$;
 
 -- 8. Update triggers
 CREATE OR REPLACE FUNCTION public.handle_updated_at()

@@ -29,7 +29,10 @@ stock-souvenir/
 │   │   ├── useAuth.js                 # ⭐ 認證功能
 │   │   ├── useGifts.js                # ⭐ 紀念品和收藏管理
 │   │   ├── useScraper.js              # ⭐ 爬蟲管理
-│   │   └── useAdmin.js                # ⭐ Admin 功能
+│   │   ├── useAdmin.js                # ⭐ Admin 功能
+│   │   ├── usePortfolio.js            # ⭐ 帳戶歸戶管理 (New)
+│   │   ├── usePDFScraper.js           # ⭐ PDF 解析功能 (New)
+│   │   └── useInventoryImport.js      # ⭐ 庫存匯入邏輯 (New)
 │   │
 │   ├── 📂 components/
 │   │   ├── Navbar.vue                 # ⭐ 導航列
@@ -45,10 +48,17 @@ stock-souvenir/
 │   │   ├── Login.vue                  # ⭐ 登入頁
 │   │   ├── AuthCallback.vue           # ⭐ OAuth 回調處理
 │   │   ├── GiftCatalog.vue            # ⭐ 紀念品目錄
-│   │   ├── MyCollections.vue          # ⭐ 我的收藏
+│   │   ├── MyCollections.vue          # ⭐ 我的收藏 (支援多帳戶)
 │   │   ├── AdminPanel.vue             # ⭐ Admin 主控台
 │   │   ├── ScraperManager.vue         # ⭐ 爬蟲管理
-│   │   └── AdminSettings.vue          # ⭐ Admin 設定
+│   │   ├── AdminSettings.vue          # ⭐ Admin 設定
+│   │   ├── AdminUserFavorites.vue     # ⭐ 入袋持股統計 (New)
+│   │   └── 📂 admin/                  # ⭐ Admin 子頁面 (New)
+│   │       ├── InventoryStagingView.vue    # ⭐ 庫存歸戶 (PDF/Excel)
+│   │       ├── ClassificationCenterView.vue # ⭐ 分類中心
+│   │       ├── UserManagementView.vue      # ⭐ 用戶管理
+│   │       ├── SouvenirManagementView.vue  # ⭐ 紀念品管理
+│   │       └── ReviewQueueView.vue         # ⭐ 審核隊列
 │   │
 │   ├── 📂 style/
 │   │   └── main.css                   # ⭐ 全域樣式

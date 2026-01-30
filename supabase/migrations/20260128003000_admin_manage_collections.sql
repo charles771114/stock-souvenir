@@ -8,6 +8,9 @@ DROP POLICY IF EXISTS "Admins can view all collections" ON public.user_collectio
 
 -- 2. Create a new policy that allows admins to perform all operations on all rows
 -- We use the pre-defined public.is_admin() function to check for admin role
+-- 2. Create a new policy that allows admins to perform all operations on all rows
+-- We use the pre-defined public.is_admin() function to check for admin role
+DROP POLICY IF EXISTS "Admins can manage all collections" ON public.user_collections;
 CREATE POLICY "Admins can manage all collections"
   ON public.user_collections
   FOR ALL

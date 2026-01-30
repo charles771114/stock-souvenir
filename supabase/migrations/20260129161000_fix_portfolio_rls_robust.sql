@@ -8,6 +8,7 @@ BEGIN;
 DROP POLICY IF EXISTS "Admins can manage all portfolios" ON public.portfolios;
 
 -- 1. Explicit SELECT policy for Admins
+DROP POLICY IF EXISTS "Admins can select all portfolios" ON public.portfolios;
 CREATE POLICY "Admins can select all portfolios" 
   ON public.portfolios FOR SELECT
   USING (
@@ -18,6 +19,7 @@ CREATE POLICY "Admins can select all portfolios"
   );
 
 -- 2. Explicit INSERT policy for Admins (Critical for automatic creation)
+DROP POLICY IF EXISTS "Admins can insert portfolios for anyone" ON public.portfolios;
 CREATE POLICY "Admins can insert portfolios for anyone" 
   ON public.portfolios FOR INSERT
   WITH CHECK (
@@ -28,6 +30,7 @@ CREATE POLICY "Admins can insert portfolios for anyone"
   );
 
 -- 3. Explicit UPDATE/DELETE policies for Admins
+DROP POLICY IF EXISTS "Admins can update all portfolios" ON public.portfolios;
 CREATE POLICY "Admins can update all portfolios" 
   ON public.portfolios FOR UPDATE
   USING (
@@ -37,6 +40,7 @@ CREATE POLICY "Admins can update all portfolios"
     )
   );
 
+DROP POLICY IF EXISTS "Admins can delete all portfolios" ON public.portfolios;
 CREATE POLICY "Admins can delete all portfolios" 
   ON public.portfolios FOR DELETE
   USING (

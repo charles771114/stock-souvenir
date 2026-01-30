@@ -551,9 +551,11 @@ watch(filters, async (newVal, oldVal) => {
 watch(viewMode, () => reset())
 
 watch(currentPortfolioId, async () => {
-  await fetchMyCollections()
-  await fetchAllUserCollections(filters.value.year)
-  userInventoryIds.value = await fetchUserInventoryIds()
+  await Promise.all([
+    fetchMyCollections(),
+    fetchAllUserCollections(filters.value.year),
+    fetchUserInventoryIds().then(ids => userInventoryIds.value = ids)
+  ])
 })
 
 let searchTimeout = null
