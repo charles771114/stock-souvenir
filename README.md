@@ -61,6 +61,23 @@
 
 ---
 
+## 🤖 自動化與維護
+
+### 保持 Supabase 專案活躍 (Keep-Alive)
+為了防止 Supabase 免費版專案因 7 天無活動而被暫停，系統包含了一個 GitHub Actions 自動化流程：
+- **路徑**: `.github/workflows/keep-supabase-alive.yml`
+- **功能**: 每天台灣時間 09:00 自動對資料庫執行簡單查詢，保持專案活躍狀態。
+- **設定**: 需在 GitHub Repo Settings 中設定以下 Secrets:
+    - `SUPABASE_URL`: 您的專案 URL。
+    - `SUPABASE_KEY`: 您的 API Key (anon 或 service_role)。
+
+---
+
+## 📱 行動版優化
+- **歷史參考**：在手機版清單與卡片中，會特別顯示「去年度紀念品」資訊，方便用戶在今年資料尚未公布時作為參考參考標記。
+
+---
+
 ## 📦 快速開始 (Local Development)
 
 ### 1. 安裝與設定
@@ -82,5 +99,5 @@ npm run dev
 
 ---
 
-**最後更新**: 2026-01-28
-**版本**: v3.1.0 (Stability & Conflict Fix Update)
+**最後更新**: 2026-02-09
+**版本**: v3.2.0 (Automation & Mobile Enhancement)

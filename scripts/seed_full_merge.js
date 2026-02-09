@@ -24,8 +24,8 @@ if (!process.env.VITE_SUPABASE_URL || !process.env.VITE_SUPABASE_ANON_KEY) {
 }
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL
-// Use the same hardcoded key from seed_2025.js if env is missing, or prefer env
-const supabaseKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || "SCRUBBED_SERVICE_ROLE_KEY"
+// Prefer SUPABASE_SERVICE_ROLE_KEY from env
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
 
 if (!supabaseUrl) {
     console.error('Missing VITE_SUPABASE_URL')

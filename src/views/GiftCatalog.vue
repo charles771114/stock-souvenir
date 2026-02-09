@@ -419,7 +419,7 @@ const mappedGifts = computed(() => {
       meeting: g.meeting_date,
       isCollected: isInCollection(g.id),
       isInInventory: userInventoryIds.value.has(g.code),
-      previousYearSouvenir: isPlaceholder(g.souvenir_item) ? prevSouvenir : null,
+      previousYearSouvenir: prevSouvenir,
       collectedPortfolios
     }
   })

@@ -19,10 +19,10 @@ if (!process.env.VITE_SUPABASE_URL || !process.env.VITE_SUPABASE_ANON_KEY) {
 }
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL
-const supabaseKey = "SCRUBBED_SERVICE_ROLE_KEY" // Local Service Role Key
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
 
 if (!supabaseUrl || !supabaseKey) {
-    console.error('Missing VITE_SUPABASE_SERVICE_ROLE_KEY in .env. Seeding requires admin privileges.')
+    console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env. Seeding requires admin privileges.')
     // Fallback to ANON key just in case, but likely will fail RLS
     if (!process.env.VITE_SUPABASE_ANON_KEY) process.exit(1)
 }

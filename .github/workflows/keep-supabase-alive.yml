@@ -1,0 +1,53 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # 每天台灣時間 09:00 (UTC 01:00) 執行
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+    # 允許手動觸發測試
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start health check
+        run: |
+          echo "開始執行時間: $(date -d '+8 hours' '+%Y-%m-%d %H:%M:%S') (台灣時間)"
+          echo "--------------------------------------------------"
+
+      - name: Query Supabase REST API
+        id: query
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          # 執行 curl 查詢 trips 表，限制 1 筆資料
+          # -s: 靜默模式
+          # -w: 輸出 HTTP 狀態碼
+          # -o: 將 Response 內容存入檔案以便出錯時顯示
+          RESPONSE=$(curl -s -X GET "${SUPABASE_URL}/rest/v1/trips?limit=1" \
+            -H "apikey: ${SUPABASE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_KEY}" \
+            -w "\n%{http_code}" \
+            -o response_body.txt)
+
+          # 取得狀態碼（最後一行）
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -n 1)
+          echo "HTTP 狀態碼: $HTTP_STATUS"
+          echo "status_code=$HTTP_STATUS" >> $GITHUB_OUTPUT
+
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo "✅ 成功: Supabase REST API 回應正常"
+          else
+            echo "❌ 失敗: HTTP 狀態碼為 $HTTP_STATUS"
+            echo "Response 內容:"
+            cat response_body.txt
+            exit 1
+          fi
+
+      - name: Finish health check
+        if: always()
+        run: |
+          echo "--------------------------------------------------"
+          echo "完成時間: $(date -d '+8 hours' '+%Y-%m-%d %H:%M:%S') (台灣時間)"

@@ -22,6 +22,15 @@
           <p class="text-[11px] text-slate-600 font-medium line-clamp-1 mb-1">
             {{ item.souvenir }}
           </p>
+          <!-- Previous Year Reference (Mobile) -->
+          <p v-if="item.previousYearSouvenir" 
+            class="text-[9px] text-slate-400 italic mb-1.5 flex items-center gap-1"
+            :title="`去年紀念品：${item.previousYearSouvenir}`">
+            <svg class="w-2.5 h-2.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="truncate text-slate-400">去年：{{ item.previousYearSouvenir }}</span>
+          </p>
 
           <!-- Aggregate Status (Mobile) -->
           <div v-if="item.collectedPortfolios && item.collectedPortfolios.length > 0" 
