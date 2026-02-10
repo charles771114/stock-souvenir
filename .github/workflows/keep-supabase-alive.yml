@@ -22,11 +22,11 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
-          # 執行 curl 查詢 trips 表，限制 1 筆資料
+          # 執行 curl 查詢 souvenirs 表，限制 1 筆資料
           # -s: 靜默模式
           # -w: 輸出 HTTP 狀態碼
           # -o: 將 Response 內容存入檔案以便出錯時顯示
-          RESPONSE=$(curl -s -X GET "${SUPABASE_URL}/rest/v1/trips?limit=1" \
+          RESPONSE=$(curl -s -X GET "${SUPABASE_URL}/rest/v1/souvenirs?limit=1" \
             -H "apikey: ${SUPABASE_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_KEY}" \
             -w "\n%{http_code}" \
