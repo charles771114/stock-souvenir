@@ -584,7 +584,7 @@ const confirmLink = async () => {
         meeting_date: `${c.year}-06-30`,
         category_id: convenienceStoreCategoryId.value,
         classification_status: 'system_matched',
-        doc_id: `AUTO_${c.code}_${c.year}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`
+        doc_id: `AUTO_${c.code}_${c.year}`
       }))
       
       const { data: createdData, error: createError } = await supabase.from('souvenirs').insert(toInsert).select('id, code, meeting_date')

@@ -40,12 +40,7 @@ const routes = [
     path: '/admin',
     redirect: '/admin/scraper'
   },
-  {
-    path: '/admin/scraper',
-    name: 'ScraperManager',
-    component: () => import('@/views/ScraperManager.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true }
-  },
+
   {
     path: '/admin/settings',
     redirect: '/admin/users'
@@ -99,6 +94,18 @@ const routes = [
     path: '/admin/users',
     name: 'UserManagement',
     component: () => import('@/views/admin/UserManagementView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/line-groups',
+    name: 'LineGroupManagement',
+    component: () => import('@/views/admin/LineGroupManagementView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/scraper',
+    name: 'ScraperManagement',
+    component: () => import('@/views/admin/ScraperManagementView.vue'),
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {

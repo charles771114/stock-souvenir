@@ -7,12 +7,8 @@
           <!-- Logo -->
           <router-link to="/gifts" class="flex items-center group">
             <div class="flex-shrink-0 flex items-center">
-              <div
-                class="h-9 w-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
-                <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-                </svg>
+              <div class="h-9 w-9 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300 overflow-hidden bg-white">
+                <img src="/logo.png" alt="Logo" class="h-full w-full object-cover" />
               </div>
               <span
                 class="hidden min-[400px]:block ml-3 text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-700 tracking-tighter">股東會紀念品</span>

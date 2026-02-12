@@ -79,8 +79,17 @@
                     </button>
                   </div>
                 </form>
+
+                <!-- Divider -->
+                <div class="border-t border-gray-100 my-6"></div>
+
+                <!-- LINE Binding Section (Admin Only) -->
+                <div v-if="isAdmin" class="space-y-4">
+                  <h4 class="text-sm font-medium text-gray-900">帳號連結 (管理員專用)</h4>
+                  <LineBinding />
+                </div>
+                </div>
               </div>
-            </div>
           </Transition>
         </div>
       </div>
@@ -92,6 +101,7 @@
 import { useAuth } from '@/composables/useAuth'
 import { useToast } from '@/composables/useToast'
 import { ref, watch } from 'vue'
+import LineBinding from '@/components/LineBinding.vue'
 
 const props = defineProps({
   isOpen: Boolean
@@ -99,7 +109,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 
-const { user, profile, updateProfile } = useAuth()
+const { user, profile, updateProfile, isAdmin } = useAuth()
 const { showToast } = useToast()
 
 const loading = ref(false)

@@ -387,7 +387,11 @@ const formData = ref({ code: '', name: '', souvenir_item: '', meeting_date: '', 
 const filteredSouvenirs = computed(() => {
   if (!searchQuery.value) return souvenirs.value
   const q = searchQuery.value.toLowerCase()
-  return souvenirs.value.filter(s => s.code?.toLowerCase().includes(q) || s.name?.toLowerCase().includes(q) || s.souvenir_item?.toLowerCase().includes(q))
+  return souvenirs.value.filter(s => 
+    (s.code && String(s.code).toLowerCase().includes(q)) || 
+    (s.name && String(s.name).toLowerCase().includes(q)) || 
+    (s.souvenir_item && String(s.souvenir_item).toLowerCase().includes(q))
+  )
 })
 
 const paginatedSouvenirs = computed(() => {
@@ -417,7 +421,13 @@ const fetchSouvenirs = async () => {
   try {
     const startDate = `${selectedYear.value}-01-01`
     const endDate = `${selectedYear.value}-12-31`
-    const { data, error } = await supabase.from('souvenirs').select('*').gte('meeting_date', startDate).lte('meeting_date', endDate).order('code', { ascending: true })
+    
+    // 建立更寬鬆的篩選邏輯：股東會在該年度，或是股東會未定但最後買進日在該年度
+    const { data, error } = await supabase
+      .from('souvenirs')
+      .select('*')
+      .or(`and(meeting_date.gte.${startDate},meeting_date.lte.${endDate}),and(meeting_date.is.null,last_buy_date.gte.${startDate},last_buy_date.lte.${endDate})`)
+      .order('code', { ascending: true })
     if (error) throw error
     souvenirs.value = data || []
   } catch (e) {

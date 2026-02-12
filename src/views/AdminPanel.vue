@@ -208,7 +208,7 @@
           </div>
         </router-link>
 
-        <!-- 08. 爬蟲管理 -->
+        <!-- 08. 股代爬蟲 (Gooddie) -->
         <router-link to="/admin/scraper" class="admin-card group">
           <div class="admin-card-inner">
             <div class="card-icon card-icon-slate">
@@ -219,12 +219,12 @@
             </div>
             <div class="flex-1">
               <div class="flex items-center justify-between mb-1">
-                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">自動化管理</span>
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">自動化</span>
                 <span
                   class="text-xs font-black text-indigo-100 group-hover:text-indigo-600 transition-colors">#08</span>
               </div>
-              <h3 class="text-xl font-black text-slate-800 group-hover:text-indigo-600 transition-colors mb-2">爬蟲管理</h3>
-              <p class="text-xs text-slate-400 font-medium leading-relaxed">資料抓取、更新狀態與排程執行紀錄</p>
+              <h3 class="text-xl font-black text-slate-800 group-hover:text-indigo-600 transition-colors mb-2">股代爬蟲</h3>
+              <p class="text-xs text-slate-400 font-medium leading-relaxed">Gooddie 自動爬蟲執行紀錄與控制</p>
             </div>
             <div class="card-arrow">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -233,6 +233,33 @@
             </div>
           </div>
         </router-link>
+
+        <!-- 09. LINE 群組管理 -->
+        <router-link to="/admin/line-groups" class="admin-card group">
+          <div class="admin-card-inner">
+            <div class="card-icon card-icon-green">
+              <!-- LINE Icon Custom SVG -->
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 5.92 2 10.75c0 2.8 1.5 5.25 3.85 6.85-.15.95-.55 2.5-1.35 3.55 1.65-.2 4.15-.95 5.5-1.95.65.1 1.35.15 2 .15 5.52 0 10-3.92 10-8.75S17.52 2 12 2zm0 15c-4.41 0-8-3.13-8-7s3.59-7 8-7 8 3.13 8 7-3.59 7-8 7z"/>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">社群整合</span>
+                <span class="text-xs font-black text-indigo-100 group-hover:text-indigo-600 transition-colors">#09</span>
+              </div>
+              <h3 class="text-xl font-black text-slate-800 group-hover:text-indigo-600 transition-colors mb-2">LINE 群組</h3>
+              <p class="text-xs text-slate-400 font-medium leading-relaxed">檢視已加入的 LINE 群組與狀態</p>
+            </div>
+            <div class="card-arrow">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+        </router-link>
+
+
 
       </div>
     </main>

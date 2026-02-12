@@ -22,14 +22,14 @@ export function useGifts() {
   const deduplicateCollections = (rawData) => {
     const filtered = (rawData || []).filter(item => item.gift)
     const uniqueMap = new Map()
-    
+
     filtered.forEach(item => {
       // 強制轉字串並修剪空白，確保 key 絕對一致
       const code = String(item.gift?.code || '').trim()
       const uniqueKey = code || item.souvenir_id
-      
+
       const existing = uniqueMap.get(uniqueKey)
-      
+
       // 優先順序：
       // 1. user_collections (沒有 _source 或 _source !== 'inventory')
       // 2. holding 狀態
@@ -39,7 +39,7 @@ export function useGifts() {
       } else {
         const existingIsInventory = existing._source === 'inventory'
         const currentIsInventory = item._source === 'inventory'
-        
+
         // 如果現有的是 inventory 來源，而新的不是，則替換
         if (existingIsInventory && !currentIsInventory) {
           uniqueMap.set(uniqueKey, item)
@@ -50,7 +50,7 @@ export function useGifts() {
         }
       }
     })
-    
+
     return Array.from(uniqueMap.values())
   }
 
@@ -64,12 +64,11 @@ export function useGifts() {
       const { data } = await supabase
         .from('souvenirs')
         .select('updated_at')
-        .gte('meeting_date', startDate)
-        .lte('meeting_date', endDate)
+        .or(`and(meeting_date.gte.${startDate},meeting_date.lte.${endDate}),and(meeting_date.is.null,last_buy_date.gte.${startDate},last_buy_date.lte.${endDate})`)
         .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle()
-      
+
       return data?.updated_at || null
     } catch (e) {
       console.warn('Get fingerprint failed:', e)
@@ -119,7 +118,7 @@ export function useGifts() {
       if (filters.year) {
         const startDate = `${filters.year}-01-01`
         const endDate = `${filters.year}-12-31`
-        query = query.gte('meeting_date', startDate).lte('meeting_date', endDate)
+        query = query.or(`and(meeting_date.gte.${startDate},meeting_date.lte.${endDate}),and(meeting_date.is.null,last_buy_date.gte.${startDate},last_buy_date.lte.${endDate})`)
       }
 
       if (filters.companyCode) {
@@ -186,7 +185,7 @@ export function useGifts() {
       let invQuery = supabase
         .from('user_inventory')
         .select('*')
-      
+
       if (isCombinedView.value) {
         invQuery = invQuery.eq('user_id', user.value.id)
       } else if (currentPortfolioId.value) {
@@ -206,7 +205,7 @@ export function useGifts() {
 
       // 2. 取得所有庫存的股票代號
       const stockCodes = inventoryData.map(inv => inv.stock_code).filter(Boolean)
-      
+
       if (stockCodes.length === 0) return []
 
       // 3. 查詢對應的紀念品資料
@@ -219,9 +218,7 @@ export function useGifts() {
       if (year) {
         const startDate = `${year}-01-01`
         const endDate = `${year}-12-31`
-        souvenirQuery = souvenirQuery
-          .gte('meeting_date', startDate)
-          .lte('meeting_date', endDate)
+        souvenirQuery = souvenirQuery.or(`and(meeting_date.gte.${startDate},meeting_date.lte.${endDate}),and(meeting_date.is.null,last_buy_date.gte.${startDate},last_buy_date.lte.${endDate})`)
       }
 
       const { data: souvenirData, error: souvenirError } = await souvenirQuery
@@ -246,7 +243,7 @@ export function useGifts() {
         .map(inv => {
           const code = String(inv.stock_code).trim()
           const souvenir = souvenirMap.get(code)
-          
+
           if (!souvenir) return null
 
           return {
@@ -278,7 +275,7 @@ export function useGifts() {
         myCollections.value = []
         return { data: [], error: null }
       }
-      
+
       const userId = user.value.id
       const currentYear = new Date().getFullYear().toString()
       const requestYear = year?.toString()
@@ -303,7 +300,7 @@ export function useGifts() {
           *,
           gift:souvenirs (*)
         `)
-      
+
       if (isCombinedView.value) {
         query = query.eq('user_id', userId)
       } else if (currentPortfolioId.value) {
@@ -331,7 +328,7 @@ export function useGifts() {
 
       // 🆕 合併兩個來源的資料
       const combinedData = [...(data || []), ...inventoryGifts]
-      
+
       // 🆕 去重：優先保留 user_collections 的記錄
       const finalData = deduplicateCollections(combinedData)
       myCollections.value = finalData
@@ -355,7 +352,7 @@ export function useGifts() {
   const fetchAllUserCollections = async (year = null) => {
     try {
       if (!user.value) return { data: [], error: null }
-      
+
       let query = supabase
         .from('user_collections')
         .select(`
@@ -368,12 +365,12 @@ export function useGifts() {
       if (year) {
         const startDate = `${year}-01-01`
         const endDate = `${year}-12-31`
-        query = query.gte('gift.meeting_date', startDate).lte('gift.meeting_date', endDate)
+        query = query.or(`and(meeting_date.gte.${startDate},meeting_date.lte.${endDate}),and(meeting_date.is.null,last_buy_date.gte.${startDate},last_buy_date.lte.${endDate})`, { foreignTable: 'souvenirs' })
       }
 
       const { data, error: fetchError } = await query
       if (fetchError) throw fetchError
-      
+
       const uniqueData = deduplicateCollections(data)
       allUserCollections.value = uniqueData
       return { data: uniqueData, error: null }
@@ -416,7 +413,7 @@ export function useGifts() {
           localStorage.removeItem(key)
         }
       }
-      
+
       await fetchMyCollections()
       await fetchAllUserCollections()
 
@@ -544,7 +541,7 @@ export function useGifts() {
             code
           )
         `)
-      
+
       // 2. 從新的 user_inventory 表取得
       let invQuery = supabase
         .from('user_inventory')
@@ -566,7 +563,7 @@ export function useGifts() {
       ])
 
       const codes = new Set()
-      
+
       // 收集來自 user_collections 的代號
       collRes.data?.forEach(d => {
         if (d.souvenirs?.code) codes.add(String(d.souvenirs.code).trim())
@@ -588,7 +585,7 @@ export function useGifts() {
     if (!currentYear) return new Map()
     const previousYear = parseInt(currentYear, 10) - 1
     if (isNaN(previousYear)) return new Map()
-    
+
     const cacheKey = `gifts:${previousYear}`
     const cachedEntry = cache.getWithMetadata(cacheKey)
     if (cachedEntry?.data) {
@@ -604,12 +601,11 @@ export function useGifts() {
     try {
       const startDate = `${previousYear}-01-01`
       const endDate = `${previousYear}-12-31`
-      
+
       const { data } = await supabase
         .from('souvenirs')
         .select('code, souvenir_item')
-        .gte('meeting_date', startDate)
-        .lte('meeting_date', endDate)
+        .or(`and(meeting_date.gte.${startDate},meeting_date.lte.${endDate}),and(meeting_date.is.null,last_buy_date.gte.${startDate},last_buy_date.lte.${endDate})`)
 
       const souvenirMap = new Map()
       data?.forEach(item => {
@@ -626,10 +622,10 @@ export function useGifts() {
 
   const enrichWithPreviousYear = (currentGifts, previousYearMap) => {
     return currentGifts.map(gift => {
-      const needsReference = !gift.souvenir_item || 
-        gift.souvenir_item === '尚未公布' || 
+      const needsReference = !gift.souvenir_item ||
+        gift.souvenir_item === '尚未公布' ||
         gift.souvenir_item.trim() === ''
-      
+
       if (needsReference && previousYearMap.has(gift.code)) {
         return {
           ...gift,
@@ -642,7 +638,7 @@ export function useGifts() {
 
   const reassignCollectionPortfolio = async (itemId, targetPortfolioId) => {
     if (!user.value) return { success: false, error: '未登入' }
-    
+
     try {
       const { error: updateError } = await supabase
         .from('user_collections')

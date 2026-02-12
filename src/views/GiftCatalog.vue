@@ -43,11 +43,12 @@
 
             <!-- Sort Dropdown -->
             <div class="relative">
-              <select
+              <select v-model="filters.sort"
                 class="pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-lg shadow-sm text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none cursor-pointer hover:bg-gray-50 transition-colors">
                 <option value="date_desc">依日期 (新到舊)</option>
                 <option value="date_asc">依日期 (舊到新)</option>
-                <option value="code_asc">依代號</option>
+                <option value="code_asc">依代號 (0-9)</option>
+                <option value="code_desc">依代號 (9-0)</option>
               </select>
               <div class="absolute right-3 top-3 pointer-events-none">
                 <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -203,7 +204,9 @@
           <!-- List View -->
           <TableView v-else :items="paginatedMappedGifts" :isExpired="isExpired"
             :disabled="!isCurrentYear"
-            @toggle-collection="handleToggleCollection" />
+            :sort-by="filters.sort"
+            @toggle-collection="handleToggleCollection"
+            @sort="handleSort" />
 
           <div v-if="!isCurrentYear" class="mt-8 p-4 bg-amber-50 rounded-2xl border border-amber-100 text-center">
             <p class="text-xs font-bold text-amber-700">⚠️ 非當年度資料僅供參考，無法執行收藏或領取操作。</p>
@@ -292,6 +295,7 @@ const filters = ref({
   search: '',
   year: new Date().getFullYear().toString(),
   category: '超商商品卡',
+  sort: 'date_desc' // Default sort: Last Buy Date (Desc)
 })
 
 const isCurrentYear = computed(() => filters.value.year === new Date().getFullYear().toString())
@@ -351,9 +355,9 @@ const filteredGifts = computed(() => {
   if (filters.value.search) {
     const keyword = filters.value.search.toLowerCase()
     result = result.filter(g =>
-      g.name?.toLowerCase().includes(keyword) ||
-      g.code?.toLowerCase().includes(keyword) ||
-      g.souvenir_item?.toLowerCase().includes(keyword)
+      (g.name && String(g.name).toLowerCase().includes(keyword)) ||
+      (g.code && String(g.code).toLowerCase().includes(keyword)) ||
+      (g.souvenir_item && String(g.souvenir_item).toLowerCase().includes(keyword))
     )
   }
 
@@ -396,13 +400,15 @@ const mappedGifts = computed(() => {
     const match = matchCategory(souvenirToMatch)
     const categoryObj = categories.value.find(c => c.id === match.id)
 
-    const collectedIn = allUserCollections.value.filter(c => c.gift?.code === g.code)
+    const normalizedCode = String(g.code || '').trim()
+    const collectedIn = allUserCollections.value.filter(c => String(c.gift?.code || '').trim() === normalizedCode)
     const collectedPortfolios = collectedIn.map(c => {
       const p = portfolios.value.find(port => port.id === c.portfolio_id)
+      const pName = p?.name || '未知'
       return {
         id: c.portfolio_id,
-        name: p ? p.name : '未知',
-        initial: p ? (p.name.charAt(0)) : '?',
+        name: pName,
+        initial: pName.charAt(0) || '?',
         status: c.status
       }
     })
@@ -425,7 +431,31 @@ const mappedGifts = computed(() => {
   })
 })
 
-// Pagination
+// Sorted Mapped Gifts
+const sortedMappedGifts = computed(() => {
+  const items = [...mappedGifts.value]
+  const sort = filters.value.sort
+  
+  if (sort === 'code_asc') {
+    return items.sort((a, b) => String(a.code).localeCompare(String(b.code)))
+  } else if (sort === 'code_desc') {
+    return items.sort((a, b) => String(b.code).localeCompare(String(a.code)))
+  } else if (sort === 'date_asc') {
+    return items.sort((a, b) => {
+      if (!a.lastBuy) return 1
+      if (!b.lastBuy) return -1
+      return new Date(a.lastBuy) - new Date(b.lastBuy)
+    })
+  } else if (sort === 'date_desc') {
+    return items.sort((a, b) => {
+      if (!a.lastBuy) return 1
+      if (!b.lastBuy) return -1
+      return new Date(b.lastBuy) - new Date(a.lastBuy)
+    })
+  }
+  return items
+})
+
 const hasActiveFilters = computed(() => {
   return !!filters.value.search || !!filters.value.category
 })
@@ -446,7 +476,7 @@ const {
   setPageSize,
   reset,
   pageSizeOptions
-} = usePagination(mappedGifts) // Use mappedGifts here to ensure pagination works on transformed data
+} = usePagination(sortedMappedGifts) // Use sortedMappedGifts here to ensure pagination works on sorted data
 
 // Use paginatedItems directly (it's already mapped)
 const paginatedMappedGifts = computed(() => paginatedItems.value)
@@ -459,6 +489,14 @@ const handlePageSizeChange = () => {
 const setYear = (year) => {
   filters.value.year = year
   applyFilters() // Refresh API data
+}
+
+const handleSort = (key) => {
+  if (key === 'code') {
+    filters.value.sort = filters.value.sort === 'code_asc' ? 'code_desc' : 'code_asc'
+  } else if (key === 'date') {
+    filters.value.sort = filters.value.sort === 'date_desc' ? 'date_asc' : 'date_desc'
+  }
 }
 
 const setCategory = (catName) => {

@@ -92,11 +92,27 @@
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-indigo-50/50 border-b border-indigo-100/50">
-              <th class="py-5 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-900/60">代號</th>
+              <th @click="$emit('sort', 'code')" class="py-5 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-900/60 cursor-pointer group/th">
+                <div class="flex items-center gap-1">
+                  代號
+                  <div class="flex flex-col transition-opacity" :class="sortBy.includes('code') ? 'opacity-100' : 'opacity-0 group-hover/th:opacity-50'">
+                    <svg class="w-2 h-2" :class="sortBy === 'code_asc' ? 'text-indigo-600' : 'text-slate-300'" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8l-6 6h12l-6-6z"/></svg>
+                    <svg class="w-2 h-2" :class="sortBy === 'code_desc' ? 'text-indigo-600' : 'text-slate-300'" fill="currentColor" viewBox="0 0 24 24"><path d="M12 16l6-6H6l6 6z"/></svg>
+                  </div>
+                </div>
+              </th>
               <th class="py-5 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-900/60">名稱</th>
               <th class="py-5 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-900/60">分類</th>
               <th class="py-5 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-900/60 w-1/3">紀念品</th>
-              <th class="py-5 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-900/60 text-right">最後買進</th>
+              <th @click="$emit('sort', 'date')" class="py-5 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-900/60 text-right cursor-pointer group/th">
+                <div class="flex items-center justify-end gap-1">
+                  <div class="flex flex-col transition-opacity" :class="sortBy.includes('date') ? 'opacity-100' : 'opacity-0 group-hover/th:opacity-50'">
+                    <svg class="w-2 h-2" :class="sortBy === 'date_asc' ? 'text-indigo-600' : 'text-slate-300'" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8l-6 6h12l-6-6z"/></svg>
+                    <svg class="w-2 h-2" :class="sortBy === 'date_desc' ? 'text-indigo-600' : 'text-slate-300'" fill="currentColor" viewBox="0 0 24 24"><path d="M12 16l6-6H6l6 6z"/></svg>
+                  </div>
+                  最後買進
+                </div>
+              </th>
               <th class="py-5 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-900/60 text-center">操作</th>
             </tr>
           </thead>
@@ -182,7 +198,8 @@ import FavoriteButton from './FavoriteButton.vue'
 defineProps({
   items: Array,
   isExpired: Function,
-  disabled: Boolean
+  disabled: Boolean,
+  sortBy: String
 })
 
 defineEmits(['toggle-collection'])
