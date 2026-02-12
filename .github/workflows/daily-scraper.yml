@@ -1,0 +1,47 @@
+name: Daily Gooddie Scraper
+
+on:
+  schedule:
+    # 每天早上 9:00 (UTC+8) = 01:00 (UTC)
+    - cron: '0 1 * * *'
+  
+  # 支援手動觸發
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Trigger Gooddie Scraper
+        run: |
+          response=$(curl -X POST "${{ secrets.SUPABASE_FUNCTION_URL }}/gooddie-scraper" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -w "\n%{http_code}" \
+            -s)
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          
+          echo "HTTP Status: $http_code"
+          echo "Response: $body"
+          
+          if [ "$http_code" -ne 200 ]; then
+            echo "::error::Scraper failed with HTTP $http_code"
+            exit 1
+          fi
+          
+          # 檢查 scraper 狀態
+          status=$(echo "$body" | jq -r '.status')
+          if [ "$status" = "error" ]; then
+            echo "::error::Scraper returned error status"
+            echo "$body" | jq '.'
+            exit 1
+          fi
+          
+          echo "✅ Scraper executed successfully"
+          echo "$body" | jq '.'
