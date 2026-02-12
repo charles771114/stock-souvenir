@@ -2,12 +2,17 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // @ts-ignore
 import { DOMParser } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
+// @ts-ignore
+import * as XLSX from "https://esm.sh/xlsx@0.18.5";
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const GOODDIE_BASE_URL = 'https://www.gooddie.tw'
 const APP_URL = Deno.env.get('APP_URL') || 'https://charles771114.github.io/stock-souvenir'
 const TARGET_YEAR = new Date().getFullYear().toString()
+
+const GOODDIE_EMAIL = Deno.env.get('GOODDIE_EMAIL')
+const GOODDIE_PASSWORD = Deno.env.get('GOODDIE_PASSWORD')
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
@@ -65,6 +70,119 @@ function getDaysRemaining(dateStr: string | null): number {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 }
 
+// 解析日期字串
+const parseDateString = (d: any) => {
+    if (!d) return null
+    const str = d.toString().trim()
+    if (/^\d{5}$/.test(str)) {
+        try {
+            const date = new Date((parseInt(str) - 25569) * 86400 * 1000)
+            return date.toISOString().split('T')[0]
+        } catch (e) { return null }
+    }
+
+    const nums = str.match(/\d+/g)
+    if (!nums || nums.length < 2) return null
+    let y = TARGET_YEAR
+    let m, day
+    if (nums.length === 2) { m = nums[0]; day = nums[1] }
+    else if (nums.length === 3) {
+        y = nums[0].length === 4 ? nums[0] : (parseInt(nums[0]) + 1911).toString()
+        m = nums[1]; day = nums[2]
+    } else return null
+    return `${y}-${m.padStart(2, '0')}-${day.padStart(2, '0')}`
+}
+
+async function loginToGooddie(): Promise<string> {
+    if (!GOODDIE_EMAIL || !GOODDIE_PASSWORD) {
+        throw new Error('Missing GOODDIE_EMAIL or GOODDIE_PASSWORD')
+    }
+
+    console.log('Attempting to login to Gooddie...')
+
+    // 1. Get login page to extract VerificationToken
+    const loginPageRes = await fetch(`${GOODDIE_BASE_URL}/Account/Login`, {
+        headers: { 'User-Agent': USER_AGENT }
+    })
+    const loginHtml = await loginPageRes.text()
+    const loginDoc = new DOMParser().parseFromString(loginHtml, "text/html")
+    const token = loginDoc?.querySelector('input[name="__RequestVerificationToken"]')?.getAttribute('value')
+
+    if (!token) throw new Error('Could not find __RequestVerificationToken')
+
+    const initialCookies = extractCookies(loginPageRes)
+
+    // 2. POST to Login
+    const formData = new URLSearchParams()
+    formData.append('Email', GOODDIE_EMAIL)
+    formData.append('Password', GOODDIE_PASSWORD)
+    formData.append('RememberMe', 'false')
+    formData.append('__RequestVerificationToken', token)
+
+    const loginRes = await fetch(`${GOODDIE_BASE_URL}/Account/Login`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': USER_AGENT,
+            'Cookie': initialCookies,
+            'Referer': `${GOODDIE_BASE_URL}/Account/Login`
+        },
+        body: formData,
+        redirect: 'manual'
+    })
+
+    const sessionCookies = extractCookies(loginRes)
+    const allCookies = [initialCookies, sessionCookies].filter(Boolean).join('; ')
+
+    console.log('Login successful, session cookies obtained.')
+    return allCookies
+}
+
+async function fetchExcelData(cookies: string): Promise<any[]> {
+    console.log(`Downloading Excel for year ${TARGET_YEAR}...`)
+    const res = await fetch(`${GOODDIE_BASE_URL}/stock/meeting/${TARGET_YEAR}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': USER_AGENT,
+            'Cookie': cookies,
+            'Referer': `${GOODDIE_BASE_URL}/stock/meeting/${TARGET_YEAR}`
+        },
+        body: `Year=${TARGET_YEAR}&isDownload=true`
+    })
+
+    if (!res.ok) throw new Error(`Excel download failed: ${res.statusText}`)
+
+    const buffer = await res.arrayBuffer()
+    const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' })
+    const firstSheetName = workbook.SheetNames[0]
+    const worksheet = workbook.Sheets[firstSheetName]
+    const jsonData = XLSX.utils.sheet_to_json(worksheet)
+
+    console.log(`Excel parsed: ${jsonData.length} rows found. Mapping data...`)
+
+    return jsonData.map((row: any) => {
+        // 嘗試匹配常見欄位名稱
+        const code = (row['股票代號'] || row['股號'] || row['代號'])?.toString().trim()
+        const name = (row['股票名稱'] || row['股名'] || row['名稱'])?.trim()
+        const souvenir = (row['紀念品內容'] || row['紀念品'] || row['禮物'])?.trim()
+        const meetingDate = row['開會日期'] || row['日期'] || row['開會']
+        const lastBuyDate = row['最後買進日'] || row['最後買進']
+
+        return {
+            doc_id: code,
+            code: code,
+            name: name,
+            meeting_date: parseDateString(meetingDate),
+            souvenir_item: souvenir,
+            last_buy_date: parseDateString(lastBuyDate),
+            source_url: GOODDIE_BASE_URL,
+            source_type: 'Excel',
+            updated_at: new Date().toISOString()
+        }
+    }).filter(r => r.code && /^\d{4,6}$/.test(r.code))
+}
+
 serve(async (req) => {
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
@@ -89,6 +207,7 @@ serve(async (req) => {
 
     try {
         addLog(`Starting Gooddie Scraper for year ${TARGET_YEAR}...`)
+        logEntry.scraper_source = 'HTML' // 預設
 
         // 建立初始 log
         const { data: initialLog, error: initialLogError } = await supabase
@@ -104,84 +223,85 @@ serve(async (req) => {
             addLog(`Log entry created: ${currentLogId}`)
         }
 
-        // Helper to parse dates
-        const parseDateString = (d: any) => {
-            if (!d) return null
-            const str = d.toString().trim()
-            if (/^\d{5}$/.test(str)) {
-                try {
-                    const date = new Date((parseInt(str) - 25569) * 86400 * 1000)
-                    return date.toISOString().split('T')[0]
-                } catch (e) { return null }
+        let rowsToSync: any[] = []
+        let scrapSource = 'HTML'
+
+        // --- Step 0: Strategy A - Excel Scraping ---
+        try {
+            addLog('Step 0: Attempting Strategy A (Excel Scraping)...')
+            const cookies = await loginToGooddie()
+            rowsToSync = await fetchExcelData(cookies)
+
+            if (rowsToSync.length > 0) {
+                scrapSource = 'Excel'
+                addLog(`Strategy A Successful: ${rowsToSync.length} rows fetched via Excel.`)
+            } else {
+                throw new Error('Excel returned 0 rows')
             }
+        } catch (excelError: any) {
+            addLog(`Strategy A Failed: ${excelError.message}. Falling back to Strategy B...`)
 
-            const nums = str.match(/\d+/g)
-            if (!nums || nums.length < 2) return null
-            let y = TARGET_YEAR
-            let m, day
-            if (nums.length === 2) { m = nums[0]; day = nums[1] }
-            else if (nums.length === 3) {
-                y = nums[0].length === 4 ? nums[0] : (parseInt(nums[0]) + 1911).toString()
-                m = nums[1]; day = nums[2]
-            } else return null
-            return `${y}-${m.padStart(2, '0')}-${day.padStart(2, '0')}`
-        }
+            // --- Step 1: Strategy B - HTML Scraping (Fallback) ---
+            addLog('Step 1: Scraping HTML content...')
+            let page = 1; let hasNextPage = true; const scrapedRows: any[] = []
 
-        // --- Step 1: HTML Scraping ---
-        addLog('Step 1: Scraping HTML content...')
-        let page = 1; let hasNextPage = true; const scrapedRows: any[] = []
+            while (hasNextPage && page <= 10) {
+                addLog(`Scraping HTML Page ${page}...`)
+                const pageRes = await fetch(`${GOODDIE_BASE_URL}/stock/meeting/${TARGET_YEAR}?Page=${page}`, { headers: { 'User-Agent': USER_AGENT } })
+                const html = await pageRes.text()
+                const pageDoc = new DOMParser().parseFromString(html, "text/html")
+                const cards = pageDoc?.querySelectorAll('.list .card') || []
 
-        while (hasNextPage && page <= 10) {
-            addLog(`Scraping HTML Page ${page}...`)
-            const pageRes = await fetch(`${GOODDIE_BASE_URL}/stock/meeting/${TARGET_YEAR}?Page=${page}`, { headers: { 'User-Agent': USER_AGENT } })
-            const html = await pageRes.text()
-            const pageDoc = new DOMParser().parseFromString(html, "text/html")
-            const cards = pageDoc?.querySelectorAll('.list .card') || []
+                if (cards.length === 0) break
 
-            if (cards.length === 0) break
+                for (const card of (cards as any)) {
+                    const titleText = card.querySelector('a.text-truncate')?.textContent.trim() || ''
+                    const parts = titleText.split(/\s+/)
+                    const code = parts[0]; const name = parts[1]
+                    if (!code || !/^\d{4,6}$/.test(code)) continue
 
-            for (const card of (cards as any)) {
-                const titleText = card.querySelector('a.text-truncate')?.textContent.trim() || ''
-                const parts = titleText.split(/\s+/)
-                const code = parts[0]; const name = parts[1]
-                if (!code || !/^\d{4,6}$/.test(code)) continue
-
-                // Extract souvenir item with multiple fallback strategies
-                let souvenirEl = card.querySelector('.col.text-truncate div[data-content]')
-                if (!souvenirEl) {
-                    const textTruncateDiv = card.querySelector('.text-truncate[title]')
-                    if (textTruncateDiv) {
-                        souvenirEl = textTruncateDiv.querySelector('.form-row .col.text-truncate')
+                    // Extract souvenir item with multiple fallback strategies
+                    let souvenirEl = card.querySelector('.col.text-truncate div[data-content]')
+                    if (!souvenirEl) {
+                        const textTruncateDiv = card.querySelector('.text-truncate[title]')
+                        if (textTruncateDiv) {
+                            souvenirEl = textTruncateDiv.querySelector('.form-row .col.text-truncate')
+                        }
                     }
-                }
-                if (!souvenirEl) {
-                    souvenirEl = card.querySelector('.col.text-truncate .text-truncate:last-child')
-                }
+                    if (!souvenirEl) {
+                        souvenirEl = card.querySelector('.col.text-truncate .text-truncate:last-child')
+                    }
 
-                const souvenir = souvenirEl ? (souvenirEl.getAttribute('data-content') || souvenirEl.textContent.trim()) : ''
+                    const souvenir = souvenirEl ? (souvenirEl.getAttribute('data-content') || souvenirEl.textContent.trim()) : ''
 
-                const getValByTitle = (titlePrefix: string) => {
-                    const titleEl = (Array.from(card.querySelectorAll('.title')) as any[]).find((t: any) => t.textContent.includes(titlePrefix))
-                    return (titleEl as any)?.closest('.form-row')?.querySelector('.col')?.textContent.replace('仍可買', '').trim() || ''
+                    const getValByTitle = (titlePrefix: string) => {
+                        const titleEl = (Array.from(card.querySelectorAll('.title')) as any[]).find((t: any) => t.textContent.includes(titlePrefix))
+                        return (titleEl as any)?.closest('.form-row')?.querySelector('.col')?.textContent.replace('仍可買', '').trim() || ''
+                    }
+
+                    scrapedRows.push({
+                        doc_id: code,
+                        code: code,
+                        name: name,
+                        meeting_date: parseDateString(parts[2] || getValByTitle('開會')),
+                        souvenir_item: souvenir,
+                        last_buy_date: parseDateString(getValByTitle('最後買進日')),
+                        source_url: GOODDIE_BASE_URL,
+                        source_type: 'HTML',
+                        updated_at: new Date().toISOString()
+                    })
                 }
-
-                scrapedRows.push({
-                    doc_id: code,
-                    code: code,
-                    name: name,
-                    meeting_date: parseDateString(parts[2] || getValByTitle('開會')),
-                    souvenir_item: souvenir,
-                    last_buy_date: parseDateString(getValByTitle('最後買進日')),
-                    source_url: GOODDIE_BASE_URL,
-                    updated_at: new Date().toISOString()
-                })
+                if (pageDoc?.querySelector('a[rel="next"]')) page++
+                else hasNextPage = false
             }
-            if (pageDoc?.querySelector('a[rel="next"]')) page++
-            else hasNextPage = false
+            rowsToSync = scrapedRows
+            scrapSource = 'HTML'
         }
 
-        // Filter out noisy souvenir texts
-        const rowsToSync = scrapedRows.map(row => {
+        logEntry.scraper_source = scrapSource
+
+        //過濾噪音文字
+        rowsToSync = rowsToSync.map(row => {
             let s = row.souvenir_item
             if (s) {
                 if (s.includes('開會55日前') || s.includes('尚未公告') || (row.code && s.includes(row.code) && row.name && s.includes(row.name))) {
@@ -191,7 +311,7 @@ serve(async (req) => {
             return row
         })
 
-        addLog(`Step 2: Syncing ${rowsToSync.length} rows...`)
+        addLog(`Step 2: Syncing ${rowsToSync.length} rows (Source: ${scrapSource})...`)
 
         // --- Step 2: 查詢上次執行結果（用於比較變化）---
         const { data: lastLog } = await supabase
@@ -259,7 +379,7 @@ serve(async (req) => {
 
         if (hasChanges) {
             // 通知類型 1: 爬蟲更新提醒
-            let notification = `✅ Gooddie 更新提醒\n\n`
+            let notification = `✅ Gooddie 更新提醒 (${scrapSource})\n\n`
             notification += `本次處理：${currentItemsProcessed} 筆\n`
 
             if (lastItemsProcessed > 0) {
@@ -334,16 +454,15 @@ serve(async (req) => {
         // --- Step 6: 商品卡智慧提醒（類型2A，首次發現）---
         addLog('Step 6: Checking gift card smart reminders...')
 
-        // 查詢當年度紀念品為空值的公司（不包含今天是最後買進日的，避免重複）
+        // 查詢當年度紀念品為空值的公司
         const { data: emptyGiftData } = await supabase
             .from('souvenirs')
             .select('*')
-            .not('doc_id', 'like', `%_%`) // 只查詢當年度（doc_id 不包含 _）
+            .not('doc_id', 'like', `%_%`)
             .is('souvenir_item', null)
-            .not('last_buy_date', 'eq', today) // 排除今天是最後買進日的（已在 Step 5 處理）
+            .not('last_buy_date', 'eq', today)
 
         if (emptyGiftData && emptyGiftData.length > 0) {
-            // 查詢去年資料
             const lastYear = (parseInt(TARGET_YEAR) - 1).toString()
             const codesToCheck = emptyGiftData.map(s => s.code)
 
@@ -352,7 +471,6 @@ serve(async (req) => {
                 .select('*')
                 .in('doc_id', codesToCheck.map(c => `${c}_${lastYear}`))
 
-            // 篩選出去年發放商品卡的公司
             const giftCardCandidates: any[] = []
             lastYearData?.forEach(lastYearItem => {
                 if (isGiftCard(lastYearItem.souvenir_item)) {
@@ -360,7 +478,7 @@ serve(async (req) => {
                     const currentItem = emptyGiftData.find(e => e.code === code)
                     if (currentItem) {
                         const daysLeft = getDaysRemaining(currentItem.last_buy_date)
-                        if (daysLeft >= 0) { // 只提醒未過期的
+                        if (daysLeft >= 0) {
                             giftCardCandidates.push({
                                 code: currentItem.code,
                                 name: currentItem.name,
@@ -402,7 +520,7 @@ serve(async (req) => {
             await sendLineBroadcast(notification)
         }
 
-        logEntry.message = `Processed ${currentItemsProcessed} items. Sent ${notifications.length} notifications.`
+        logEntry.message = `Processed ${currentItemsProcessed} items via ${scrapSource}. Sent ${notifications.length} notifications.`
 
     } catch (error: any) {
         addLog(`Scraper Error: ${error.message}`)
