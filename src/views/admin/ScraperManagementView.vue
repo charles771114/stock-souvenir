@@ -209,7 +209,6 @@ const handleTriggerScraper = async () => {
         cancelButtonText: '暫時不要',
         reverseButtons: true,
         confirmButtonColor: '#4f46e5',
-        borderRadius: '2rem',
         customClass: {
             popup: 'rounded-[2rem] border-none shadow-2xl',
             confirmButton: 'rounded-xl font-black px-6 py-3',
@@ -236,7 +235,6 @@ const handleTriggerScraper = async () => {
             icon: 'success',
             confirmButtonText: '太棒了',
             confirmButtonColor: '#059669',
-            borderRadius: '2rem',
             customClass: {
                 popup: 'rounded-[2rem] border-none shadow-2xl',
                 confirmButton: 'rounded-xl font-black px-6 py-3'
@@ -250,7 +248,6 @@ const handleTriggerScraper = async () => {
             icon: 'error',
             confirmButtonText: '瞭解',
             confirmButtonColor: '#e11d48',
-            borderRadius: '2rem',
             customClass: {
                 popup: 'rounded-[2rem] border-none shadow-2xl',
                 confirmButton: 'rounded-xl font-black px-6 py-3'
