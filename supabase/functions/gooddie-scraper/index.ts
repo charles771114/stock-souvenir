@@ -6,6 +6,7 @@ import { DOMParser } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const GOODDIE_BASE_URL = 'https://www.gooddie.tw'
+const APP_URL = Deno.env.get('APP_URL') || 'https://charles771114.github.io/stock-souvenir'
 const TARGET_YEAR = new Date().getFullYear().toString()
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
@@ -287,6 +288,7 @@ serve(async (req) => {
             }
 
             notification += `\n執行時間：${new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}`
+            notification += `\n\n🔗 查看完整資料：${APP_URL}/gifts`
             notifications.push(notification)
         }
 
@@ -324,6 +326,7 @@ serve(async (req) => {
                 })
 
                 notification += `今天是最後機會，請把握時間！⚠️`
+                notification += `\n\n🔗 查看完整資料：${APP_URL}/gifts`
                 notifications.push(notification)
             }
         }
@@ -387,6 +390,7 @@ serve(async (req) => {
                 }
 
                 notification += `共 ${giftCardCandidates.length} 家公司，建議持續關注 👀`
+                notification += `\n\n🔗 查看完整資料：${APP_URL}/gifts`
                 notifications.push(notification)
 
                 addLog(`Found ${giftCardCandidates.length} companies with gift card history`)
@@ -413,7 +417,7 @@ serve(async (req) => {
         if (!logEntry.message) {
             logEntry.message = logs.join('\n')
         }
-        
+
         // 更新資料庫記錄
         if (currentLogId) {
             await supabase.from('scraper_logs').update(logEntry).eq('id', currentLogId)
