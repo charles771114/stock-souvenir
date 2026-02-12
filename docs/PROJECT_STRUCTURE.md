@@ -18,7 +18,12 @@ stock-souvenir/
 │
 ├── 📂 supabase/                        # ⭐ Supabase 設定
 │   ├── migrations/
-│   │   └── 001_initial_schema.sql    # ⭐ 資料庫 schema
+│   │   ├── 001_initial_schema.sql    # ⭐ 資料庫 schema
+│   │   ├── 20260210150000_create_line_groups.sql # ⭐ LINE 群組表
+│   │   └── 20260212_fix_rls_security.sql # ⭐ 安全性修復 (Comprehensive RLS)
+│   ├── 📂 functions/
+│   │   ├── line-bot/                 # ⭐ LINE Bot Webhook
+│   │   └── gooddie-scraper/          # ⭐ 爬蟲與通知發送
 │   └── .gitignore
 │
 ├── 📂 src/

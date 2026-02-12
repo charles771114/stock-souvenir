@@ -43,7 +43,7 @@ serve(async (req) => {
             }
         }
 
-        // TODO: Verify signature (簡化版先略過，正式版需補上)
+        // console.log('Webhook received:', body)
 
         const events = JSON.parse(body).events
         if (!events || events.length === 0) {
