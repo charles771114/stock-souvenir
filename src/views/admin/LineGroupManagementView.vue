@@ -79,19 +79,75 @@
                         </div>
                     </div>
                     
-                    <!-- Status & Time -->
-                    <div class="flex flex-col items-end gap-1">
+                    <!-- Status & Actions -->
+                    <div class="flex flex-col items-end gap-2">
+                        <!-- Active Status Badge -->
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                            :class="group.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                            {{ group.is_active ? '活躍中' : '已退出' }}
+                            :class="group.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
+                            {{ group.is_active ? '✓ 啟用通知' : '停用通知' }}
                         </span>
+                        
+                        <!-- Last Active Time -->
                         <div class="text-xs text-gray-500">
                              最後活動: {{ formatDate(group.last_active_at) }}
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="flex items-center gap-2 mt-1">
+                            <!-- Toggle Active Button -->
+                            <button 
+                                @click="toggleActive(group)"
+                                class="inline-flex items-center px-3 py-1.5 border text-xs font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors"
+                                :class="group.is_active 
+                                    ? 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50 focus:ring-gray-500' 
+                                    : 'border-green-300 text-green-700 bg-green-50 hover:bg-green-100 focus:ring-green-500'"
+                            >
+                                <svg v-if="group.is_active" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                </svg>
+                                <svg v-else class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                {{ group.is_active ? '停用' : '啟用' }}
+                            </button>
+                            
+                            <!-- Remove Button -->
+                            <button 
+                                @click="removeGroup(group)"
+                                class="inline-flex items-center px-3 py-1.5 border border-red-300 text-xs font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                            >
+                                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                移除
+                            </button>
                         </div>
                     </div>
                 </div>
             </li>
         </ul>
+      </div>
+      
+      <!-- Help Section -->
+      <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-blue-800">如何加入群組</h3>
+            <div class="mt-2 text-sm text-blue-700">
+              <ol class="list-decimal list-inside space-y-1">
+                <li>在 LINE 中搜尋您的 Bot</li>
+                <li>將 Bot 加入目標群組</li>
+                <li>群組會自動出現在此列表</li>
+                <li>使用切換開關啟用/停用通知</li>
+              </ol>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   </div>
@@ -126,6 +182,44 @@ const fetchGroups = async () => {
 const copy = (text) => {
     navigator.clipboard.writeText(text)
     showToast('ID 已複製', 'success')
+}
+
+const toggleActive = async (group) => {
+    const newStatus = !group.is_active
+    const { error } = await supabase
+        .from('line_groups')
+        .update({ is_active: newStatus })
+        .eq('group_id', group.group_id)
+    
+    if (error) {
+        console.error(error)
+        showToast('更新失敗', 'error')
+    } else {
+        group.is_active = newStatus
+        showToast(
+            newStatus ? '已啟用通知' : '已停用通知', 
+            'success'
+        )
+    }
+}
+
+const removeGroup = async (group) => {
+    if (!confirm(`確定要移除群組「${group.group_name || group.display_name || '未命名群組'}」嗎？`)) {
+        return
+    }
+    
+    const { error } = await supabase
+        .from('line_groups')
+        .delete()
+        .eq('group_id', group.group_id)
+    
+    if (error) {
+        console.error(error)
+        showToast('移除失敗', 'error')
+    } else {
+        groups.value = groups.value.filter(g => g.group_id !== group.group_id)
+        showToast('群組已移除', 'success')
+    }
 }
 
 const formatDate = (ts) => {
