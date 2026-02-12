@@ -6,7 +6,6 @@ import { DOMParser } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const GOODDIE_BASE_URL = 'https://www.gooddie.tw'
-const APP_URL = Deno.env.get('APP_URL') || 'https://charles771114.github.io/stock-souvenir'
 const TARGET_YEAR = new Date().getFullYear().toString()
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
@@ -288,7 +287,6 @@ serve(async (req) => {
             }
 
             notification += `\n執行時間：${new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}`
-            notification += `\n\n🔗 查看完整資料：${APP_URL}/gifts`
             notifications.push(notification)
         }
 
@@ -326,7 +324,6 @@ serve(async (req) => {
                 })
 
                 notification += `今天是最後機會，請把握時間！⚠️`
-                notification += `\n\n🔗 查看完整資料：${APP_URL}/gifts`
                 notifications.push(notification)
             }
         }
@@ -390,7 +387,6 @@ serve(async (req) => {
                 }
 
                 notification += `共 ${giftCardCandidates.length} 家公司，建議持續關注 👀`
-                notification += `\n\n🔗 查看完整資料：${APP_URL}/gifts`
                 notifications.push(notification)
 
                 addLog(`Found ${giftCardCandidates.length} companies with gift card history`)
@@ -413,76 +409,16 @@ serve(async (req) => {
         const errorNotification = `❌ Gooddie 爬蟲執行失敗\n\n錯誤訊息：${error.message}\n時間：${new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}\n\n請檢查爬蟲設定或網站狀態`
         await sendLineBroadcast(errorNotification)
     } finally {
-        // 只在 message 為空時才設定詳細日誌（避免覆蓋成功/錯誤訊息）
-        if (!logEntry.message) {
-            logEntry.message = logs.join('\n')
-        }
-
-        // 更新資料庫記錄
-        if (currentLogId) {
-            await supabase.from('scraper_logs').update(logEntry).eq('id', currentLogId)
-        } else {
-            await supabase.from('scraper_logs').insert(logEntry)
-        }
+        logEntry.message = logs.join('\n')
+        if (currentLogId) await supabase.from('scraper_logs').update(logEntry).eq('id', currentLogId)
+        else await supabase.from('scraper_logs').insert(logEntry)
     }
     return new Response(JSON.stringify(logEntry), { headers: { ...corsHeaders, "Content-Type": "application/json" } })
 })
 
 async function sendLineBroadcast(text: string) {
     const token = Deno.env.get('LINE_CHANNEL_ACCESS_TOKEN')
-    if (!token) {
-        console.error('Missing LINE_CHANNEL_ACCESS_TOKEN')
-        return
-    }
-
-    // 查詢所有啟用的群組
-    const { data: activeGroups, error } = await supabase
-        .from('line_groups')
-        .select('group_id, group_name')
-        .eq('is_active', true)
-
-    if (error) {
-        console.error('Error fetching active groups:', error)
-        return
-    }
-
-    if (!activeGroups || activeGroups.length === 0) {
-        console.log('No active groups to send notification')
-        return
-    }
-
-    console.log(`Sending notification to ${activeGroups.length} active group(s)`)
-
-    // 發送到所有啟用的群組
-    for (const group of activeGroups) {
-        try {
-            const response = await fetch('https://api.line.me/v2/bot/message/push', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    to: group.group_id,
-                    messages: [{ type: 'text', text: text }]
-                })
-            })
-
-            if (response.ok) {
-                console.log(`✅ Sent to group: ${group.group_name || group.group_id}`)
-
-                // 更新最後活動時間
-                await supabase
-                    .from('line_groups')
-                    .update({ last_active_at: new Date().toISOString() })
-                    .eq('group_id', group.group_id)
-            } else {
-                const errorText = await response.text()
-                console.error(`❌ Failed to send to group ${group.group_id}:`, errorText)
-            }
-        } catch (e) {
-            console.error(`Error sending to group ${group.group_id}:`, e)
-        }
-    }
+    const target = Deno.env.get('LINE_NOTIFY_TARGET_ID')
+    if (!token || !target) return
+    await fetch('https://api.line.me/v2/bot/message/push', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ to: target, messages: [{ type: 'text', text: text }] }) })
 }
-

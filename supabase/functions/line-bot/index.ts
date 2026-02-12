@@ -20,6 +20,29 @@ serve(async (req) => {
 
         const body = await req.text()
 
+        // Verify signature
+        if (LINE_CHANNEL_SECRET) {
+            const encoder = new TextEncoder()
+            const key = await crypto.subtle.importKey(
+                'raw',
+                encoder.encode(LINE_CHANNEL_SECRET),
+                { name: 'HMAC', hash: 'SHA-256' },
+                false,
+                ['sign']
+            )
+            const signatureBuffer = await crypto.subtle.sign(
+                'HMAC',
+                key,
+                encoder.encode(body)
+            )
+            const computedSignature = btoa(String.fromCharCode(...new Uint8Array(signatureBuffer)))
+
+            if (computedSignature !== signature) {
+                console.error('Invalid signature')
+                return new Response('Unauthorized', { status: 401 })
+            }
+        }
+
         // TODO: Verify signature (簡化版先略過，正式版需補上)
 
         const events = JSON.parse(body).events
