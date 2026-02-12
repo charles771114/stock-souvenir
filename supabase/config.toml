@@ -77,9 +77,9 @@ file_size_limit = "50MiB"
 enabled = true
 verify_jwt = false
 import_map = "./functions/stock-api/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
 entrypoint = "./functions/stock-api/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/stock-api/*.html" ]
+
+[functions.gooddie-scraper]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/gooddie-scraper/index.ts"
