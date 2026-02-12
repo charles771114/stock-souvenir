@@ -52,10 +52,17 @@ description: 實作 GitHub Spec Kit 方法論，推動規格驅動開發 (Spec-D
 4.  標記任務為完成。
 5.  重複上述步驟。
 
-## Agent 指引 (Instructions for Agent)
-1.  當使用者要求開發複雜功能時，主動建議使用 `spec-kit` 流程。
-2.  如果獲得同意，從 Phase 1 開始。在使用者核准當前產出物之前，不要進入下一階段。
-3.  將所有規格文件存放在專案根目錄的 `.specs/` 資料夾中。
+## Active Context Protocol (Smart Memory)
+
+為了提高效率並增強 Skill 之間的連動性，本專案採用 **Active Context Protocol**。
+
+### 核心規則
+1.  **Read First**: 在執行任何任務之前，**務必優先讀取 `.specs/ACTIVE_CONTEXT.md`**。這個檔案是你的「短期記憶」。
+2.  **Update Always**: 當你完成了某個階段 (Phase) 或做出了重要決策，**務必更新 `.specs/ACTIVE_CONTEXT.md`**。
+
+### 協作模式
+-   **PM -> Architect**: PM 更新 Context 中的 `Current Phase` 為 "System Design"，並列出 `Recent Decisions` (需求變更)。
+-   **Architect -> Developer**: 架構師設計完後，更新 `Current Phase` 為 "Implementation"，並列出 `Active Files` (需要建立/修改的檔案)。
 
 ## 文件範本 (Templates)
 

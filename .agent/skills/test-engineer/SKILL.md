@@ -47,6 +47,11 @@ describe('ExampleComponent', () => {
 -   Watch mode: `npm run test:unit -- --watch`
 -   If a test fails, do not just delete the test. Fix the code to make the test pass.
 
+### 4. Supabase Testing
+-   **Connection & Sanity Check**: `npm run supabase:test`
+    - 使用此腳本來驗證 Supabase 連線是否正常，以及基礎資料表 (souvenirs, profiles) 是否可讀取。
+    - 當測試失敗涉及資料庫時，先執行此指令排除連線問題。
+
 ## "One Case, Three Inferences" (舉一反三)
 When fixing a bug or adding a feature:
 1.  **Check Similar Code**: search for patterns that look like the code you just touched.

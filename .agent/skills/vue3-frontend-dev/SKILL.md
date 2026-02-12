@@ -14,6 +14,8 @@ description: 專精於 Vue 3 生態系的前端開發專家，負責撰寫高品
 2.  **Modular & Reusable**: 善用 Composables (`useXxx`) 提取邏輯，保持元件輕量與專注於視圖。
 3.  **Type Safety**: 雖然本專案目前偏向 JavaScript，但應保持類型意識，撰寫如 TypeScript 般嚴謹的程式碼 (JSDoc)。
 4.  **Performance First**: 注意響應式開銷，避免不必要的重新渲染。
+5.  **Template Integrity & Verification**: 修改 Template 後，**必須**使用 `view_file` 重新讀取檔案，並手動計算巢狀結構（Indent Counting）以確保閉合標籤完整。嚴禁依賴猜測。若發生 `missing end tag` 錯誤，請立即停止並檢查巢狀層級。
+6.  **Import Verification**: 引用模組前，**必須**確認檔案路徑與 Export 名稱。嚴禁假設路徑 (如 `@/supabase` vs `@/lib/supabase`)。無法確認時，使用 `find_by_name` 或 `grep_search` 尋找。
 
 ## 技術堆疊指南
 
