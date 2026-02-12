@@ -409,9 +409,17 @@ serve(async (req) => {
         const errorNotification = `❌ Gooddie 爬蟲執行失敗\n\n錯誤訊息：${error.message}\n時間：${new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}\n\n請檢查爬蟲設定或網站狀態`
         await sendLineBroadcast(errorNotification)
     } finally {
-        logEntry.message = logs.join('\n')
-        if (currentLogId) await supabase.from('scraper_logs').update(logEntry).eq('id', currentLogId)
-        else await supabase.from('scraper_logs').insert(logEntry)
+        // 只在 message 為空時才設定詳細日誌（避免覆蓋成功/錯誤訊息）
+        if (!logEntry.message) {
+            logEntry.message = logs.join('\n')
+        }
+        
+        // 更新資料庫記錄
+        if (currentLogId) {
+            await supabase.from('scraper_logs').update(logEntry).eq('id', currentLogId)
+        } else {
+            await supabase.from('scraper_logs').insert(logEntry)
+        }
     }
     return new Response(JSON.stringify(logEntry), { headers: { ...corsHeaders, "Content-Type": "application/json" } })
 })
