@@ -67,6 +67,30 @@
             </div>
           </div>
 
+          <!-- Year Selector -->
+          <div class="glass-card p-6 bg-indigo-50/20 border-indigo-100/30">
+            <h2
+              class="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2 leading-none">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              匯入年份設定
+            </h2>
+            <div class="space-y-3">
+              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">選擇目標年份</label>
+              <select v-model="selectedYear"
+                class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
+                <option v-for="year in availableYears" :key="year" :value="year">
+                  {{ year }} 年度
+                </option>
+              </select>
+              <p class="text-[9px] font-bold text-slate-400 leading-relaxed">
+                選擇要匯入的年份，系統會自動以「股票代號」為準進行複寫
+              </p>
+            </div>
+          </div>
+
           <div class="glass-card p-6 bg-cyan-50/20 border-cyan-100/30">
             <h2
               class="text-[10px] font-black text-cyan-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2 leading-none">
@@ -249,6 +273,17 @@ const isDragging = ref(false)
 const file = ref(null)
 const mappedData = ref([])
 
+// Year Selector
+const currentYear = new Date().getFullYear()
+const availableYears = ref([
+  currentYear,
+  currentYear - 1,
+  currentYear - 2,
+  currentYear - 3,
+  currentYear - 4
+])
+const selectedYear = ref(currentYear)
+
 const previewRows = computed(() => mappedData.value.slice(0, 20))
 
 const handleFileChange = async (e) => {
@@ -267,10 +302,10 @@ const processFile = async (f) => {
   try {
     const rawData = await parseFile(f)
     if (!rawData || rawData.length === 0) throw new Error('Empty payload detected')
-    const result = mapData(rawData)
+    const result = mapData(rawData, selectedYear.value)
     if (!result || result.length === 0) throw new Error('No valid alignment keys found (Stock ID/Date)')
     mappedData.value = result
-    showToast(`Aligned ${result.length} master records`, 'success')
+    showToast(`Aligned ${result.length} master records for year ${selectedYear.value}`, 'success')
   } catch (err) {
     showToast(err.message, 'error')
     file.value = null
@@ -285,9 +320,9 @@ const clearFile = () => {
 
 const handleUpload = async () => {
   if (mappedData.value.length === 0) return
-  const result = await uploadToSouvenirs(mappedData.value)
+  const result = await uploadToSouvenirs(mappedData.value, selectedYear.value)
   if (result.success) {
-    showToast(`Committed ${result.count} alignment records`, 'success')
+    showToast(`Committed ${result.count} records for year ${selectedYear.value}`, 'success')
     router.push('/admin/souvenirs')
   } else {
     showToast(`Commit failure: ${result.error}`, 'error')

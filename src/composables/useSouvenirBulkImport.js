@@ -23,21 +23,21 @@ export function useSouvenirBulkImport() {
           const data = e.target.result
           const readOptions = isCsv ? { type: 'string' } : { type: 'array', cellDates: true }
           const workbook = XLSX.read(data, readOptions)
-          
+
           if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
             throw new Error('Excel 檔案中找不到工作表 (Sheet)')
           }
 
           let allParsedData = []
-          
+
           // 嘗試解析所有工作表，看是不是資料在別張或是範圍判定出錯
           workbook.SheetNames.forEach((name, idx) => {
             const ws = workbook.Sheets[name]
-            
+
             // 關鍵修正：重新計算 Range
             // 某些 Numbers 匯出的檔案 !ref 可能只有 A1:J3，即便後面還有資料
             let range = ws['!ref']
-            
+
             // 手動計算真正的範圍 (遍歷所有 Key 找出最大 Row/Col)
             const cells = Object.keys(ws).filter(k => k[0] !== '!')
             if (cells.length > 0) {
@@ -57,12 +57,12 @@ export function useSouvenirBulkImport() {
             }
 
             const jsonData = XLSX.utils.sheet_to_json(ws, { defval: "" })
-            
+
             if (jsonData.length > 0) {
               allParsedData = [...allParsedData, ...jsonData]
             }
           })
-          
+
           resolve(allParsedData)
         } catch (err) {
           console.error('[Import] 解析核心錯誤:', err)
@@ -83,14 +83,16 @@ export function useSouvenirBulkImport() {
   /**
    * 將解析後的原始資料 (JSONArray) 轉換為標準格式
    * 針對 Mac Numbers 或格式不規範的 Excel 進行優化
+   * @param {Array} rawData - 原始資料
+   * @param {Number} targetYear - 目標年份（選填，預設為當年度）
    */
-  const mapData = (rawData) => {
+  const mapData = (rawData, targetYear = null) => {
     if (!rawData || rawData.length === 0) return []
 
     // 1. 識別關鍵欄位索引 (不依賴 JSON Key 名稱，改用內容搜尋)
     // 有些 Excel 標題不在第一列，或者標題名稱有微小差異
     // 我們嘗試從前 10 筆資料中尋找最像「標題列」的那一列
-    
+
     const keywords = {
       code: ['股票代號', '代號', 'Code', 'StockCode', '股票代碼', '證券代號', '代碼'],
       meetingTime: ['開會時間', '日期', 'MeetingTime', '開會日期', '開會', '時間', '會議時間'],
@@ -106,7 +108,7 @@ export function useSouvenirBulkImport() {
     // 輔助函式：標準化 Key 名稱 (去除空格、標點符號，但保留中文字與英數)
     // 原始 regex /[\s\W_]/g 會把中文也當成 \W 刪掉，導致所有中文欄位都變成空字串
     const normalize = (s) => String(s || '').trim().replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '')
-    
+
     let keyIndices = {}
     let headerRowIdx = -1 // 需要跳過的「位於資料列中」的標題列索引
 
@@ -215,13 +217,20 @@ export function useSouvenirBulkImport() {
       }
 
       const formattedMeetingDate = formatDate(meetingTime)
-      
+
       // 修法：不再過濾掉 null rows，改為標記 isValid
       // 這樣使用者才能在預覽表格看到底哪些是有問題的
       const isValid = code && formattedMeetingDate
- 
+
+      // doc_id 生成邏輯：
+      // - 當年度：使用純代號（例如：1409）
+      // - 歷史年度：使用 CODE_YEAR 格式（例如：1409_2025）
+      const currentYear = new Date().getFullYear()
+      const isCurrentYear = !targetYear || parseInt(targetYear) === currentYear
+      const docId = isCurrentYear ? code : `${code}_${targetYear}`
+
       return {
-        doc_id: isValid ? `${code}_${formattedMeetingDate}` : null,
+        doc_id: docId,
         code,
         name: name ? String(name).trim() : null,
         price: parseFloat(priceStr) || null,
@@ -235,14 +244,15 @@ export function useSouvenirBulkImport() {
         isValid // 新增：用於 UI 顯示
       }
     })
- 
+
     return result
   }
   /**
    * 批次上傳至 souvenirs
    * @param {Array} mappedData 
+   * @param {Number} targetYear - 目標年份（選填）
    */
-  const uploadToSouvenirs = async (mappedData) => {
+  const uploadToSouvenirs = async (mappedData, targetYear = null) => {
     uploading.value = true
     error.value = null
     progress.value = 0
@@ -251,36 +261,53 @@ export function useSouvenirBulkImport() {
       const validData = mappedData.filter(d => d.isValid)
       if (validData.length === 0) throw new Error('無有效且完整的資料可供匯入')
 
+      // 去重邏輯：確保每個 doc_id 只出現一次
+      // 當有重複時，保留陣列中最後出現的（通常是最新的）
+      const deduplicatedData = []
+      const docIdMap = new Map()
+
+      validData.forEach(item => {
+        const docId = item.doc_id
+        if (docId) {
+          // 使用 Map 自動覆蓋，保留最後一筆
+          docIdMap.set(docId, item)
+        }
+      })
+
+      deduplicatedData.push(...docIdMap.values())
+
+      console.log(`Original: ${validData.length} records, After deduplication: ${deduplicatedData.length} records`)
+
       const BATCH_SIZE = 200
-      const total = validData.length
+      const total = deduplicatedData.length
       let processed = 0
 
       for (let i = 0; i < total; i += BATCH_SIZE) {
-        const chunk = validData.slice(i, i + BATCH_SIZE).map(({ isValid, ...rest }) => rest)
+        const chunk = deduplicatedData.slice(i, i + BATCH_SIZE).map(({ isValid, ...rest }) => rest)
 
         const { error: upsertError } = await supabase
           .from('souvenirs')
           .upsert(chunk, { onConflict: 'doc_id' })
 
         if (upsertError) throw upsertError
- 
-         processed += chunk.length
-         progress.value = Math.round((processed / total) * 100)
-       }
- 
-       // 關鍵：清除快取，避免前端 Gifts 頁面因為 LocalStorage Cache 而看不到新資料
-       try {
-         const CACHE_PREFIX = 'stock-souvenir:gifts:'
-         Object.keys(localStorage).forEach(key => {
-           if (key.startsWith(CACHE_PREFIX)) {
-              localStorage.removeItem(key)
-            }
-          })
-        } catch (e) {
-         // console.warn('[Import] 清除快取失敗 (不影響匯入):', e) // Removed
-       }
- 
-       return { success: true, count: total }
+
+        processed += chunk.length
+        progress.value = Math.round((processed / total) * 100)
+      }
+
+      // 關鍵：清除快取，避免前端 Gifts 頁面因為 LocalStorage Cache 而看不到新資料
+      try {
+        const CACHE_PREFIX = 'stock-souvenir:gifts:'
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith(CACHE_PREFIX)) {
+            localStorage.removeItem(key)
+          }
+        })
+      } catch (e) {
+        // console.warn('[Import] 清除快取失敗 (不影響匯入):', e) // Removed
+      }
+
+      return { success: true, count: total }
 
     } catch (e) {
       console.error('批量匯入失敗:', e)
