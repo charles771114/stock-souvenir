@@ -83,3 +83,18 @@ entrypoint = "./functions/stock-api/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/gooddie-scraper/index.ts"
+
+[functions.line-bot]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/line-bot/index.ts"
+
+[functions.line-notify]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/line-notify/index.ts"
+
+[functions.scrape-gifts]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/scrape-gifts/index.ts"
