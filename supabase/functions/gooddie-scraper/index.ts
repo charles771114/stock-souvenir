@@ -23,13 +23,6 @@ const corsHeaders = {
 
 const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 
-// 商品卡關鍵字
-const GIFT_CARD_KEYWORDS = [
-    '商品卡', '禮物卡', '提貨券', '禮券', '購物金',
-    '全家', 'FamilyMart', '7-11', '7-ELEVEN', '統一超商',
-    '萊爾富', 'Hi-Life', '家樂福', 'Carrefour',
-    'Gift Card', 'Voucher', 'Coupon'
-]
 
 function extractCookies(res: Response) {
     // @ts-ignore
@@ -54,11 +47,6 @@ function calculateFingerprint(souvenirs: any[]) {
     return hash.toString(36)
 }
 
-// 檢查是否為商品卡
-function isGiftCard(souvenirText: string | null): boolean {
-    if (!souvenirText) return false
-    return GIFT_CARD_KEYWORDS.some(keyword => souvenirText.includes(keyword))
-}
 
 // 計算剩餘天數
 function getDaysRemaining(dateStr: string | null): number {
@@ -203,6 +191,29 @@ serve(async (req) => {
 
     let currentLogId: any = null
     const notifications: string[] = []
+
+    // 1. Fetch Categories for matching
+    const { data: categories } = await supabase
+        .from('souvenir_categories')
+        .select('*')
+        .order('sort_order', { ascending: true })
+
+    const matchCategory = (text: string | null) => {
+        if (!text) return '其他'
+        if (categories) {
+            for (const cat of categories) {
+                if (cat.keywords && Array.isArray(cat.keywords)) {
+                    // @ts-ignore
+                    if (cat.keywords.some(k => text.includes(k))) {
+                        return cat.name
+                    }
+                }
+            }
+        }
+        return '其他'
+    }
+
+    const isGiftCard = (text: string | null) => matchCategory(text) === '超商商品卡'
 
     try {
         addLog(`Starting Gooddie Scraper for year ${TARGET_YEAR}...`)
@@ -371,12 +382,15 @@ serve(async (req) => {
 
                 const isOldSouvenirEmpty = !oldSouvenir || (typeof oldSouvenir === 'string' && (oldSouvenir.includes('尚未公告') || oldSouvenir.includes('開會55日前')))
 
+                const category = matchCategory(newSouvenir)
+
                 // 1. 偵測新增項目 (針對該年份)
                 if (isNewForYear) {
                     addedGifts.push({
                         code: row.code,
                         name: row.name,
                         souvenir: newSouvenir || '尚未公布',
+                        category,
                         lastYearSouvenir,
                         lastBuyDate: row.last_buy_date,
                         daysLeft
@@ -388,6 +402,7 @@ serve(async (req) => {
                         code: row.code,
                         name: row.name,
                         souvenir: newSouvenir,
+                        category,
                         lastBuyDate: row.last_buy_date,
                         daysLeft
                     })
@@ -403,8 +418,16 @@ serve(async (req) => {
         const hasChanges = (currentFingerprint !== lastFingerprint) || (currentItemsProcessed !== lastItemsProcessed)
 
         if (hasChanges) {
+            // 分類列表
+            const addedGiftCards = addedGifts.filter(g => g.category === '超商商品卡')
+            const addedOthers = addedGifts.filter(g => g.category !== '超商商品卡')
+            const updatedGiftCards = updatedGifts.filter(g => g.category === '超商商品卡')
+            const updatedOthers = updatedGifts.filter(g => g.category !== '超商商品卡')
+
+            const hasGiftCardUpdate = addedGiftCards.length > 0 || updatedGiftCards.length > 0
+
             // 通知類型 1: 爬蟲更新提醒
-            let notification = `✅ Gooddie 更新提醒 (${scrapSource})\n\n`
+            let notification = `${hasGiftCardUpdate ? '🎁 商品卡更新提醒！' : '✅ Gooddie 更新提醒'} (${scrapSource})\n\n`
             notification += `本次處理：${currentItemsProcessed} 筆\n`
 
             if (lastItemsProcessed > 0) {
@@ -419,36 +442,46 @@ serve(async (req) => {
                 }
             }
 
-            // 新增項目詳情
-            if (addedGifts.length > 0) {
-                notification += `\n🆕 新增項目：\n`
-                addedGifts.slice(0, 5).forEach(g => {
+            // A. 商品卡優先區
+            if (hasGiftCardUpdate) {
+                notification += `\n💳 【 商品卡新公告 】\n`
+                const allGiftCards = [...addedGiftCards, ...updatedGiftCards]
+                allGiftCards.slice(0, 5).forEach(g => {
+                    notification += `🌟 [${g.code}] ${g.name}\n`
+                    notification += `  ${g.souvenir}\n`
+                    const timeInfo = g.daysLeft === 0 ? `🔥 今天截止 (⚠️ 13:30前)` : `${g.lastBuyDate} (剩${g.daysLeft}天)`
+                    notification += `  最後買進：${timeInfo}\n\n`
+                })
+            }
+
+            // B. 其他新增項目
+            if (addedOthers.length > 0) {
+                notification += `\n🆕 其他新增項目：\n`
+                addedOthers.slice(0, 5).forEach(g => {
+                    const catTag = g.category !== '其他' ? `[${g.category}] ` : ''
                     notification += `📌 ${g.code} ${g.name}\n`
                     if (g.souvenir === '尚未公布' && g.lastYearSouvenir) {
                         notification += `  紀念品：尚未公布\n  (去年參考：${g.lastYearSouvenir})\n`
                     } else {
-                        notification += `  紀念品：${g.souvenir}\n`
+                        notification += `  ${catTag}${g.souvenir}\n`
                     }
-                    const timeInfo = g.daysLeft === 0 ? `🔥 今天截止 (⚠️ 13:30 前買進)` : `${g.lastBuyDate} (還有${g.daysLeft}天)`
-                    notification += `  最後買進日：${timeInfo}\n\n`
+                    const timeInfo = g.daysLeft === 0 ? `🔥 今天截止 (⚠️ 13:30前)` : `${g.lastBuyDate} (剩${g.daysLeft}天)`
+                    notification += `  最後買進：${timeInfo}\n\n`
                 })
-                if (addedGifts.length > 5) {
-                    notification += `...及其他 ${addedGifts.length - 5} 家公司\n`
-                }
+                if (addedOthers.length > 5) notification += `...及其他 ${addedOthers.length - 5} 家公司\n`
             }
 
-            // 紀念品更新
-            if (updatedGifts.length > 0) {
-                notification += `\n✨ 紀念品更新：\n`
-                updatedGifts.slice(0, 5).forEach(g => {
+            // C. 其他紀念品更新
+            if (updatedOthers.length > 0) {
+                notification += `\n✨ 其他紀念品更新：\n`
+                updatedOthers.slice(0, 5).forEach(g => {
+                    const catTag = g.category !== '其他' ? `[${g.category}] ` : ''
                     notification += `📌 ${g.code} ${g.name}\n`
-                    notification += `  更新：${g.souvenir}\n`
-                    const timeInfo = g.daysLeft === 0 ? `🔥 今天截止 (⚠️ 13:30 前買進)` : `${g.lastBuyDate} (還有${g.daysLeft}天)`
-                    notification += `  最後買進日：${timeInfo}\n\n`
+                    notification += `  更新：${catTag}${g.souvenir}\n`
+                    const timeInfo = g.daysLeft === 0 ? `🔥 今天截止 (⚠️ 13:30前)` : `${g.lastBuyDate} (剩${g.daysLeft}天)`
+                    notification += `  最後買進：${timeInfo}\n\n`
                 })
-                if (updatedGifts.length > 5) {
-                    notification += `...及其他 ${updatedGifts.length - 5} 家公司\n`
-                }
+                if (updatedOthers.length > 5) notification += `...及其他 ${updatedOthers.length - 5} 家公司\n`
             }
 
             notification += `\n執行時間：${new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}`
