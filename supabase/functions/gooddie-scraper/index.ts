@@ -170,7 +170,7 @@ async function fetchExcelData(cookies: string): Promise<any[]> {
         const lastBuyDate = row['最後買進日'] || row['最後買進']
 
         return {
-            doc_id: code,
+            doc_id: `${code}_${TARGET_YEAR}`,
             code: code,
             name: name,
             meeting_date: parseDateString(meetingDate),
@@ -279,7 +279,7 @@ serve(async (req) => {
                     }
 
                     scrapedRows.push({
-                        doc_id: code,
+                        doc_id: `${code}_${TARGET_YEAR}`,
                         code: code,
                         name: name,
                         meeting_date: parseDateString(parts[2] || getValByTitle('開會')),
@@ -336,10 +336,10 @@ serve(async (req) => {
             // 先查詢現有資料（用於偵測紀念品更新）
             const { data: existingData } = await supabase
                 .from('souvenirs')
-                .select('code, souvenir_item')
-                .in('code', rowsToSync.map(r => r.code))
+                .select('doc_id, souvenir_item')
+                .in('doc_id', rowsToSync.map(r => r.doc_id))
 
-            const existingMap = new Map(existingData?.map(e => [e.code, e.souvenir_item]) || [])
+            const existingMap = new Map(existingData?.map(e => [e.doc_id, e.souvenir_item]) || [])
 
             // Upsert
             const { error: upsertError } = await supabase
@@ -350,8 +350,8 @@ serve(async (req) => {
 
             // 偵測項目變化
             for (const row of rowsToSync) {
-                const oldSouvenir = existingMap.get(row.code)
-                const isNew = !existingMap.has(row.code)
+                const oldSouvenir = existingMap.get(row.doc_id)
+                const isNewForYear = !existingMap.has(row.doc_id)
                 const newSouvenir = row.souvenir_item
 
                 const daysLeft = getDaysRemaining(row.last_buy_date)
@@ -369,8 +369,10 @@ serve(async (req) => {
                     lastYearSouvenir = prevYearData?.souvenir_item || null
                 }
 
-                // 1. 偵測新增項目
-                if (isNew) {
+                const isOldSouvenirEmpty = !oldSouvenir || (typeof oldSouvenir === 'string' && (oldSouvenir.includes('尚未公告') || oldSouvenir.includes('開會55日前')))
+
+                // 1. 偵測新增項目 (針對該年份)
+                if (isNewForYear) {
                     addedGifts.push({
                         code: row.code,
                         name: row.name,
@@ -380,8 +382,8 @@ serve(async (req) => {
                         daysLeft
                     })
                 }
-                // 2. 偵測紀念品更新（空值→有內容）
-                else if ((!oldSouvenir || oldSouvenir.includes('尚未公告') || oldSouvenir.includes('開會55日前')) && newSouvenir) {
+                // 2. 偵測紀念品更新 (舊資料為空或尚待公布 -> 現在有新內容)
+                else if (isOldSouvenirEmpty && newSouvenir) {
                     updatedGifts.push({
                         code: row.code,
                         name: row.name,
