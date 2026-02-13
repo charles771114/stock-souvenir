@@ -8,7 +8,7 @@ import * as XLSX from "https://esm.sh/xlsx@0.18.5";
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const GOODDIE_BASE_URL = 'https://www.gooddie.tw'
-const APP_URL = Deno.env.get('APP_URL') || 'https://charles771114.github.io/stock-souvenir'
+const APP_URL = Deno.env.get('APP_URL') || 'https://stock-souvenir.vercel.app'
 const TARGET_YEAR = new Date().getFullYear().toString()
 
 const GOODDIE_EMAIL = Deno.env.get('GOODDIE_EMAIL')
@@ -177,7 +177,6 @@ async function fetchExcelData(cookies: string): Promise<any[]> {
             souvenir_item: souvenir,
             last_buy_date: parseDateString(lastBuyDate),
             source_url: GOODDIE_BASE_URL,
-            source_type: 'Excel',
             updated_at: new Date().toISOString()
         }
     }).filter(r => r.code && /^\d{4,6}$/.test(r.code))
@@ -287,7 +286,6 @@ serve(async (req) => {
                         souvenir_item: souvenir,
                         last_buy_date: parseDateString(getValByTitle('最後買進日')),
                         source_url: GOODDIE_BASE_URL,
-                        source_type: 'HTML',
                         updated_at: new Date().toISOString()
                     })
                 }
@@ -332,6 +330,7 @@ serve(async (req) => {
 
         // --- Step 3: Upsert 資料並偵測變化 ---
         const updatedGifts: any[] = [] // 紀念品從空值→有內容的公司
+        const addedGifts: any[] = [] // 本次新增的公司
 
         if (rowsToSync.length > 0) {
             // 先查詢現有資料（用於偵測紀念品更新）
@@ -349,25 +348,49 @@ serve(async (req) => {
 
             if (upsertError) throw upsertError
 
-            // 偵測紀念品更新（空值→有內容）
-            rowsToSync.forEach(row => {
+            // 偵測項目變化
+            for (const row of rowsToSync) {
                 const oldSouvenir = existingMap.get(row.code)
+                const isNew = !existingMap.has(row.code)
                 const newSouvenir = row.souvenir_item
 
-                // 檢查是否從空值變為有內容
-                if ((!oldSouvenir || oldSouvenir.includes('尚未公告') || oldSouvenir.includes('開會55日前')) && newSouvenir) {
-                    const daysLeft = getDaysRemaining(row.last_buy_date)
-                    if (daysLeft >= 0) { // 只提醒未過期的
-                        updatedGifts.push({
-                            code: row.code,
-                            name: row.name,
-                            souvenir: newSouvenir,
-                            lastBuyDate: row.last_buy_date,
-                            daysLeft
-                        })
-                    }
+                const daysLeft = getDaysRemaining(row.last_buy_date)
+                if (daysLeft < 0) continue // 只提醒未過期的
+
+                // 獲取去年資料背景
+                let lastYearSouvenir = null
+                if (!newSouvenir || newSouvenir.includes('尚未公告') || newSouvenir.includes('開會55日前')) {
+                    const lastYear = (parseInt(TARGET_YEAR) - 1).toString()
+                    const { data: prevYearData } = await supabase
+                        .from('souvenirs')
+                        .select('souvenir_item')
+                        .eq('doc_id', `${row.code}_${lastYear}`)
+                        .maybeSingle()
+                    lastYearSouvenir = prevYearData?.souvenir_item || null
                 }
-            })
+
+                // 1. 偵測新增項目
+                if (isNew) {
+                    addedGifts.push({
+                        code: row.code,
+                        name: row.name,
+                        souvenir: newSouvenir || '尚未公布',
+                        lastYearSouvenir,
+                        lastBuyDate: row.last_buy_date,
+                        daysLeft
+                    })
+                }
+                // 2. 偵測紀念品更新（空值→有內容）
+                else if ((!oldSouvenir || oldSouvenir.includes('尚未公告') || oldSouvenir.includes('開會55日前')) && newSouvenir) {
+                    updatedGifts.push({
+                        code: row.code,
+                        name: row.name,
+                        souvenir: newSouvenir,
+                        lastBuyDate: row.last_buy_date,
+                        daysLeft
+                    })
+                }
+            }
 
             logEntry.items_processed = currentItemsProcessed
             logEntry.data_fingerprint = currentFingerprint
@@ -394,13 +417,32 @@ serve(async (req) => {
                 }
             }
 
+            // 新增項目詳情
+            if (addedGifts.length > 0) {
+                notification += `\n🆕 新增項目：\n`
+                addedGifts.slice(0, 5).forEach(g => {
+                    notification += `📌 ${g.code} ${g.name}\n`
+                    if (g.souvenir === '尚未公布' && g.lastYearSouvenir) {
+                        notification += `  紀念品：尚未公布\n  (去年參考：${g.lastYearSouvenir})\n`
+                    } else {
+                        notification += `  紀念品：${g.souvenir}\n`
+                    }
+                    const timeInfo = g.daysLeft === 0 ? `🔥 今天截止 (⚠️ 13:30 前買進)` : `${g.lastBuyDate} (還有${g.daysLeft}天)`
+                    notification += `  最後買進日：${timeInfo}\n\n`
+                })
+                if (addedGifts.length > 5) {
+                    notification += `...及其他 ${addedGifts.length - 5} 家公司\n`
+                }
+            }
+
             // 紀念品更新
             if (updatedGifts.length > 0) {
-                notification += `\n紀念品更新：\n`
+                notification += `\n✨ 紀念品更新：\n`
                 updatedGifts.slice(0, 5).forEach(g => {
                     notification += `📌 ${g.code} ${g.name}\n`
-                    notification += `  更新：${g.souvenir} ✨\n`
-                    notification += `  最後買進日：${g.lastBuyDate} (還有${g.daysLeft}天)\n\n`
+                    notification += `  更新：${g.souvenir}\n`
+                    const timeInfo = g.daysLeft === 0 ? `🔥 今天截止 (⚠️ 13:30 前買進)` : `${g.lastBuyDate} (還有${g.daysLeft}天)`
+                    notification += `  最後買進日：${timeInfo}\n\n`
                 })
                 if (updatedGifts.length > 5) {
                     notification += `...及其他 ${updatedGifts.length - 5} 家公司\n`
@@ -408,7 +450,7 @@ serve(async (req) => {
             }
 
             notification += `\n執行時間：${new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}`
-            notification += `\n\n🔗 查看完整資料：${APP_URL}/gifts`
+            notification += `\n\n點擊查看您的庫存狀態：${APP_URL}/gifts`
             notifications.push(notification)
         }
 
@@ -441,12 +483,12 @@ serve(async (req) => {
                     if (current) {
                         notification += `🔥 ${current.code} ${current.name}\n`
                         notification += `去年：${company.souvenir_item}\n`
-                        notification += `最後買進日：今天！(${today})\n\n`
+                        notification += `最後買進日：🔥 今天截止 (⚠️ 13:30 前買進)\n\n`
                     }
                 })
 
                 notification += `今天是最後機會，請把握時間！⚠️`
-                notification += `\n\n🔗 查看完整資料：${APP_URL}/gifts`
+                notification += `\n\n點擊查看您的庫存狀態：${APP_URL}/gifts`
                 notifications.push(notification)
             }
         }
@@ -508,7 +550,7 @@ serve(async (req) => {
                 }
 
                 notification += `共 ${giftCardCandidates.length} 家公司，建議持續關注 👀`
-                notification += `\n\n🔗 查看完整資料：${APP_URL}/gifts`
+                notification += `\n\n點擊查看您的庫存狀態：${APP_URL}/gifts`
                 notifications.push(notification)
 
                 addLog(`Found ${giftCardCandidates.length} companies with gift card history`)

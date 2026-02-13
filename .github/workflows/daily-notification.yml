@@ -3,10 +3,10 @@ name: Daily Stock Souvenir Notification
 
 on:
   schedule:
-    # 13:00 PM UTC+8 = 05:00 UTC
-    - cron: '0 5 * * *'
-    # 21:00 PM UTC+8 = 13:00 UTC
-    - cron: '0 13 * * *'
+    # 09:00 AM UTC+8 = 01:00 UTC
+    - cron: '0 1 * * *'
+    # 13:30 PM UTC+8 = 05:30 UTC (Just before 13:30 deadline)
+    - cron: '30 5 * * *'
   workflow_dispatch:
 
 jobs:
