@@ -10,10 +10,11 @@ export function useToast() {
      * @param {string} message - The message to display
      * @param {string} type - 'success', 'error', 'info', 'warning'
      * @param {number} duration - Duration in ms (default 3000)
+     * @param {Object} action - Optional action button { label: string, onClick: Function }
      */
-    const showToast = (message, type = 'info', duration = 3000) => {
+    const showToast = (message, type = 'info', duration = 3000, action = null) => {
         const id = toastId++
-        const toast = { id, message, type, duration }
+        const toast = { id, message, type, duration, action }
         toasts.value.push(toast)
 
         if (duration > 0) {

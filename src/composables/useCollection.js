@@ -23,7 +23,7 @@ export function useCollection() {
             let query = supabase
                 .from('user_inventory')
                 .select('updated_at')
-            
+
             if (isCombinedView.value) {
                 query = query.eq('user_id', user.value.id)
             } else if (currentPortfolioId.value) {
@@ -62,19 +62,19 @@ export function useCollection() {
 
             // Step 1: Check cache if not forcing refresh
             if (!forceRefresh) {
-              const fingerprint = await getInventoryFingerprint()
-              if (cachedEntry && cachedEntry.fingerprint === fingerprint) {
-                  collection.value = cachedEntry.data
-                  loading.value = false
-                  return { data: cachedEntry.data, fromCache: true }
-              }
+                const fingerprint = await getInventoryFingerprint()
+                if (cachedEntry && cachedEntry.fingerprint === fingerprint) {
+                    collection.value = cachedEntry.data
+                    loading.value = false
+                    return { data: cachedEntry.data, fromCache: true }
+                }
             }
 
             // Step 2: Fetch from DB
             let query = supabase
                 .from('user_inventory')
                 .select('*')
-            
+
             if (isCombinedView.value) {
                 query = query.eq('user_id', user.value.id)
             } else {
@@ -139,11 +139,11 @@ export function useCollection() {
                 .single()
 
             if (error) throw error
-            
+
             // Invalidate cache immediately on change
             const currentId = isCombinedView.value ? 'combined' : currentPortfolioId.value
             cache.remove(`inventory:${user.value.id}:${currentId}`)
-            
+
             return { success: true, data }
         } catch (err) {
             console.error('Add to inventory failed:', err)
@@ -157,18 +157,21 @@ export function useCollection() {
             return { success: false, error: '請先選擇一個特定的帳戶，不能在歸戶模式下新增' }
         }
 
-        if (status === 'holding') {
-            const { data: souvenir } = await supabase
-                .from('souvenirs')
-                .select('code, name')
-                .eq('id', souvenirId)
-                .single()
-            if (souvenir) {
-                return await addToInventory(souvenir.code, souvenir.name)
-            }
-        }
-
         try {
+            // 1. 如果是轉為持股狀態，先更新 inventory 表
+            if (status === 'holding') {
+                const { data: souvenir } = await supabase
+                    .from('souvenirs')
+                    .select('code, name')
+                    .eq('id', souvenirId)
+                    .single()
+
+                if (souvenir) {
+                    await addToInventory(souvenir.code, souvenir.name)
+                }
+            }
+
+            // 2. 更新 collections 表
             const { data, error: insertError } = await supabase
                 .from('user_collections')
                 .upsert({
@@ -188,6 +191,50 @@ export function useCollection() {
         }
     }
 
+    /**
+     * 撤銷入庫：將狀態改回 collected，並從 user_inventory 移除
+     */
+    const moveToPlanned = async (souvenirId) => {
+        if (!user.value) return { success: false, error: '未登入' }
+        if (isCombinedView.value || !currentPortfolioId.value) {
+            return { success: false, error: '請先選擇一個特定的帳戶，不能在歸戶模式下操作' }
+        }
+
+        try {
+            // 1. 先取得紀念品代碼
+            const { data: souvenir } = await supabase
+                .from('souvenirs')
+                .select('code')
+                .eq('id', souvenirId)
+                .single()
+
+            if (souvenir) {
+                // 2. 從 user_inventory 移除
+                await supabase
+                    .from('user_inventory')
+                    .delete()
+                    .eq('portfolio_id', currentPortfolioId.value)
+                    .eq('stock_code', souvenir.code)
+
+                const currentId = isCombinedView.value ? 'combined' : currentPortfolioId.value
+                cache.remove(`inventory:${user.value.id}:${currentId}`)
+            }
+
+            // 3. 將 user_collections 狀態改回 collected
+            const { error: updateError } = await supabase
+                .from('user_collections')
+                .update({ status: 'collected' })
+                .eq('portfolio_id', currentPortfolioId.value)
+                .eq('souvenir_id', souvenirId)
+
+            if (updateError) throw updateError
+            return { success: true }
+        } catch (err) {
+            console.error('Move back to planned failed:', err)
+            return { success: false, error: err.message }
+        }
+    }
+
     const removeFromCollection = async (id, isInventory = false) => {
         if (!user.value) return { success: false, error: '未登入' }
         try {
@@ -199,13 +246,13 @@ export function useCollection() {
                 .eq('user_id', user.value.id)
 
             if (delError) throw delError
-            
+
             // Invalidate cache if inventory item removed
             if (isInventory) {
-              const currentId = isCombinedView.value ? 'combined' : currentPortfolioId.value
-              cache.remove(`inventory:${user.value.id}:${currentId}`)
+                const currentId = isCombinedView.value ? 'combined' : currentPortfolioId.value
+                cache.remove(`inventory:${user.value.id}:${currentId}`)
             }
-            
+
             return { success: true }
         } catch (err) {
             console.error('Remove failed:', err)
@@ -223,13 +270,13 @@ export function useCollection() {
                 .eq('user_id', user.value.id)
 
             if (delError) throw delError
-            
+
             // Invalidate ALL inventory caches for this user
             if (onlyInventory) {
-              const allKeys = Object.keys(localStorage)
-              allKeys.filter(k => k.startsWith(`inventory:${user.value.id}:`)).forEach(k => cache.remove(k))
+                const allKeys = Object.keys(localStorage)
+                allKeys.filter(k => k.startsWith(`inventory:${user.value.id}:`)).forEach(k => cache.remove(k))
             }
-            
+
             return { success: true }
         } catch (err) {
             console.error('Clear failed:', err)
@@ -249,7 +296,7 @@ export function useCollection() {
                   *,
                   souvenir: souvenirs (*)
                 `)
-            
+
             if (isCombinedView.value) {
                 query = query.eq('user_id', user.value.id)
             } else if (currentPortfolioId.value) {
@@ -281,6 +328,7 @@ export function useCollection() {
         fetchAllInventory,
         addToInventory,
         addToCollection,
+        moveToPlanned,
         removeFromCollection,
         clearAllCollections
     }

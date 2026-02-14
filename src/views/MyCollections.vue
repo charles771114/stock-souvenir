@@ -90,7 +90,7 @@
                 <!-- Urgency Indicator Strip -->
                 <div v-if="item.gift?.last_buy_date" 
                      class="absolute left-0 top-0 bottom-0 w-1 transition-colors"
-                     :class="getUrgencyColor(getUrgencyLevel(item.gift?.last_buy_date)).replace('text-', 'bg-').split(' ')[1]">
+                     :class="confirmedIds.has(item.souvenir_id) ? 'bg-emerald-500' : getUrgencyColor(getUrgencyLevel(item.gift?.last_buy_date)).split(' ')[2].replace('border-', 'bg-')">
                 </div>
 
                 <div class="flex flex-col gap-3 pl-2">
@@ -105,26 +105,29 @@
                             </h3>
                         </div>
                         
-                        <!-- Actions (Top Right for easy access) -->
+                        <!-- Actions -->
                          <div class="flex items-center gap-2">
-                             <button @click="addToInventory(item.souvenir_id)" :disabled="addingToInventory === item.souvenir_id"
-                                    class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg shadow-md shadow-indigo-200 hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-300 transition-all cursor-pointer group disabled:opacity-50 disabled:cursor-not-allowed">
+                             <button @click="addToInventory(item.souvenir_id)" 
+                                    :disabled="addingToInventory === item.souvenir_id || confirmedIds.has(item.souvenir_id)"
+                                    :class="[
+                                      'flex items-center gap-1.5 px-3 py-1.5 rounded-lg shadow-md transition-all cursor-pointer group disabled:cursor-not-allowed',
+                                      confirmedIds.has(item.souvenir_id) 
+                                        ? 'bg-emerald-500 text-white shadow-emerald-200 animate-bounce-subtle' 
+                                        : 'bg-indigo-600 text-white shadow-indigo-200 hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-300'
+                                    ]">
                                     <svg v-if="addingToInventory === item.souvenir_id" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
+                                    <svg v-else-if="confirmedIds.has(item.souvenir_id)" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                    </svg>
                                     <svg v-else class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                                     </svg>
-                                    <span class="text-xs font-black tracking-wide">確認入庫</span>
-                             </button>
-
-                             <button @click="handleRemove(item.id)" :disabled="removing === item.id"
-                                    class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-500 rounded-lg border border-slate-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-100 transition-all cursor-pointer group disabled:opacity-50"
-                                    title="移除">
-                                    <i v-if="removing === item.id" class="fas fa-spinner fa-spin text-xs"></i>
-                                    <i v-else class="fas fa-trash-alt text-xs"></i>
-                                    <span class="text-xs font-black tracking-wide">移除</span>
+                                    <span class="text-xs font-black tracking-wide">
+                                      {{ confirmedIds.has(item.souvenir_id) ? '已入袋' : '確認入袋' }}
+                                    </span>
                              </button>
                         </div>
                     </div>
@@ -138,18 +141,30 @@
                     <div class="flex items-center justify-between mt-1 pl-1">
                          <div class="flex items-center gap-2">
                             <span v-if="item.gift?.last_buy_date" 
-                                  :class="['text-[10px] font-black px-2 py-0.5 rounded-md border uppercase tracking-wider flex items-center gap-1.5', getUrgencyColor(getUrgencyLevel(item.gift?.last_buy_date))]">
+                                  :class="['text-[10px] font-black px-2 py-0.5 rounded-md border uppercase tracking-wider flex items-center gap-1.5 shadow-sm', getUrgencyColor(getUrgencyLevel(item.gift?.last_buy_date))]">
                                 <i class="far fa-clock"></i>
-                                最後買進: {{ item.gift?.last_buy_date }}
-                                <span v-if="getDaysRemaining(item.gift?.last_buy_date) > 0" class="font-mono">
-                                    ({{ getDaysRemaining(item.gift?.last_buy_date) }}天)
+                               最後買進: {{ item.gift?.last_buy_date }}
+                                <span class="bg-white/40 px-1.5 rounded ml-1 font-mono">
+                                    {{ getDaysRemaining(item.gift?.last_buy_date) }}天後
                                 </span>
+                            </span>
+                            <span v-if="getUrgencyLevel(item.gift?.last_buy_date) === 'urgent'" 
+                                  class="animate-pulse text-[9px] font-black text-rose-600 uppercase tracking-widest">
+                                  Immediate Action
                             </span>
                          </div>
                          
-                         <span v-if="isCombinedView" class="text-[9px] font-bold text-slate-300 uppercase tracking-widest px-1.5 py-0.5 border border-slate-100 rounded">
-                            {{ getPortfolioName(item.portfolio_id) }}
-                         </span>
+                         <div class="flex items-center gap-2">
+                            <span v-if="isCombinedView" class="text-[9px] font-bold text-slate-300 uppercase tracking-widest px-1.5 py-0.5 border border-slate-100 rounded">
+                                {{ getPortfolioName(item.portfolio_id) }}
+                            </span>
+                            <button @click="handleRemove(item.id)" :disabled="removing === item.id"
+                                    class="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all group disabled:opacity-50"
+                                    title="移除計畫">
+                                    <i v-if="removing === item.id" class="fas fa-spinner fa-spin text-xs"></i>
+                                    <i v-else class="fas fa-trash-alt text-[10px]"></i>
+                            </button>
+                         </div>
                     </div>
                 </div>
              </div>
@@ -229,6 +244,12 @@
 
                           <!-- Actions -->
                           <div class="flex items-center justify-end gap-3 shrink-0">
+                               <button @click="handleUndoInventory(item.souvenir_id)"
+                                      class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-500 rounded-lg border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 transition-all cursor-pointer group"
+                                      title="撤銷入庫，移回計畫">
+                                      <i class="fas fa-undo text-[10px]"></i>
+                                      <span class="text-[10px] font-black tracking-wide">移回計畫</span>
+                               </button>
                                <button @click="handleRemove(item.id)" :disabled="removing === item.id"
                                       class="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all border border-transparent hover:border-rose-100">
                                       <i v-if="removing === item.id" class="fas fa-spinner fa-spin text-xs"></i>
@@ -290,7 +311,7 @@ const { user } = useAuth()
 const { pullDistance, isRefreshing } = usePullRefresh(async () => {
   await fetchMyCollections(selectedYear.value)
 })
-const { addToCollection } = useCollection()
+const { addToCollection, moveToPlanned } = useCollection()
 
 const {
   myCollections,
@@ -308,6 +329,7 @@ const inventoryIds = ref(new Set())
 const previousYearSouvenirs = ref(new Map())
 const removing = ref(null)
 const addingToInventory = ref(null)  // 追蹤正在新增到庫存的項目
+const confirmedIds = ref(new Set()) // 🆕 追蹤剛確認入袋的項目
 const expandedCategories = ref({})
 const expandedItems = ref(new Set()) // 🆕 用於展開單個紀念品項目
 
@@ -395,17 +417,19 @@ const isCurrentYear = computed(() => {
 
 const filteredCollections = computed(() => {
   return myCollections.value.filter(item => {
-    const meetingDate = item.gift?.meeting_date
-    if (!meetingDate?.startsWith(selectedYear.value)) return false
+    // 修正：必須優雅處理開會日期尚未公布的情況
+    const gift = item.gift
+    const yearMatches = gift?.meeting_date?.startsWith(selectedYear.value) || 
+                        (!gift?.meeting_date && gift?.last_buy_date?.startsWith(selectedYear.value))
+    
+    if (!yearMatches) return false
 
-    // 嚴格過濾：名稱必須「明確」，但排除 (開會55日前...) 的情況以便追蹤待買標的
-    const name = item.gift?.souvenir_item || ''
-    const isVague = name === '尚未公布' || name === ''
-    if (isVague) return false
-
+    // 放寬過濾：允許顯示「尚未公布」的項目，因為使用者收藏它們就是為了追蹤進度
+    const name = gift?.souvenir_item || ''
+    
     // 自動移除已過期但尚未買進的「待買進標的」
     if (item.status === 'collected') {
-      const lastBuyDate = item.gift?.last_buy_date
+      const lastBuyDate = gift?.last_buy_date
       if (isExpired(lastBuyDate)) return false
     }
 
@@ -416,10 +440,14 @@ const filteredCollections = computed(() => {
 const hasFilteredItems = computed(() => filteredCollections.value.length > 0)
 
 const groupedCollections = computed(() => {
-  // 領取計畫：狀態為 collected 且尚未持有
-  const planned = filteredCollections.value.filter(item =>
-    item.status === 'collected' && !inventoryIds.value.has(item.gift?.code)
-  )
+  // 領取計畫：狀態為 collected 且尚未持有 (或剛確認但尚未滑出)
+  const planned = filteredCollections.value.filter(item => {
+    const isCollected = item.status === 'collected'
+    const isInInventory = inventoryIds.value.has(item.gift?.code)
+    const isRecentlyConfirmed = confirmedIds.value.has(item.souvenir_id)
+    
+    return isCollected && (!isInInventory || isRecentlyConfirmed)
+  })
   // 在庫項目：狀態為 holding，或是雖然是 collected 但在庫存中已存在
   const inventory = filteredCollections.value.filter(item =>
     item.status === 'holding' || (item.status === 'collected' && inventoryIds.value.has(item.gift?.code))
@@ -541,17 +569,50 @@ const addToInventory = async (souvenirId) => {
   try {
     const { success, error } = await addToCollection(souvenirId, 'holding')
     if (success) {
-      showToast('已加入庫存', 'success')
-      // 重新載入庫存狀態
+      // 🆕 體感優化：不立即移除，先顯示成功狀態
+      confirmedIds.value.add(souvenirId)
+      
+      showToast('已確認入袋！', 'success', 5000, {
+        label: '撤銷',
+        onClick: () => handleUndoInventory(souvenirId, true)
+      })
+
+      // 重新載入庫存狀態（這會更新 inventoryIds，但因為有 confirmedIds，項目暫時不會消失）
       inventoryIds.value = await fetchUserInventoryIds()
+
+      // 延遲 1.5 秒後才真正從計畫清單移除
+      setTimeout(() => {
+        confirmedIds.value.delete(souvenirId)
+      }, 1500)
     } else {
-      showToast(error || '加入失敗', 'error')
+      showToast(error || '操作失敗', 'error')
     }
   } catch (e) {
     console.error('Add to inventory error:', e)
-    showToast('加入失敗', 'error')
+    showToast('操作失敗', 'error')
   } finally {
     addingToInventory.value = null
+  }
+}
+
+// 🆕 撤銷入庫
+const handleUndoInventory = async (souvenirId, skipConfirm = false) => {
+  if (skipConfirm || await confirm('確定要撤銷入庫，將此項目移回「待買進標的」嗎？', '撤銷入庫')) {
+    try {
+      // 如果是從 Toast 點擊的，先移除確認狀態讓它能立刻顯示在計畫中
+      confirmedIds.value.delete(souvenirId)
+      
+      const { success, error } = await moveToPlanned(souvenirId)
+      if (success) {
+        showToast('已移回計畫', 'success')
+        await loadData()
+      } else {
+        showToast(error || '操作失敗', 'error')
+      }
+    } catch (e) {
+      console.error('Undo inventory error:', e)
+      showToast('操作失敗', 'error')
+    }
   }
 }
 

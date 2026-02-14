@@ -33,6 +33,16 @@
             <div class="ml-3 flex-1 pt-0.5 min-w-0">
               <p class="text-sm font-medium text-gray-900">{{ getTitle(toast.type) }}</p>
               <p class="mt-1 text-sm text-gray-500 break-words">{{ toast.message }}</p>
+              <!-- Action Button -->
+              <div v-if="toast.action" class="mt-3">
+                <button
+                  type="button"
+                  @click="handleAction(toast)"
+                  class="text-sm font-bold text-indigo-600 hover:text-indigo-500 focus:outline-none"
+                >
+                  {{ toast.action.label }}
+                </button>
+              </div>
             </div>
             <div class="ml-4 flex flex-shrink-0">
               <button type="button" @click="removeToast(toast.id)" class="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
@@ -61,5 +71,12 @@ const getTitle = (type) => {
     case 'warning': return '警告'
     default: return '訊息'
   }
+}
+
+const handleAction = (toast) => {
+  if (toast.action && typeof toast.action.onClick === 'function') {
+    toast.action.onClick()
+  }
+  removeToast(toast.id)
 }
 </script>

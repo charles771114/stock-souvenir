@@ -8,7 +8,11 @@
       >
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 mb-1.5">
-            <span class="font-mono text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+            <span v-if="item.isCollected && !item.isInInventory" class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded flex items-center gap-1 border border-indigo-100">
+              <i class="far fa-heart text-[8px]"></i>
+              計畫中
+            </span>
+            <span v-else class="font-mono text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
               {{ item.code }}
             </span>
             <span v-if="item.isInInventory" class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -125,8 +129,9 @@
             >
               <td class="py-5 px-6">
                 <div class="flex items-center gap-2">
-                  <span class="font-mono text-sm font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">
-                    {{ item.code }}
+                  <span v-if="item.isCollected && !item.isInInventory" class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full flex items-center gap-1 border border-indigo-100">
+                    <i class="far fa-heart text-[8px]"></i>
+                    計畫中
                   </span>
                   <span v-if="item.isInInventory" class="w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-200"></span>
                 </div>

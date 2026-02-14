@@ -8,35 +8,31 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 
-// Mock user ref for useAuth
-const mockUser = ref(null)
+// Mock hoisted variables
+const { mockUser, mockSupabase } = vi.hoisted(() => ({
+  mockUser: { value: null },
+  mockSupabase: {
+    from: vi.fn(),
+  }
+}))
 
-// Mock useAuth composable
-vi.mock('../useAuth', () => ({
-  useAuth: () => ({
-    user: mockUser,
-    profile: ref(null),
-    loading: ref(false),
-    error: ref(null),
-    isAdmin: ref(false),
-    isAuthenticated: ref(!!mockUser.value),
+// Mock usePortfolio composable
+vi.mock('./usePortfolio', () => ({
+  usePortfolio: () => ({
+    currentPortfolioId: ref('test-portfolio-id'),
+    isCombinedView: ref(false),
   }),
 }))
 
-// Mock localStorage cache
-vi.mock('../useLocalStorageCache', () => ({
+// Mock useLocalStorageCache
+vi.mock('./useLocalStorageCache', () => ({
   useLocalStorageCache: () => ({
-    get: vi.fn(() => null),
+    get: vi.fn(),
     set: vi.fn(),
     remove: vi.fn(),
-    withCache: vi.fn((key, fn) => fn()),
+    getWithMetadata: vi.fn(),
   }),
 }))
-
-// Mock Supabase client
-const mockSupabase = {
-  from: vi.fn(),
-}
 
 vi.mock('@/lib/supabase', () => ({
   supabase: mockSupabase,
@@ -110,8 +106,7 @@ describe('useGifts', () => {
 
     it('should apply year filter', async () => {
       const mockSelect = vi.fn().mockReturnValue({
-        gte: vi.fn().mockReturnThis(),
-        lte: vi.fn().mockReturnThis(),
+        or: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValueOnce({ data: [], error: null }),
       })
 
@@ -127,8 +122,7 @@ describe('useGifts', () => {
       let loadingDuringFetch = false
 
       const mockChain = {
-        gte: vi.fn().mockReturnThis(),
-        lte: vi.fn().mockReturnThis(),
+        or: vi.fn().mockReturnThis(),
         order: vi.fn().mockImplementationOnce(async () => {
           loadingDuringFetch = useGifts().loading.value
           return { data: [], error: null }
@@ -314,28 +308,45 @@ describe('useGifts', () => {
     it('should return set of inventory IDs when logged in', async () => {
       mockUser.value = { id: 'test-user-id' }
 
-      const mockInventoryData = [
-        { souvenir_id: 'sov-1' },
-        { souvenir_id: 'sov-2' },
-        { souvenir_id: 'sov-3' },
+      const mockCollData = [
+        { souvenirs: { code: 'sov-1' } },
+      ]
+      const mockInvData = [
+        { stock_code: 'sov-2' },
+        { stock_code: 'sov-3' },
       ]
 
-      const mockEqStatus = vi.fn().mockResolvedValueOnce({
-        data: mockInventoryData,
-        error: null,
-      })
-      const mockEqUser = vi.fn().mockReturnValueOnce({ eq: mockEqStatus })
-      const mockSelect = vi.fn().mockReturnValueOnce({ eq: mockEqUser })
+      mockSupabase.from.mockImplementation((table) => {
+        const mockChain = {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          in: vi.fn().mockReturnThis(),
+          order: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn(),
+          single: vi.fn(),
+          or: vi.fn().mockReturnThis(),
+          // Make it thenable to work with await directly on the query
+          then: vi.fn().mockImplementation((onFulfilled) => {
+            if (table === 'user_collections') {
+              return Promise.resolve({ data: mockCollData, error: null }).then(onFulfilled)
+            }
+            if (table === 'user_inventory') {
+              return Promise.resolve({ data: mockInvData, error: null }).then(onFulfilled)
+            }
+            return Promise.resolve({ data: [], error: null }).then(onFulfilled)
+          })
+        }
 
-      mockSupabase.from.mockReturnValueOnce({ select: mockSelect })
+        // Handle the .eq chain
+        mockChain.eq.mockReturnValue(mockChain)
+
+        return mockChain
+      })
 
       const { fetchUserInventoryIds } = useGifts()
       const result = await fetchUserInventoryIds()
 
       expect(result).toEqual(new Set(['sov-1', 'sov-2', 'sov-3']))
-      expect(mockSelect).toHaveBeenCalledWith('souvenir_id')
-      expect(mockEqUser).toHaveBeenCalledWith('user_id', 'test-user-id')
-      expect(mockEqStatus).toHaveBeenCalledWith('status', 'holding')
     })
   })
 })

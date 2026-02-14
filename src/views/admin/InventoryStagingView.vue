@@ -87,7 +87,7 @@
       <div class="animate-fade-in-up delay-200">
         <div v-if="loading" class="py-24 flex flex-col items-center gap-6">
           <div class="w-16 h-16 border-8 border-indigo-50 border-t-indigo-600 rounded-full animate-spin"></div>
-          <p class="text-sm font-black text-indigo-300 uppercase tracking-[0.2em] animate-pulse">同步暫存項目中...</p>
+          <p class="text-sm font-black text-indigo-300 uppercase tracking-[0.2em] animate-pulse">正在精準同步大數據...</p>
         </div>
 
         <div v-else-if="groupedStaging.length === 0" class="glass-card py-24 text-center border-emerald-100/30">
@@ -97,11 +97,21 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h3 class="text-3xl font-black text-slate-800 mb-2 tracking-tighter">歸戶完成</h3>
-          <p class="text-[10px] font-bold text-emerald-500 uppercase tracking-[0.2em]">目前無待處理的暫存項目</p>
+          <h3 class="text-3xl font-black text-slate-800 mb-2 tracking-tighter">數據完全歸位</h3>
+          <p class="text-[10px] font-bold text-emerald-500 uppercase tracking-[0.2em]">目前的暫存清單已全數對齊完畢</p>
         </div>
 
         <div v-else class="glass-card overflow-hidden p-0">
+          <!-- Multi-action Header -->
+          <div v-if="autoMatchedCount > 0" class="px-8 py-4 bg-indigo-600 flex items-center justify-between animate-fade-in">
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+              <span class="text-[10px] font-black text-white uppercase tracking-widest leading-none">
+                偵測到 {{ autoMatchedCount }} 筆建議歸戶項 (可點擊 ✨ 標籤快速連結)
+              </span>
+            </div>
+          </div>
+          
           <!-- Desktop View -->
           <div class="hidden lg:block overflow-x-auto">
             <table class="w-full border-separate border-spacing-0">
@@ -109,16 +119,16 @@
                 <tr class="bg-slate-50/50 border-b border-slate-100">
                   <th
                     class="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
-                    待歸戶身份</th>
+                    待歸戶對象 (來源姓名)</th>
                   <th
                     class="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
-                    數據組成項目</th>
+                    組合項目組成</th>
                   <th
                     class="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
                     筆數</th>
                   <th
                     class="px-6 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none pr-10">
-                    歸戶操作</th>
+                    系統對齊決策</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-50">
@@ -127,13 +137,17 @@
                   <td class="px-8 py-6">
                     <div class="flex items-center gap-4">
                       <div
-                        class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-xl shadow-sm">
+                        class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-xl shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500">
                         {{ group.owner_name.charAt(0) }}
                       </div>
                       <div>
                         <div class="text-xl font-black text-slate-800 tracking-tighter">{{ group.owner_name }}</div>
-                        <div class="text-[10px] font-bold text-slate-300 uppercase tracking-widest leading-none mt-1">
-                          等待歸戶中</div>
+                        <div v-if="group.match" class="mt-1 flex items-center gap-1.5">
+                          <span class="px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase tracking-widest border border-emerald-100 leading-none">✨ 智能匹配</span>
+                          <span class="text-[9px] font-bold text-slate-300 leading-none">{{ group.match.profile.email.split('@')[0] }}</span>
+                        </div>
+                        <div v-else class="text-[10px] font-bold text-slate-300 uppercase tracking-widest leading-none mt-1">
+                          等待人工核對</div>
                       </div>
                     </div>
                   </td>
@@ -151,18 +165,19 @@
                   </td>
                   <td class="px-6 py-6 text-center">
                     <span
-                      class="text-sm font-black text-slate-700 bg-amber-50 border border-amber-100 px-4 py-2 rounded-2xl shadow-sm">
+                      class="text-sm font-black text-slate-700 bg-amber-50 border border-amber-100 px-4 py-2 rounded-2xl shadow-sm group-hover:scale-110 transition-transform inline-block">
                       {{ group.items.length }}
                     </span>
                   </td>
                   <td class="px-6 py-6 text-right pr-8">
                     <button @click="openLinkModal(group)"
-                      class="h-12 px-6 bg-indigo-600 text-white text-[10px] font-black rounded-2xl uppercase tracking-widest hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 ml-auto shadow-lg shadow-indigo-100">
+                      class="h-12 px-6 bg-indigo-600 text-white text-[10px] font-black rounded-2xl uppercase tracking-widest hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 ml-auto shadow-lg shadow-indigo-100 relative group/btn overflow-hidden">
+                      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:animate-shimmer"></div>
                       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                         <path stroke-linecap="round" stroke-linejoin="round"
                           d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                       </svg>
-                      連結使用者
+                      {{ group.match ? '對齊歸戶' : '連結使用者' }}
                     </button>
                   </td>
                 </tr>
@@ -305,55 +320,52 @@
                 </div>
 
                 <div class="space-y-3">
-                  <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest block ml-4">Select Target
-                    選擇目標帳戶</span>
+                  <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest block ml-4">目標歸戶分身 (Avatars)</span>
                   <div v-if="fetchingPortfolios" class="py-12 flex flex-col items-center gap-4">
                     <div class="w-8 h-8 border-4 border-indigo-50 border-t-indigo-600 rounded-full animate-spin"></div>
                     <span
                       class="text-[10px] font-black text-indigo-300 uppercase tracking-widest animate-pulse">Scanning
-                      正在掃描帳戶...</span>
+                      正在搜尋帳戶環境...</span>
                   </div>
-                  <div v-else class="space-y-2">
+                  <div v-else class="space-y-3">
                     <div v-for="port in targetPortfolios" :key="port.id" @click="selectedPortfolioId = port.id"
-                      class="p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between group"
-                      :class="selectedPortfolioId === port.id ? 'border-indigo-600 bg-indigo-50 shadow-xl shadow-indigo-500/10' : 'border-slate-50 bg-slate-50/50 hover:border-indigo-200 hover:bg-white'">
-                      <div class="flex items-center gap-3">
+                      class="p-5 rounded-[2rem] border-2 transition-all cursor-pointer flex items-center justify-between group overflow-hidden relative"
+                      :class="selectedPortfolioId === port.id ? 'border-indigo-600 bg-indigo-50 shadow-2xl shadow-indigo-500/10 scale-[1.02]' : 'border-slate-50 bg-slate-50/50 hover:border-indigo-200 hover:bg-white'">
+                      <div v-if="selectedPortfolioId === port.id" class="absolute top-0 right-0 p-3">
+                         <div class="w-2 h-2 rounded-full bg-indigo-600 animate-ping"></div>
+                      </div>
+                      <div class="flex items-center gap-4">
                         <div
-                          class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black transition-all"
-                          :class="selectedPortfolioId === port.id ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white text-slate-300'">
+                          class="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black transition-all duration-500"
+                          :class="selectedPortfolioId === port.id ? 'bg-indigo-600 text-white shadow-xl rotate-6' : 'bg-white text-slate-300 border border-slate-100'">
                           {{ port.name.charAt(0) }}
                         </div>
-                        <div class="text-sm font-black text-slate-700">{{ port.name }}</div>
+                        <div>
+                          <div class="text-base font-black text-slate-800 tracking-tight">{{ port.name }}</div>
+                          <div class="text-[9px] font-black text-slate-300 uppercase tracking-widest">Active Account 有效分身</div>
+                        </div>
                       </div>
                       <div v-if="port.is_default"
-                        class="text-[9px] font-black text-indigo-400 uppercase bg-white border border-indigo-100 px-2 py-0.5 rounded shadow-sm">
-                        主要帳戶</div>
+                        class="text-[9px] font-black text-indigo-400 uppercase bg-white border border-indigo-100 px-3 py-1 rounded-full shadow-sm">
+                        本人主要</div>
                     </div>
 
                     <div v-if="targetPortfolios.length === 0" @click="selectedPortfolioId = 'NEW_DEFAULT'"
-                      class="p-6 rounded-[2rem] border-2 border-dashed transition-all cursor-pointer flex items-center justify-between"
-                      :class="selectedPortfolioId === 'NEW_DEFAULT' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-100 bg-slate-50/30 hover:border-indigo-200 hover:bg-white'">
-                      <div class="flex items-center gap-4">
+                      class="p-8 rounded-[2.5rem] border-2 border-dashed transition-all cursor-pointer flex items-center justify-between"
+                      :class="selectedPortfolioId === 'NEW_DEFAULT' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-100 bg-slate-50/30 hover:border-indigo-200 hover:bg-white text-slate-300'">
+                      <div class="flex items-center gap-5">
                         <div
-                          class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-xl shadow-indigo-100 p-3">
+                          class="w-16 h-16 rounded-[2rem] bg-indigo-600 text-white flex items-center justify-center shadow-2xl shadow-indigo-200 p-4">
                           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                               d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                           </svg>
                         </div>
                         <div class="text-left">
-                          <div class="text-sm font-black text-slate-800 tracking-tight">建立主要帳戶</div>
-                          <div class="text-[9px] text-indigo-400 font-bold uppercase tracking-widest">偵測到新使用者
+                          <div class="text-lg font-black text-slate-800 tracking-tighter">建立首個分身</div>
+                          <div class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">偵測到全新型態使用者
                           </div>
                         </div>
-                      </div>
-                      <div
-                        class="w-6 h-6 rounded-full flex items-center justify-center transition-all bg-indigo-600 shadow-lg scale-0 opacity-0"
-                        :class="{ 'scale-100 opacity-100': selectedPortfolioId === 'NEW_DEFAULT' }">
-                        <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                          stroke-width="4">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
                       </div>
                     </div>
                   </div>
@@ -398,21 +410,42 @@ const fetchingPortfolios = ref(false)
 const selectedPortfolioId = ref(null)
 const linking = ref(false)
 
-const stats = computed(() => {
-  const pendingCount = stagingItems.value.length
-  const uniqueOwners = new Set(stagingItems.value.map(i => i.owner_name)).size
-  return { pendingCount, uniqueOwners }
-})
+const allProfiles = ref([])
+const stats = computed(() => ({
+  pendingCount: stagingItems.value.length,
+  uniqueOwners: groupedStaging.value.length
+}))
+const autoMatchedCount = computed(() => groupedStaging.value.filter(g => !!g.match).length)
+
+const fetchAllProfiles = async () => {
+  const { data } = await supabase.from('profiles').select('id, email, full_name, nickname, legacy_names')
+  if (data) allProfiles.value = data
+}
 
 const groupedStaging = computed(() => {
   const groups = {}
   stagingItems.value.forEach(item => {
     if (!groups[item.owner_name]) {
-      groups[item.owner_name] = { owner_name: item.owner_name, items: [] }
+      // Smart Matching logic
+      const match = allProfiles.value.find(p => 
+        p.full_name === item.owner_name || 
+        p.nickname === item.owner_name || 
+        (p.legacy_names && p.legacy_names.includes(item.owner_name))
+      )
+      
+      groups[item.owner_name] = { 
+        owner_name: item.owner_name, 
+        items: [],
+        match: match ? { profile: match, portfolio: null } : null
+      }
     }
     groups[item.owner_name].items.push(item)
   })
-  return Object.values(groups)
+  return Object.values(groups).sort((a, b) => {
+    if (a.match && !b.match) return -1
+    if (!a.match && b.match) return 1
+    return b.items.length - a.items.length
+  })
 })
 
 const filteredGroups = computed(() => {
@@ -495,7 +528,7 @@ const selectUser = async (user) => {
   }
 }
 
-const openLinkModal = (group) => {
+const openLinkModal = async (group) => {
   selectedGroup.value = group
   isModalOpen.value = true
   targetUser.value = null
@@ -503,6 +536,14 @@ const openLinkModal = (group) => {
   selectedPortfolioId.value = null
   userSearch.value = ''
   userResults.value = []
+  
+  // If smart matched, auto-select the user
+  if (group.match) {
+    await selectUser(group.match.profile)
+    // Find portfolio match if name is identical to one of the portfolios
+    const portMatch = targetPortfolios.value.find(p => p.name === group.owner_name)
+    if (portMatch) selectedPortfolioId.value = portMatch.id
+  }
 }
 
 const closeModal = () => {
@@ -629,6 +670,15 @@ const confirmLink = async () => {
     const { error: stageError } = await supabase.from('inventory_staging').update({ status: 'IMPORTED', matched_user_id: userId }).in('id', items.map(i => i.id))
     if (stageError) throw stageError
 
+    // Link legacy name to profile (Alias Learning)
+    const currentLegacyNames = targetUser.value.legacy_names || []
+    if (!currentLegacyNames.includes(selectedGroup.value.owner_name)) {
+      const newLegacyNames = [...currentLegacyNames, selectedGroup.value.owner_name]
+      await supabase.from('profiles').update({ legacy_names: newLegacyNames }).eq('id', userId)
+      // Refresh local profiles
+      await fetchAllProfiles()
+    }
+
     showToast(`成功歸戶 ${items.length} 筆資料`, 'success')
     closeModal()
     await fetchStagingData()
@@ -640,9 +690,10 @@ const confirmLink = async () => {
   }
 }
 
-onMounted(() => {
-  fetchStagingData()
-  fetchCategoriesData()
+onMounted(async () => {
+  await fetchAllProfiles()
+  await fetchStagingData()
+  await fetchCategoriesData()
 })
 </script>
 
@@ -705,6 +756,15 @@ onMounted(() => {
     transform: scale(1);
     opacity: 1;
   }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s infinite;
 }
 
 .animate-fade-in-up {

@@ -36,7 +36,12 @@
           <span class="font-mono text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded">
             {{ gift.code }}
           </span>
-          <span class="text-xs font-medium px-2 py-0.5 rounded-full border"
+          <span v-if="gift.isCollected && !gift.isInInventory" 
+                class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100 flex items-center gap-1">
+            <i class="far fa-heart text-[8px]"></i>
+            計畫中
+          </span>
+          <span v-else class="text-xs font-medium px-2 py-0.5 rounded-full border"
             :class="getCategoryBadgeClass(gift.categoryColor)">
             {{ gift.category }}
           </span>

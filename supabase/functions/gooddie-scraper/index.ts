@@ -1,9 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // @ts-ignore
 import { DOMParser } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
 // @ts-ignore
 import * as XLSX from "https://esm.sh/xlsx@0.18.5";
+import { corsHeaders } from '../_shared/cors.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -15,11 +15,6 @@ const GOODDIE_EMAIL = Deno.env.get('GOODDIE_EMAIL')
 const GOODDIE_PASSWORD = Deno.env.get('GOODDIE_PASSWORD')
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-
-const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
 
 const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 
@@ -170,457 +165,467 @@ async function fetchExcelData(cookies: string): Promise<any[]> {
     }).filter(r => r.code && /^\d{4,6}$/.test(r.code))
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+    // 1. Handle CORS Preflight
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
     }
 
-    const logEntry: any = {
-        scraper_name: 'gooddie',
-        status: 'running',
-        items_processed: 0,
-        message: '',
-        created_at: new Date().toISOString()
-    }
-
-    const logs: string[] = []
-    const addLog = (msg: string) => {
-        console.log(msg)
-        logs.push(msg)
-    }
-
-    let currentLogId: any = null
-    const notifications: string[] = []
-
-    // 1. Fetch Categories for matching
-    const { data: categories } = await supabase
-        .from('souvenir_categories')
-        .select('*')
-        .order('sort_order', { ascending: true })
-
-    const matchCategory = (text: string | null) => {
-        if (!text) return '其他'
-        if (categories) {
-            for (const cat of categories) {
-                if (cat.keywords && Array.isArray(cat.keywords)) {
-                    // @ts-ignore
-                    if (cat.keywords.some(k => text.includes(k))) {
-                        return cat.name
-                    }
-                }
-            }
-        }
-        return '其他'
-    }
-
-    const isGiftCard = (text: string | null) => matchCategory(text) === '超商商品卡'
-
     try {
-        addLog(`Starting Gooddie Scraper for year ${TARGET_YEAR}...`)
-        logEntry.scraper_source = 'HTML' // 預設
 
-        // 建立初始 log
-        const { data: initialLog, error: initialLogError } = await supabase
-            .from('scraper_logs')
-            .insert(logEntry)
-            .select()
-            .single()
-
-        if (initialLogError) {
-            console.error('Failed to create initial log:', initialLogError)
-        } else {
-            currentLogId = initialLog.id
-            addLog(`Log entry created: ${currentLogId}`)
+        const logEntry: any = {
+            scraper_name: 'gooddie',
+            status: 'running',
+            items_processed: 0,
+            message: '',
+            created_at: new Date().toISOString()
         }
 
-        let rowsToSync: any[] = []
-        let scrapSource = 'HTML'
+        const logs: string[] = []
+        const addLog = (msg: string) => {
+            console.log(msg)
+            logs.push(msg)
+        }
 
-        // --- Step 0: Strategy A - Excel Scraping ---
+        let currentLogId: any = null
+        const notifications: string[] = []
+
+        // 1. Fetch Categories for matching
+        const { data: categories } = await supabase
+            .from('souvenir_categories')
+            .select('*')
+            .order('sort_order', { ascending: true })
+
+        const matchCategory = (text: string | null) => {
+            if (!text) return '其他'
+            if (categories) {
+                for (const cat of categories) {
+                    if (cat.keywords && Array.isArray(cat.keywords)) {
+                        // @ts-ignore
+                        if (cat.keywords.some(k => text.includes(k))) {
+                            return cat.name
+                        }
+                    }
+                }
+            }
+            return '其他'
+        }
+
+        const isGiftCard = (text: string | null) => matchCategory(text) === '超商商品卡'
+
         try {
-            addLog('Step 0: Attempting Strategy A (Excel Scraping)...')
-            const cookies = await loginToGooddie()
-            rowsToSync = await fetchExcelData(cookies)
+            addLog(`Starting Gooddie Scraper for year ${TARGET_YEAR}...`)
+            logEntry.scraper_source = 'HTML' // 預設
 
-            if (rowsToSync.length > 0) {
-                scrapSource = 'Excel'
-                addLog(`Strategy A Successful: ${rowsToSync.length} rows fetched via Excel.`)
+            // 建立初始 log
+            const { data: initialLog, error: initialLogError } = await supabase
+                .from('scraper_logs')
+                .insert(logEntry)
+                .select()
+                .single()
+
+            if (initialLogError) {
+                console.error('Failed to create initial log:', initialLogError)
             } else {
-                throw new Error('Excel returned 0 rows')
-            }
-        } catch (excelError: any) {
-            addLog(`Strategy A Failed: ${excelError.message}. Falling back to Strategy B...`)
-
-            // --- Step 1: Strategy B - HTML Scraping (Fallback) ---
-            addLog('Step 1: Scraping HTML content...')
-            let page = 1; let hasNextPage = true; const scrapedRows: any[] = []
-
-            while (hasNextPage && page <= 10) {
-                addLog(`Scraping HTML Page ${page}...`)
-                const pageRes = await fetch(`${GOODDIE_BASE_URL}/stock/meeting/${TARGET_YEAR}?Page=${page}`, { headers: { 'User-Agent': USER_AGENT } })
-                const html = await pageRes.text()
-                const pageDoc = new DOMParser().parseFromString(html, "text/html")
-                const cards = pageDoc?.querySelectorAll('.list .card') || []
-
-                if (cards.length === 0) break
-
-                for (const card of (cards as any)) {
-                    const titleText = card.querySelector('a.text-truncate')?.textContent.trim() || ''
-                    const parts = titleText.split(/\s+/)
-                    const code = parts[0]; const name = parts[1]
-                    if (!code || !/^\d{4,6}$/.test(code)) continue
-
-                    // Extract souvenir item with multiple fallback strategies
-                    let souvenirEl = card.querySelector('.col.text-truncate div[data-content]')
-                    if (!souvenirEl) {
-                        const textTruncateDiv = card.querySelector('.text-truncate[title]')
-                        if (textTruncateDiv) {
-                            souvenirEl = textTruncateDiv.querySelector('.form-row .col.text-truncate')
-                        }
-                    }
-                    if (!souvenirEl) {
-                        souvenirEl = card.querySelector('.col.text-truncate .text-truncate:last-child')
-                    }
-
-                    const souvenir = souvenirEl ? (souvenirEl.getAttribute('data-content') || souvenirEl.textContent.trim()) : ''
-
-                    const getValByTitle = (titlePrefix: string) => {
-                        const titleEl = (Array.from(card.querySelectorAll('.title')) as any[]).find((t: any) => t.textContent.includes(titlePrefix))
-                        return (titleEl as any)?.closest('.form-row')?.querySelector('.col')?.textContent.replace('仍可買', '').trim() || ''
-                    }
-
-                    scrapedRows.push({
-                        doc_id: `${code}_${TARGET_YEAR}`,
-                        code: code,
-                        name: name,
-                        meeting_date: parseDateString(parts[2] || getValByTitle('開會')),
-                        souvenir_item: souvenir,
-                        last_buy_date: parseDateString(getValByTitle('最後買進日')),
-                        source_url: GOODDIE_BASE_URL,
-                        updated_at: new Date().toISOString()
-                    })
-                }
-                if (pageDoc?.querySelector('a[rel="next"]')) page++
-                else hasNextPage = false
-            }
-            rowsToSync = scrapedRows
-            scrapSource = 'HTML'
-        }
-
-        logEntry.scraper_source = scrapSource
-
-        //過濾噪音文字
-        rowsToSync = rowsToSync.map(row => {
-            let s = row.souvenir_item
-            if (s) {
-                if (s.includes('開會55日前') || s.includes('尚未公告') || (row.code && s.includes(row.code) && row.name && s.includes(row.name))) {
-                    row.souvenir_item = null
-                }
-            }
-            return row
-        })
-
-        addLog(`Step 2: Syncing ${rowsToSync.length} rows (Source: ${scrapSource})...`)
-
-        // --- Step 2: 查詢上次執行結果（用於比較變化）---
-        const { data: lastLog } = await supabase
-            .from('scraper_logs')
-            .select('*')
-            .eq('scraper_name', 'gooddie')
-            .eq('status', 'success')
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle()
-
-        const lastFingerprint = lastLog?.data_fingerprint || null
-        const lastItemsProcessed = lastLog?.items_processed || 0
-
-        // 計算本次指紋
-        const currentFingerprint = calculateFingerprint(rowsToSync)
-        const currentItemsProcessed = rowsToSync.length
-
-        // --- Step 3: Upsert 資料並偵測變化 ---
-        const updatedGifts: any[] = [] // 紀念品從空值→有內容的公司
-        const addedGifts: any[] = [] // 本次新增的公司
-
-        if (rowsToSync.length > 0) {
-            // 先查詢現有資料（用於偵測紀念品更新）
-            const { data: existingData } = await supabase
-                .from('souvenirs')
-                .select('doc_id, souvenir_item')
-                .in('doc_id', rowsToSync.map(r => r.doc_id))
-
-            const existingMap = new Map(existingData?.map(e => [e.doc_id, e.souvenir_item]) || [])
-
-            // Upsert
-            const { error: upsertError } = await supabase
-                .from('souvenirs')
-                .upsert(rowsToSync, { onConflict: 'doc_id' })
-
-            if (upsertError) throw upsertError
-
-            // 偵測項目變化
-            for (const row of rowsToSync) {
-                const oldSouvenir = existingMap.get(row.doc_id)
-                const isNewForYear = !existingMap.has(row.doc_id)
-                const newSouvenir = row.souvenir_item
-
-                const daysLeft = getDaysRemaining(row.last_buy_date)
-                if (daysLeft < 0) continue // 只提醒未過期的
-
-                // 獲取去年資料背景
-                let lastYearSouvenir = null
-                if (!newSouvenir || newSouvenir.includes('尚未公告') || newSouvenir.includes('開會55日前')) {
-                    const lastYear = (parseInt(TARGET_YEAR) - 1).toString()
-                    const { data: prevYearData } = await supabase
-                        .from('souvenirs')
-                        .select('souvenir_item')
-                        .eq('doc_id', `${row.code}_${lastYear}`)
-                        .maybeSingle()
-                    lastYearSouvenir = prevYearData?.souvenir_item || null
-                }
-
-                const isOldSouvenirEmpty = !oldSouvenir || (typeof oldSouvenir === 'string' && (oldSouvenir.includes('尚未公告') || oldSouvenir.includes('開會55日前')))
-
-                const category = matchCategory(newSouvenir)
-
-                // 1. 偵測新增項目 (針對該年份)
-                if (isNewForYear) {
-                    addedGifts.push({
-                        code: row.code,
-                        name: row.name,
-                        souvenir: newSouvenir || '尚未公布',
-                        category,
-                        lastYearSouvenir,
-                        lastBuyDate: row.last_buy_date,
-                        daysLeft
-                    })
-                }
-                // 2. 偵測紀念品更新 (舊資料為空或尚待公布 -> 現在有新內容)
-                else if (isOldSouvenirEmpty && newSouvenir) {
-                    updatedGifts.push({
-                        code: row.code,
-                        name: row.name,
-                        souvenir: newSouvenir,
-                        category,
-                        lastBuyDate: row.last_buy_date,
-                        daysLeft
-                    })
-                }
+                currentLogId = initialLog.id
+                addLog(`Log entry created: ${currentLogId}`)
             }
 
-            logEntry.items_processed = currentItemsProcessed
-            logEntry.data_fingerprint = currentFingerprint
-            logEntry.status = 'success'
-        }
+            let rowsToSync: any[] = []
+            let scrapSource = 'HTML'
 
-        // --- Step 4: 檢查是否需要發送通知 ---
-        const hasChanges = (currentFingerprint !== lastFingerprint) || (currentItemsProcessed !== lastItemsProcessed)
+            // --- Step 0: Strategy A - Excel Scraping ---
+            try {
+                addLog('Step 0: Attempting Strategy A (Excel Scraping)...')
+                const cookies = await loginToGooddie()
+                rowsToSync = await fetchExcelData(cookies)
 
-        if (hasChanges) {
-            // 分類列表
-            const addedGiftCards = addedGifts.filter(g => g.category === '超商商品卡')
-            const addedOthers = addedGifts.filter(g => g.category !== '超商商品卡')
-            const updatedGiftCards = updatedGifts.filter(g => g.category === '超商商品卡')
-            const updatedOthers = updatedGifts.filter(g => g.category !== '超商商品卡')
-
-            const hasGiftCardUpdate = addedGiftCards.length > 0 || updatedGiftCards.length > 0
-
-            // 通知類型 1: 爬蟲更新提醒
-            let notification = `${hasGiftCardUpdate ? '🎁 商品卡更新提醒！' : '✅ Gooddie 更新提醒'} (${scrapSource})\n\n`
-            notification += `本次處理：${currentItemsProcessed} 筆\n`
-
-            if (lastItemsProcessed > 0) {
-                notification += `上次處理：${lastItemsProcessed} 筆\n`
-                const diff = currentItemsProcessed - lastItemsProcessed
-                if (diff > 0) {
-                    notification += `變化：+${diff} 筆 📈\n`
-                } else if (diff < 0) {
-                    notification += `變化：${diff} 筆 📉\n`
+                if (rowsToSync.length > 0) {
+                    scrapSource = 'Excel'
+                    addLog(`Strategy A Successful: ${rowsToSync.length} rows fetched via Excel.`)
                 } else {
-                    notification += `筆數相同，但內容有更新\n`
+                    throw new Error('Excel returned 0 rows')
                 }
-            }
+            } catch (excelError: any) {
+                addLog(`Strategy A Failed: ${excelError.message}. Falling back to Strategy B...`)
 
-            // A. 商品卡優先區
-            if (hasGiftCardUpdate) {
-                notification += `\n💳 【 商品卡新公告 】\n`
-                const allGiftCards = [...addedGiftCards, ...updatedGiftCards]
-                allGiftCards.slice(0, 5).forEach(g => {
-                    notification += `🌟 [${g.code}] ${g.name}\n`
-                    notification += `  ${g.souvenir}\n`
-                    const timeInfo = g.daysLeft === 0 ? `🔥 今天截止 (⚠️ 13:30前)` : `${g.lastBuyDate} (剩${g.daysLeft}天)`
-                    notification += `  最後買進：${timeInfo}\n\n`
-                })
-            }
+                // --- Step 1: Strategy B - HTML Scraping (Fallback) ---
+                addLog('Step 1: Scraping HTML content...')
+                let page = 1; let hasNextPage = true; const scrapedRows: any[] = []
 
-            // B. 其他新增項目
-            if (addedOthers.length > 0) {
-                notification += `\n🆕 其他新增項目：\n`
-                addedOthers.slice(0, 5).forEach(g => {
-                    const catTag = g.category !== '其他' ? `[${g.category}] ` : ''
-                    notification += `📌 ${g.code} ${g.name}\n`
-                    if (g.souvenir === '尚未公布' && g.lastYearSouvenir) {
-                        notification += `  紀念品：尚未公布\n  (去年參考：${g.lastYearSouvenir})\n`
-                    } else {
-                        notification += `  ${catTag}${g.souvenir}\n`
-                    }
-                    const timeInfo = g.daysLeft === 0 ? `🔥 今天截止 (⚠️ 13:30前)` : `${g.lastBuyDate} (剩${g.daysLeft}天)`
-                    notification += `  最後買進：${timeInfo}\n\n`
-                })
-                if (addedOthers.length > 5) notification += `...及其他 ${addedOthers.length - 5} 家公司\n`
-            }
+                while (hasNextPage && page <= 10) {
+                    addLog(`Scraping HTML Page ${page}...`)
+                    const pageRes = await fetch(`${GOODDIE_BASE_URL}/stock/meeting/${TARGET_YEAR}?Page=${page}`, { headers: { 'User-Agent': USER_AGENT } })
+                    const html = await pageRes.text()
+                    const pageDoc = new DOMParser().parseFromString(html, "text/html")
+                    const cards = pageDoc?.querySelectorAll('.list .card') || []
 
-            // C. 其他紀念品更新
-            if (updatedOthers.length > 0) {
-                notification += `\n✨ 其他紀念品更新：\n`
-                updatedOthers.slice(0, 5).forEach(g => {
-                    const catTag = g.category !== '其他' ? `[${g.category}] ` : ''
-                    notification += `📌 ${g.code} ${g.name}\n`
-                    notification += `  更新：${catTag}${g.souvenir}\n`
-                    const timeInfo = g.daysLeft === 0 ? `🔥 今天截止 (⚠️ 13:30前)` : `${g.lastBuyDate} (剩${g.daysLeft}天)`
-                    notification += `  最後買進：${timeInfo}\n\n`
-                })
-                if (updatedOthers.length > 5) notification += `...及其他 ${updatedOthers.length - 5} 家公司\n`
-            }
+                    if (cards.length === 0) break
 
-            notification += `\n執行時間：${new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}`
-            notification += `\n\n點擊查看您的庫存狀態：${APP_URL}/gifts`
-            notifications.push(notification)
-        }
+                    for (const card of (cards as any)) {
+                        const titleText = card.querySelector('a.text-truncate')?.textContent.trim() || ''
+                        const parts = titleText.split(/\s+/)
+                        const code = parts[0]; const name = parts[1]
+                        if (!code || !/^\d{4,6}$/.test(code)) continue
 
-        // --- Step 5: 最後買進日提醒（類型2B）---
-        const today = new Date().toISOString().split('T')[0]
-        const { data: todayLastBuyDate } = await supabase
-            .from('souvenirs')
-            .select('*')
-            .eq('last_buy_date', today)
-            .is('souvenir_item', null)
-
-        if (todayLastBuyDate && todayLastBuyDate.length > 0) {
-            // 檢查去年是否發放商品卡
-            const lastYear = (parseInt(TARGET_YEAR) - 1).toString()
-            const codesToCheck = todayLastBuyDate.map(s => s.code)
-
-            const { data: lastYearData } = await supabase
-                .from('souvenirs')
-                .select('*')
-                .in('doc_id', codesToCheck.map(c => `${c}_${lastYear}`))
-
-            const giftCardCompanies = lastYearData?.filter(s => isGiftCard(s.souvenir_item)) || []
-
-            if (giftCardCompanies.length > 0) {
-                let notification = `⏰ 最後買進日提醒！\n\n`
-                notification += `以下公司「今天」是最後買進日，去年發放商品卡：\n\n`
-
-                giftCardCompanies.forEach(company => {
-                    const current = todayLastBuyDate.find(s => s.code === company.code.replace(`_${lastYear}`, ''))
-                    if (current) {
-                        notification += `🔥 ${current.code} ${current.name}\n`
-                        notification += `去年：${company.souvenir_item}\n`
-                        notification += `最後買進日：🔥 今天截止 (⚠️ 13:30 前買進)\n\n`
-                    }
-                })
-
-                notification += `今天是最後機會，請把握時間！⚠️`
-                notification += `\n\n點擊查看您的庫存狀態：${APP_URL}/gifts`
-                notifications.push(notification)
-            }
-        }
-
-        // --- Step 6: 商品卡智慧提醒（類型2A，首次發現）---
-        addLog('Step 6: Checking gift card smart reminders...')
-
-        // 查詢當年度紀念品為空值的公司
-        const { data: emptyGiftData } = await supabase
-            .from('souvenirs')
-            .select('*')
-            .not('doc_id', 'like', `%_%`)
-            .is('souvenir_item', null)
-            .not('last_buy_date', 'eq', today)
-
-        if (emptyGiftData && emptyGiftData.length > 0) {
-            const lastYear = (parseInt(TARGET_YEAR) - 1).toString()
-            const codesToCheck = emptyGiftData.map(s => s.code)
-
-            const { data: lastYearData } = await supabase
-                .from('souvenirs')
-                .select('*')
-                .in('doc_id', codesToCheck.map(c => `${c}_${lastYear}`))
-
-            const giftCardCandidates: any[] = []
-            lastYearData?.forEach(lastYearItem => {
-                if (isGiftCard(lastYearItem.souvenir_item)) {
-                    const code = lastYearItem.code || lastYearItem.doc_id.replace(`_${lastYear}`, '')
-                    const currentItem = emptyGiftData.find(e => e.code === code)
-                    if (currentItem) {
-                        const daysLeft = getDaysRemaining(currentItem.last_buy_date)
-                        if (daysLeft >= 0) {
-                            giftCardCandidates.push({
-                                code: currentItem.code,
-                                name: currentItem.name,
-                                lastYearGift: lastYearItem.souvenir_item,
-                                lastBuyDate: currentItem.last_buy_date,
-                                daysLeft
-                            })
+                        // Extract souvenir item with multiple fallback strategies
+                        let souvenirEl = card.querySelector('.col.text-truncate div[data-content]')
+                        if (!souvenirEl) {
+                            const textTruncateDiv = card.querySelector('.text-truncate[title]')
+                            if (textTruncateDiv) {
+                                souvenirEl = textTruncateDiv.querySelector('.form-row .col.text-truncate')
+                            }
                         }
+                        if (!souvenirEl) {
+                            souvenirEl = card.querySelector('.col.text-truncate .text-truncate:last-child')
+                        }
+
+                        const souvenir = souvenirEl ? (souvenirEl.getAttribute('data-content') || souvenirEl.textContent.trim()) : ''
+
+                        const getValByTitle = (titlePrefix: string) => {
+                            const titleEl = (Array.from(card.querySelectorAll('.title')) as any[]).find((t: any) => t.textContent.includes(titlePrefix))
+                            return (titleEl as any)?.closest('.form-row')?.querySelector('.col')?.textContent.replace('仍可買', '').trim() || ''
+                        }
+
+                        scrapedRows.push({
+                            doc_id: `${code}_${TARGET_YEAR}`,
+                            code: code,
+                            name: name,
+                            meeting_date: parseDateString(parts[2] || getValByTitle('開會')),
+                            souvenir_item: souvenir,
+                            last_buy_date: parseDateString(getValByTitle('最後買進日')),
+                            source_url: GOODDIE_BASE_URL,
+                            updated_at: new Date().toISOString()
+                        })
+                    }
+                    if (pageDoc?.querySelector('a[rel="next"]')) page++
+                    else hasNextPage = false
+                }
+                rowsToSync = scrapedRows
+                scrapSource = 'HTML'
+            }
+
+            logEntry.scraper_source = scrapSource
+
+            //過濾噪音文字
+            rowsToSync = rowsToSync.map(row => {
+                let s = row.souvenir_item
+                if (s) {
+                    if (s.includes('開會55日前') || s.includes('尚未公告') || (row.code && s.includes(row.code) && row.name && s.includes(row.name))) {
+                        row.souvenir_item = null
                     }
                 }
+                return row
             })
 
-            // 檢查是否已通知過（使用 scraper_logs 的 metadata 欄位記錄）
-            // 簡化版：每次執行只通知一次，不跨日重複
-            if (giftCardCandidates.length > 0) {
-                let notification = `💳 商品卡提醒 (${TARGET_YEAR}年度)\n\n`
-                notification += `以下公司去年發放商品卡，今年尚未公告：\n\n`
+            addLog(`Step 2: Syncing ${rowsToSync.length} rows (Source: ${scrapSource})...`)
 
-                giftCardCandidates.slice(0, 5).forEach(c => {
-                    notification += `📌 ${c.code} ${c.name}\n`
-                    notification += `去年：${c.lastYearGift}\n`
-                    notification += `最後買進日：${c.lastBuyDate} (還有${c.daysLeft}天)\n\n`
-                })
+            // --- Step 2: 查詢上次執行結果（用於比較變化）---
+            const { data: lastLog } = await supabase
+                .from('scraper_logs')
+                .select('*')
+                .eq('scraper_name', 'gooddie')
+                .eq('status', 'success')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle()
 
-                if (giftCardCandidates.length > 5) {
-                    notification += `...及其他 ${giftCardCandidates.length - 5} 家公司\n\n`
+            const lastFingerprint = lastLog?.data_fingerprint || null
+            const lastItemsProcessed = lastLog?.items_processed || 0
+
+            // 計算本次指紋
+            const currentFingerprint = calculateFingerprint(rowsToSync)
+            const currentItemsProcessed = rowsToSync.length
+
+            // --- Step 3: Upsert 資料並偵測變化 ---
+            const updatedGifts: any[] = [] // 紀念品從空值→有內容的公司
+            const addedGifts: any[] = [] // 本次新增的公司
+
+            if (rowsToSync.length > 0) {
+                // 先查詢現有資料（用於偵測紀念品更新）
+                const { data: existingData } = await supabase
+                    .from('souvenirs')
+                    .select('doc_id, souvenir_item')
+                    .in('doc_id', rowsToSync.map(r => r.doc_id))
+
+                const existingMap = new Map(existingData?.map(e => [e.doc_id, e.souvenir_item]) || [])
+
+                // Upsert
+                const { error: upsertError } = await supabase
+                    .from('souvenirs')
+                    .upsert(rowsToSync, { onConflict: 'doc_id' })
+
+                if (upsertError) throw upsertError
+
+                // 偵測項目變化
+                for (const row of rowsToSync) {
+                    const oldSouvenir = existingMap.get(row.doc_id)
+                    const isNewForYear = !existingMap.has(row.doc_id)
+                    const newSouvenir = row.souvenir_item
+
+                    const daysLeft = getDaysRemaining(row.last_buy_date)
+                    if (daysLeft < 0) continue // 只提醒未過期的
+
+                    // 獲取去年資料背景
+                    let lastYearSouvenir = null
+                    if (!newSouvenir || newSouvenir.includes('尚未公告') || newSouvenir.includes('開會55日前')) {
+                        const lastYear = (parseInt(TARGET_YEAR) - 1).toString()
+                        const { data: prevYearData } = await supabase
+                            .from('souvenirs')
+                            .select('souvenir_item')
+                            .eq('doc_id', `${row.code}_${lastYear}`)
+                            .maybeSingle()
+                        lastYearSouvenir = prevYearData?.souvenir_item || null
+                    }
+
+                    const isOldSouvenirEmpty = !oldSouvenir || (typeof oldSouvenir === 'string' && (oldSouvenir.includes('尚未公告') || oldSouvenir.includes('開會55日前')))
+
+                    const category = matchCategory(newSouvenir)
+
+                    // 1. 偵測新增項目 (針對該年份)
+                    if (isNewForYear) {
+                        addedGifts.push({
+                            code: row.code,
+                            name: row.name,
+                            souvenir: newSouvenir || '尚未公布',
+                            category,
+                            lastYearSouvenir,
+                            lastBuyDate: row.last_buy_date,
+                            daysLeft
+                        })
+                    }
+                    // 2. 偵測紀念品更新 (舊資料為空或尚待公布 -> 現在有新內容)
+                    else if (isOldSouvenirEmpty && newSouvenir) {
+                        updatedGifts.push({
+                            code: row.code,
+                            name: row.name,
+                            souvenir: newSouvenir,
+                            category,
+                            lastBuyDate: row.last_buy_date,
+                            daysLeft
+                        })
+                    }
                 }
 
-                notification += `共 ${giftCardCandidates.length} 家公司，建議持續關注 👀`
+                logEntry.items_processed = currentItemsProcessed
+                logEntry.data_fingerprint = currentFingerprint
+                logEntry.status = 'success'
+            }
+
+            // --- Step 4: 檢查是否需要發送通知 ---
+            const hasChanges = (currentFingerprint !== lastFingerprint) || (currentItemsProcessed !== lastItemsProcessed)
+
+            if (hasChanges) {
+                // 分類列表
+                const addedGiftCards = addedGifts.filter(g => g.category === '超商商品卡')
+                const addedOthers = addedGifts.filter(g => g.category !== '超商商品卡')
+                const updatedGiftCards = updatedGifts.filter(g => g.category === '超商商品卡')
+                const updatedOthers = updatedGifts.filter(g => g.category !== '超商商品卡')
+
+                const hasGiftCardUpdate = addedGiftCards.length > 0 || updatedGiftCards.length > 0
+
+                // 通知類型 1: 爬蟲更新提醒
+                let notification = `${hasGiftCardUpdate ? '🎁 商品卡更新提醒！' : '✅ Gooddie 更新提醒'} (${scrapSource})\n\n`
+                notification += `本次處理：${currentItemsProcessed} 筆\n`
+
+                if (lastItemsProcessed > 0) {
+                    notification += `上次處理：${lastItemsProcessed} 筆\n`
+                    const diff = currentItemsProcessed - lastItemsProcessed
+                    if (diff > 0) {
+                        notification += `變化：+${diff} 筆 📈\n`
+                    } else if (diff < 0) {
+                        notification += `變化：${diff} 筆 📉\n`
+                    } else {
+                        notification += `筆數相同，但內容有更新\n`
+                    }
+                }
+
+                // A. 商品卡優先區
+                if (hasGiftCardUpdate) {
+                    notification += `\n💳 【 商品卡新公告 】\n`
+                    const allGiftCards = [...addedGiftCards, ...updatedGiftCards]
+                    allGiftCards.slice(0, 5).forEach(g => {
+                        notification += `🌟 [${g.code}] ${g.name}\n`
+                        notification += `  ${g.souvenir}\n`
+                        const timeInfo = g.daysLeft === 0 ? `🔥 今天截止 (⚠️ 13:30前)` : `${g.lastBuyDate} (剩${g.daysLeft}天)`
+                        notification += `  最後買進：${timeInfo}\n\n`
+                    })
+                }
+
+                // B. 其他新增項目
+                if (addedOthers.length > 0) {
+                    notification += `\n🆕 其他新增項目：\n`
+                    addedOthers.slice(0, 5).forEach(g => {
+                        const catTag = g.category !== '其他' ? `[${g.category}] ` : ''
+                        notification += `📌 ${g.code} ${g.name}\n`
+                        if (g.souvenir === '尚未公布' && g.lastYearSouvenir) {
+                            notification += `  紀念品：尚未公布\n  (去年參考：${g.lastYearSouvenir})\n`
+                        } else {
+                            notification += `  ${catTag}${g.souvenir}\n`
+                        }
+                        const timeInfo = g.daysLeft === 0 ? `🔥 今天截止 (⚠️ 13:30前)` : `${g.lastBuyDate} (剩${g.daysLeft}天)`
+                        notification += `  最後買進：${timeInfo}\n\n`
+                    })
+                    if (addedOthers.length > 5) notification += `...及其他 ${addedOthers.length - 5} 家公司\n`
+                }
+
+                // C. 其他紀念品更新
+                if (updatedOthers.length > 0) {
+                    notification += `\n✨ 其他紀念品更新：\n`
+                    updatedOthers.slice(0, 5).forEach(g => {
+                        const catTag = g.category !== '其他' ? `[${g.category}] ` : ''
+                        notification += `📌 ${g.code} ${g.name}\n`
+                        notification += `  更新：${catTag}${g.souvenir}\n`
+                        const timeInfo = g.daysLeft === 0 ? `🔥 今天截止 (⚠️ 13:30前)` : `${g.lastBuyDate} (剩${g.daysLeft}天)`
+                        notification += `  最後買進：${timeInfo}\n\n`
+                    })
+                    if (updatedOthers.length > 5) notification += `...及其他 ${updatedOthers.length - 5} 家公司\n`
+                }
+
+                notification += `\n執行時間：${new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}`
                 notification += `\n\n點擊查看您的庫存狀態：${APP_URL}/gifts`
                 notifications.push(notification)
+            }
 
-                addLog(`Found ${giftCardCandidates.length} companies with gift card history`)
+            // --- Step 5: 最後買進日提醒（類型2B）---
+            const today = new Date().toISOString().split('T')[0]
+            const { data: todayLastBuyDate } = await supabase
+                .from('souvenirs')
+                .select('*')
+                .eq('last_buy_date', today)
+                .is('souvenir_item', null)
+
+            if (todayLastBuyDate && todayLastBuyDate.length > 0) {
+                // 檢查去年是否發放商品卡
+                const lastYear = (parseInt(TARGET_YEAR) - 1).toString()
+                const codesToCheck = todayLastBuyDate.map(s => s.code)
+
+                const { data: lastYearData } = await supabase
+                    .from('souvenirs')
+                    .select('*')
+                    .in('doc_id', codesToCheck.map(c => `${c}_${lastYear}`))
+
+                const giftCardCompanies = lastYearData?.filter(s => isGiftCard(s.souvenir_item)) || []
+
+                if (giftCardCompanies.length > 0) {
+                    let notification = `⏰ 最後買進日提醒！\n\n`
+                    notification += `以下公司「今天」是最後買進日，去年發放商品卡：\n\n`
+
+                    giftCardCompanies.forEach(company => {
+                        const current = todayLastBuyDate.find(s => s.code === company.code.replace(`_${lastYear}`, ''))
+                        if (current) {
+                            notification += `🔥 ${current.code} ${current.name}\n`
+                            notification += `去年：${company.souvenir_item}\n`
+                            notification += `最後買進日：🔥 今天截止 (⚠️ 13:30 前買進)\n\n`
+                        }
+                    })
+
+                    notification += `今天是最後機會，請把握時間！⚠️`
+                    notification += `\n\n點擊查看您的庫存狀態：${APP_URL}/gifts`
+                    notifications.push(notification)
+                }
+            }
+
+            // --- Step 6: 商品卡智慧提醒（類型2A，首次發現）---
+            addLog('Step 6: Checking gift card smart reminders...')
+
+            // 查詢當年度紀念品為空值的公司
+            const { data: emptyGiftData } = await supabase
+                .from('souvenirs')
+                .select('*')
+                .not('doc_id', 'like', `%_%`)
+                .is('souvenir_item', null)
+                .not('last_buy_date', 'eq', today)
+
+            if (emptyGiftData && emptyGiftData.length > 0) {
+                const lastYear = (parseInt(TARGET_YEAR) - 1).toString()
+                const codesToCheck = emptyGiftData.map(s => s.code)
+
+                const { data: lastYearData } = await supabase
+                    .from('souvenirs')
+                    .select('*')
+                    .in('doc_id', codesToCheck.map(c => `${c}_${lastYear}`))
+
+                const giftCardCandidates: any[] = []
+                lastYearData?.forEach(lastYearItem => {
+                    if (isGiftCard(lastYearItem.souvenir_item)) {
+                        const code = lastYearItem.code || lastYearItem.doc_id.replace(`_${lastYear}`, '')
+                        const currentItem = emptyGiftData.find(e => e.code === code)
+                        if (currentItem) {
+                            const daysLeft = getDaysRemaining(currentItem.last_buy_date)
+                            if (daysLeft >= 0) {
+                                giftCardCandidates.push({
+                                    code: currentItem.code,
+                                    name: currentItem.name,
+                                    lastYearGift: lastYearItem.souvenir_item,
+                                    lastBuyDate: currentItem.last_buy_date,
+                                    daysLeft
+                                })
+                            }
+                        }
+                    }
+                })
+
+                // 檢查是否已通知過（使用 scraper_logs 的 metadata 欄位記錄）
+                // 簡化版：每次執行只通知一次，不跨日重複
+                if (giftCardCandidates.length > 0) {
+                    let notification = `💳 商品卡提醒 (${TARGET_YEAR}年度)\n\n`
+                    notification += `以下公司去年發放商品卡，今年尚未公告：\n\n`
+
+                    giftCardCandidates.slice(0, 5).forEach(c => {
+                        notification += `📌 ${c.code} ${c.name}\n`
+                        notification += `去年：${c.lastYearGift}\n`
+                        notification += `最後買進日：${c.lastBuyDate} (還有${c.daysLeft}天)\n\n`
+                    })
+
+                    if (giftCardCandidates.length > 5) {
+                        notification += `...及其他 ${giftCardCandidates.length - 5} 家公司\n\n`
+                    }
+
+                    notification += `共 ${giftCardCandidates.length} 家公司，建議持續關注 👀`
+                    notification += `\n\n點擊查看您的庫存狀態：${APP_URL}/gifts`
+                    notifications.push(notification)
+
+                    addLog(`Found ${giftCardCandidates.length} companies with gift card history`)
+                }
+            }
+
+            // --- 發送所有通知 ---
+            for (const notification of notifications) {
+                await sendLineBroadcast(notification)
+            }
+
+            logEntry.message = `Processed ${currentItemsProcessed} items via ${scrapSource}. Sent ${notifications.length} notifications.`
+
+        } catch (error: any) {
+            addLog(`Scraper Error: ${error.message}`)
+            logEntry.status = 'error'
+            logEntry.message = error.message
+
+            // 錯誤通知
+            const errorNotification = `❌ Gooddie 爬蟲執行失敗\n\n錯誤訊息：${error.message}\n時間：${new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}\n\n請檢查爬蟲設定或網站狀態`
+            await sendLineBroadcast(errorNotification)
+        } finally {
+            // 只在 message 為空時才設定詳細日誌（避免覆蓋成功/錯誤訊息）
+            if (!logEntry.message) {
+                logEntry.message = logs.join('\n')
+            }
+
+            // 更新資料庫記錄
+            if (currentLogId) {
+                await supabase.from('scraper_logs').update(logEntry).eq('id', currentLogId)
+            } else {
+                await supabase.from('scraper_logs').insert(logEntry)
             }
         }
-
-        // --- 發送所有通知 ---
-        for (const notification of notifications) {
-            await sendLineBroadcast(notification)
-        }
-
-        logEntry.message = `Processed ${currentItemsProcessed} items via ${scrapSource}. Sent ${notifications.length} notifications.`
-
-    } catch (error: any) {
-        addLog(`Scraper Error: ${error.message}`)
-        logEntry.status = 'error'
-        logEntry.message = error.message
-
-        // 錯誤通知
-        const errorNotification = `❌ Gooddie 爬蟲執行失敗\n\n錯誤訊息：${error.message}\n時間：${new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}\n\n請檢查爬蟲設定或網站狀態`
-        await sendLineBroadcast(errorNotification)
-    } finally {
-        // 只在 message 為空時才設定詳細日誌（避免覆蓋成功/錯誤訊息）
-        if (!logEntry.message) {
-            logEntry.message = logs.join('\n')
-        }
-
-        // 更新資料庫記錄
-        if (currentLogId) {
-            await supabase.from('scraper_logs').update(logEntry).eq('id', currentLogId)
-        } else {
-            await supabase.from('scraper_logs').insert(logEntry)
-        }
+        return new Response(JSON.stringify(logEntry), { headers: { ...corsHeaders, "Content-Type": "application/json" } })
+    } catch (err: any) {
+        console.error('Edge Function Error:', err)
+        return new Response(JSON.stringify({ error: err.message }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+        })
     }
-    return new Response(JSON.stringify(logEntry), { headers: { ...corsHeaders, "Content-Type": "application/json" } })
 })
 
 async function sendLineBroadcast(text: string) {

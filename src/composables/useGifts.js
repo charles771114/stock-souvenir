@@ -342,7 +342,8 @@ export function useGifts() {
       if (requestYear) {
         const startDate = `${requestYear}-01-01`
         const endDate = `${requestYear}-12-31`
-        query = query.gte('gift.meeting_date', startDate).lte('gift.meeting_date', endDate)
+        // 修正：必須優雅處理開會日期尚未公布的情況，使用 or 同步檢查最後買進日
+        query = query.or(`and(meeting_date.gte.${startDate},meeting_date.lte.${endDate}),and(meeting_date.is.null,last_buy_date.gte.${startDate},last_buy_date.lte.${endDate})`, { foreignTable: 'gift' })
       }
 
       const { data, error: fetchError } = await query
@@ -392,7 +393,7 @@ export function useGifts() {
       if (year) {
         const startDate = `${year}-01-01`
         const endDate = `${year}-12-31`
-        query = query.or(`and(meeting_date.gte.${startDate},meeting_date.lte.${endDate}),and(meeting_date.is.null,last_buy_date.gte.${startDate},last_buy_date.lte.${endDate})`, { foreignTable: 'souvenirs' })
+        query = query.or(`and(meeting_date.gte.${startDate},meeting_date.lte.${endDate}),and(meeting_date.is.null,last_buy_date.gte.${startDate},last_buy_date.lte.${endDate})`, { foreignTable: 'gift' })
       }
 
       const { data, error: fetchError } = await query
@@ -407,7 +408,7 @@ export function useGifts() {
     }
   }
 
-  const addToCollection = async (giftId) => {
+  const addToCollection = async (giftId, status = 'collected') => {
     loading.value = true
     error.value = null
 
@@ -417,13 +418,33 @@ export function useGifts() {
         throw new Error('請先選擇一個特定的帳戶，不能在歸戶模式下新增')
       }
 
+      // 1. 如果是持股狀態，確保 user_inventory 也有點紀錄
+      if (status === 'holding') {
+        const { data: souvenir } = await supabase
+          .from('souvenirs')
+          .select('code, name')
+          .eq('id', giftId)
+          .single()
+
+        if (souvenir) {
+          await supabase.from('user_inventory').upsert({
+            user_id: user.value.id,
+            portfolio_id: currentPortfolioId.value,
+            stock_code: souvenir.code,
+            stock_name: souvenir.name,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'portfolio_id,stock_code' })
+        }
+      }
+
+      // 2. 更新 collections
       const { data, error: insertError } = await supabase
         .from('user_collections')
         .upsert({
           user_id: user.value.id,
           portfolio_id: currentPortfolioId.value,
           souvenir_id: giftId,
-          status: 'collected'
+          status
         }, { onConflict: 'portfolio_id,souvenir_id' })
         .select()
         .single()

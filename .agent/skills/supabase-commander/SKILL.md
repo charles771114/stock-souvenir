@@ -71,4 +71,7 @@ description: Standardized workflow for Supabase development, migration, and depl
       ```
 3.  **Standard Timestamps**: 避免手動命名 Migration (如 `20260210_fix.sql`)，應使用 `npx supabase migration new <name>` 確保流水號格式正確。
 4.  **Sync Types Immediately**: 產生 Migration 後，立即更新 Types。
-5.  **Check RLS**: 新增 Table 後，務必檢查 RLS Policy 是否啟用。
+6.  **Edge Function CORS (重要)**: 為了確保前端 (如 localhost) 能正確呼叫，所有 Function 必須：
+    -   實作 `OPTIONS` 預檢請求處理。
+    -   使用 `_shared/cors.ts` 中的標準 Headers。
+    -   使用 `Deno.serve` (而非 Standard Library 的 `serve`) 並配合 `try-catch` 包裹整段邏輯，**確保在 Error 情況下也能回傳 CORS Headers**。否則瀏覽器會回報 `Access-Control-Allow-Origin` 缺失，掩蓋真正的 Error。

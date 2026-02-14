@@ -8,30 +8,32 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAuth } from '../useAuth'
 
-// Mock Supabase client
-const mockSupabase = {
-  auth: {
-    signInWithOAuth: vi.fn(),
-    signOut: vi.fn(),
-    getSession: vi.fn(),
-    onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
-  },
-  from: vi.fn(() => ({
-    select: vi.fn(() => ({
-      eq: vi.fn(() => ({
-        maybeSingle: vi.fn(),
-        single: vi.fn(),
-      })),
-    })),
-    update: vi.fn(() => ({
-      eq: vi.fn(() => ({
-        select: vi.fn(() => ({
+// Mock hoisted variables
+const { mockSupabase } = vi.hoisted(() => ({
+  mockSupabase: {
+    auth: {
+      signInWithOAuth: vi.fn(),
+      signOut: vi.fn(),
+      getSession: vi.fn(),
+      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+    },
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          maybeSingle: vi.fn(),
           single: vi.fn(),
         })),
       })),
+      update: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          select: vi.fn(() => ({
+            single: vi.fn(),
+          })),
+        })),
+      })),
     })),
-  })),
-}
+  }
+}))
 
 vi.mock('@/lib/supabase', () => ({
   supabase: mockSupabase,
@@ -41,11 +43,12 @@ describe('useAuth', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     // Reset refs state between tests
-    const { user, profile, loading, error } = useAuth()
+    const { user, profile, loading, error, _resetAuth } = useAuth()
     user.value = null
     profile.value = null
     loading.value = false
     error.value = null
+    _resetAuth()
   })
 
   describe('Initial State', () => {
@@ -117,13 +120,14 @@ describe('useAuth', () => {
       })
 
       const { signInWithGoogle, loading } = useAuth()
-      
+
       const result = await signInWithGoogle('/my-collections')
-      
+
       expect(mockSupabase.auth.signInWithOAuth).toHaveBeenCalledWith({
         provider: 'google',
         options: expect.objectContaining({
-          queryParams: { next: '/my-collections' },
+          queryParams: { next: encodeURIComponent('/my-collections') },
+          redirectTo: expect.stringContaining('/auth/callback'),
         }),
       })
       expect(result.error).toBeNull()

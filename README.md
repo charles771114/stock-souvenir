@@ -80,6 +80,20 @@
 
 ---
 
+## 🧪 品質與資安保證 (Quality & Security QA)
+
+### 1. 測試驅動開發 (TDD Workflow)
+本專案嚴格要求所有代碼變更必須經過 **vtest** 驗證。
+- **指令**: `npm run test:unit`
+- **規範**: 任何 Composable, Utils 或核心邏輯調整後，開發者「必須」執行測試並確認 100% 通過。
+
+### 2. 資安規範 (Security Best Practices)
+- **RLS (Row Level Security)**：所有資料表皆已啟用 RLS，確保使用者只能存取授權資料。
+- **敏感資訊管理**：嚴禁寫入任何 hardcoded keys。所有金鑰應透過 `.env` 或 GitHub Secrets 管理。
+- **LINE 驗證**：所有 Webhook 皆包含 `x-line-signature` 雜湊驗證，防止非授權請求。
+
+---
+
 ## 📦 快速開始 (Local Development)
 
 ### 1. 安裝與設定
@@ -101,5 +115,5 @@ npm run dev
 
 ---
 
-**最後更新**: 2026-02-09
-**版本**: v3.2.0 (Automation & Mobile Enhancement)
+**最後更新**: 2026-02-14
+**版本**: v3.3.0 (Security Audit & Test-Mandated Workflow)

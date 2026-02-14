@@ -55,17 +55,17 @@ serve(async (req) => {
 
         // Mock: Insert a test gift
         const mockGift = {
-            company_code: 'TEST' + Math.floor(Math.random() * 1000),
-            company_name: '測試公司',
-            gift_name: '測試紀念品 ' + new Date().toISOString(),
-            gift_year: 114,
-            gift_category: '日用品',
-            scraped_at: new Date().toISOString()
+            code: 'TEST' + Math.floor(Math.random() * 1000),
+            name: '測試公司',
+            souvenir_item: '測試紀念品 ' + new Date().toISOString(),
+            meeting_date: `114-06-30`, // Simulation
+            doc_id: `AUTO_TEST_${Date.now()}`,
+            updated_at: new Date().toISOString()
         }
 
         const { error: giftError } = await supabaseClient
-            .from('gift_catalog')
-            .upsert(mockGift, { onConflict: 'company_code, gift_year, gift_name' })
+            .from('souvenirs')
+            .upsert(mockGift, { onConflict: 'doc_id' })
 
         if (giftError) throw giftError
 

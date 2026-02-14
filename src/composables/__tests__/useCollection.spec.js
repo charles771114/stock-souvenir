@@ -8,8 +8,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 
-// Mock user ref for useAuth
-const mockUser = ref(null)
+// Mock hoisted variables
+const { mockUser, mockSupabase } = vi.hoisted(() => ({
+  mockUser: { value: null },
+  mockSupabase: {
+    from: vi.fn(),
+  }
+}))
 
 // Mock useAuth composable
 vi.mock('@/composables/useAuth', () => ({
@@ -23,10 +28,23 @@ vi.mock('@/composables/useAuth', () => ({
   }),
 }))
 
-// Mock Supabase client
-const mockSupabase = {
-  from: vi.fn(),
-}
+// Mock usePortfolio composable
+vi.mock('@/composables/usePortfolio', () => ({
+  usePortfolio: () => ({
+    currentPortfolioId: ref('test-portfolio-id'),
+    isCombinedView: ref(false),
+  }),
+}))
+
+// Mock useLocalStorageCache
+vi.mock('./useLocalStorageCache', () => ({
+  useLocalStorageCache: () => ({
+    get: vi.fn(),
+    set: vi.fn(),
+    remove: vi.fn(),
+    getWithMetadata: vi.fn(),
+  }),
+}))
 
 vi.mock('@/lib/supabase', () => ({
   supabase: mockSupabase,

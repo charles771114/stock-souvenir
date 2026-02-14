@@ -127,7 +127,7 @@
                     發放紀念品</th>
                   <th
                     class="px-6 py-5 text-left text-[10px] font-black text-indigo-900/40 uppercase tracking-widest leading-none">
-                    重要時程</th>
+                    圖片</th>
                   <th
                     class="px-8 py-5 text-right text-[10px] font-black text-indigo-900/40 uppercase tracking-widest leading-none pr-10">
                     管理功能</th>
@@ -169,6 +169,14 @@
                         <span class="text-[10px] font-bold text-indigo-400 font-mono italic">{{ item.last_buy_date ||
                           '-' }}</span>
                       </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-5">
+                    <div class="w-12 h-12 rounded-lg bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center">
+                      <img v-if="item.image_url" :src="item.image_url" class="w-full h-full object-cover" />
+                      <svg v-else class="w-5 h-5 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
                     </div>
                   </td>
                   <td class="px-8 py-5 text-right pr-10">
@@ -306,6 +314,12 @@
               <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">紀念品內容</label>
                 <input v-model="formData.souvenir_item" type="text" placeholder="例如：50元超商商品卡"
+                  class="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-black focus:bg-white focus:border-indigo-200 transition-all outline-none" />
+              </div>
+
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">圖片位址 (URL)</label>
+                <input v-model="formData.image_url" type="text" placeholder="https://example.com/image.jpg"
                   class="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-black focus:bg-white focus:border-indigo-200 transition-all outline-none" />
               </div>
 
@@ -465,11 +479,28 @@ const saveItem = async () => {
     const year = formData.value.meeting_date ? formData.value.meeting_date.split('-')[0] : selectedYear.value
     const docId = `${formData.value.code}_${year}`
     if (isEditing.value) {
-      const { error } = await supabase.from('souvenirs').update({ name: formData.value.name, souvenir_item: formData.value.souvenir_item, meeting_date: formData.value.meeting_date, last_buy_date: formData.value.last_buy_date || null, location: formData.value.location, updated_at: new Date().toISOString() }).eq('id', formData.value.id)
+      const { error } = await supabase.from('souvenirs').update({ 
+        name: formData.value.name, 
+        souvenir_item: formData.value.souvenir_item, 
+        image_url: formData.value.image_url,
+        meeting_date: formData.value.meeting_date, 
+        last_buy_date: formData.value.last_buy_date || null, 
+        location: formData.value.location, 
+        updated_at: new Date().toISOString() 
+      }).eq('id', formData.value.id)
       if (error) throw error
       showToast('更新成功', 'success')
     } else {
-      const { error } = await supabase.from('souvenirs').insert({ doc_id: docId, code: formData.value.code, name: formData.value.name, souvenir_item: formData.value.souvenir_item, meeting_date: formData.value.meeting_date, last_buy_date: formData.value.last_buy_date || null, location: formData.value.location })
+      const { error } = await supabase.from('souvenirs').insert({ 
+        doc_id: docId, 
+        code: formData.value.code, 
+        name: formData.value.name, 
+        souvenir_item: formData.value.souvenir_item, 
+        image_url: formData.value.image_url,
+        meeting_date: formData.value.meeting_date, 
+        last_buy_date: formData.value.last_buy_date || null, 
+        location: formData.value.location 
+      })
       if (error) throw error
       showToast('新增成功', 'success')
     }

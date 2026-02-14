@@ -26,7 +26,7 @@ export function useAuth() {
       // 1. 動態建構 Callback URL
       const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin
       const callbackUrl = `${siteUrl}${import.meta.env.BASE_URL.replace(/\/$/, '')}/auth/callback`
-      
+
       console.log('Initiating Google OAuth redirect to:', callbackUrl)
 
       const { data, error: signInError } = await supabase.auth.signInWithOAuth({
@@ -87,16 +87,12 @@ export function useAuth() {
     try {
       const { data, error: fetchError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, id, email, full_name, nickname, avatar_url, role, legacy_names')
         .eq('id', userId)
-        .maybeSingle() // Use maybeSingle to avoid 406 error if row doesn't exist
+        .maybeSingle()
 
       if (fetchError) throw fetchError
 
-      // Map profiles structure to expected useAuth structure if needed
-      // Currently, isAdmin computed property uses profile.value.is_admin
-      // In new schema, we have 'role' column ('admin' or 'user').
-      // So we attach a virtual is_admin property for compatibility.
       if (data) {
         data.is_admin = data.role === 'admin'
       }
@@ -115,7 +111,7 @@ export function useAuth() {
   /**
    * 初始化認證狀態
    */
-  const initAuth = async () => {
+  const initAuth = () => {
     if (initAuthPromise) return initAuthPromise
 
     initAuthPromise = (async () => {
@@ -229,5 +225,6 @@ export function useAuth() {
     initAuth,
     refreshProfile,
     updateProfile,
+    _resetAuth: () => { initAuthPromise = null } // For testing
   }
 }
