@@ -55,24 +55,51 @@ export function useGifts() {
   }
 
   /**
-   * 取得指定年度紀念品的指紋（最後更新時間）
+   * 取得指定年度紀念品的指紋（最後更新時間 + 總筆數）
+   * 增加 count(*) 是為了在刪除紀錄時也能正確失效快取
    */
   const getSouvenirFingerprint = async (year) => {
     try {
       const startDate = `${year}-01-01`
       const endDate = `${year}-12-31`
-      const { data } = await supabase
+
+      // 同時取得最後更新時間與總筆數
+      const { data, count, error } = await supabase
         .from('souvenirs')
-        .select('updated_at')
+        .select('updated_at', { count: 'exact' })
         .or(`and(meeting_date.gte.${startDate},meeting_date.lte.${endDate}),and(meeting_date.is.null,last_buy_date.gte.${startDate},last_buy_date.lte.${endDate})`)
         .order('updated_at', { ascending: false })
         .limit(1)
-        .maybeSingle()
 
-      return data?.updated_at || null
+      if (error) throw error
+
+      const lastUpdated = data?.[0]?.updated_at || 'null'
+      const totalCount = count || 0
+
+      return `${lastUpdated}:${totalCount}`
     } catch (e) {
       console.warn('Get fingerprint failed:', e)
       return null
+    }
+  }
+
+  /**
+   * 手動清除指定年份或全部的紀念品快取
+   */
+  const clearGiftsCache = (year = null) => {
+    if (year) {
+      const cacheKey = `gifts:${year}`
+      cache.remove(cacheKey)
+      console.info(`Cleared cache for year: ${year}`)
+    } else {
+      // 清除所有開頭為 gifts: 的快取
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key && key.includes('stock-souvenir:gifts:')) {
+          localStorage.removeItem(key)
+        }
+      }
+      console.info('Cleared all gifts caches')
     }
   }
 
@@ -673,5 +700,6 @@ export function useGifts() {
     reassignCollectionPortfolio,
     isInCollection,
     getCollection,
+    clearGiftsCache,
   }
 }

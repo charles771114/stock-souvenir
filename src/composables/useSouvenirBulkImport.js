@@ -225,9 +225,8 @@ export function useSouvenirBulkImport() {
       // doc_id 生成邏輯：
       // - 當年度：使用純代號（例如：1409）
       // - 歷史年度：使用 CODE_YEAR 格式（例如：1409_2025）
-      const currentYear = new Date().getFullYear()
-      const isCurrentYear = !targetYear || parseInt(targetYear) === currentYear
-      const docId = isCurrentYear ? code : `${code}_${targetYear}`
+      const year = targetYear || (formattedMeetingDate ? formattedMeetingDate.split('-')[0] : new Date().getFullYear())
+      const docId = `${code}_${year}`
 
       return {
         doc_id: docId,

@@ -261,12 +261,14 @@
 <script setup>
 import Navbar from '@/components/Navbar.vue'
 import { useSouvenirBulkImport } from '@/composables/useSouvenirBulkImport'
+import { useGifts } from '@/composables/useGifts'
 import { useToast } from '@/composables/useToast'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const { showToast } = useToast()
+const { clearGiftsCache } = useGifts()
 const { uploading, progress, parseFile, mapData, uploadToSouvenirs } = useSouvenirBulkImport()
 
 const isDragging = ref(false)
@@ -322,6 +324,7 @@ const handleUpload = async () => {
   if (mappedData.value.length === 0) return
   const result = await uploadToSouvenirs(mappedData.value, selectedYear.value)
   if (result.success) {
+    clearGiftsCache(selectedYear.value) // 清理快取
     showToast(`Committed ${result.count} records for year ${selectedYear.value}`, 'success')
     router.push('/admin/souvenirs')
   } else {

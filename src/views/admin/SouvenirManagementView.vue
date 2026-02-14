@@ -43,6 +43,13 @@
             </svg>
             新增資料
           </button>
+          <button @click="handleDeleteAllForYear" :disabled="loading || deleting"
+            class="h-12 px-6 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl hover:bg-rose-600 hover:text-white transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            刪除全年度
+          </button>
         </div>
       </div>
 
@@ -363,10 +370,13 @@
 <script setup>
 import Navbar from '@/components/Navbar.vue'
 import { useToast } from '@/composables/useToast'
+import { useGifts } from '@/composables/useGifts'
 import { supabase } from '@/lib/supabase'
 import { computed, onMounted, ref, watch } from 'vue'
+import Swal from 'sweetalert2'
 
 const { showToast } = useToast()
+const { clearGiftsCache } = useGifts()
 
 const souvenirs = ref([])
 const loading = ref(false)
@@ -452,7 +462,8 @@ const closeModal = () => { showModal.value = false }
 const saveItem = async () => {
   saving.value = true
   try {
-    const docId = `${formData.value.code}_${formData.value.meeting_date}`
+    const year = formData.value.meeting_date ? formData.value.meeting_date.split('-')[0] : selectedYear.value
+    const docId = `${formData.value.code}_${year}`
     if (isEditing.value) {
       const { error } = await supabase.from('souvenirs').update({ name: formData.value.name, souvenir_item: formData.value.souvenir_item, meeting_date: formData.value.meeting_date, last_buy_date: formData.value.last_buy_date || null, location: formData.value.location, updated_at: new Date().toISOString() }).eq('id', formData.value.id)
       if (error) throw error
@@ -462,6 +473,7 @@ const saveItem = async () => {
       if (error) throw error
       showToast('新增成功', 'success')
     }
+    clearGiftsCache(selectedYear.value) // 立即清除快取，確保同步
     closeModal(); await fetchSouvenirs()
   } catch (e) { showToast(e.message || '儲存失敗', 'error') } finally { saving.value = false }
 }
@@ -473,8 +485,59 @@ const deleteItem = async () => {
   try {
     const { error } = await supabase.from('souvenirs').delete().eq('id', itemToDelete.value.id)
     if (error) throw error
+    clearGiftsCache(selectedYear.value) // 立即清除快取，確保同步
     showToast('刪除成功', 'success'); showDeleteConfirm.value = false; itemToDelete.value = null; await fetchSouvenirs()
   } catch (e) { showToast(e.message || '刪除失敗', 'error') } finally { deleting.value = false }
+}
+
+const handleDeleteAllForYear = async () => {
+  if (!selectedYear.value) return
+
+  const count = filteredSouvenirs.value.length
+  if (count === 0) {
+    showToast(`目前 ${selectedYear.value} 年度沒有可刪除的資料`, 'info')
+    return
+  }
+
+  const result = await Swal.fire({
+    title: `確定要刪除 ${selectedYear.value} 全年度資料？`,
+    html: `這將會永久移除資料庫中 ${selectedYear.value} 年度的 <b class="text-rose-600">${count}</b> 筆紀念品紀錄。<br><br><small class="text-slate-400 uppercase tracking-widest font-black">此操作無法復原，請謹慎執行</small>`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: '確認永久刪除',
+    cancelButtonText: '取消',
+    confirmButtonColor: '#e11d48',
+    reverseButtons: true,
+    customClass: {
+      popup: 'rounded-[2rem] border-none shadow-2xl',
+      confirmButton: 'rounded-xl font-black px-6 py-3',
+      cancelButton: 'rounded-xl font-black px-6 py-3'
+    }
+  })
+
+  if (!result.isConfirmed) return
+
+  loading.value = true
+  try {
+    const startDate = `${selectedYear.value}-01-01`
+    const endDate = `${selectedYear.value}-12-31`
+    
+    // 執行範圍刪除
+    const { error } = await supabase
+      .from('souvenirs')
+      .delete()
+      .or(`and(meeting_date.gte.${startDate},meeting_date.lte.${endDate}),and(meeting_date.is.null,last_buy_date.gte.${startDate},last_buy_date.lte.${endDate})`)
+
+    if (error) throw error
+
+    clearGiftsCache(selectedYear.value) // 立即清除該年份快取
+    showToast(`已成功移除 ${selectedYear.value} 共 ${count} 筆紀錄`, 'success')
+    await fetchSouvenirs()
+  } catch (e) {
+    showToast(e.message || '刪除失敗', 'error')
+  } finally {
+    loading.value = false
+  }
 }
 
 onMounted(() => { fetchSouvenirs() })

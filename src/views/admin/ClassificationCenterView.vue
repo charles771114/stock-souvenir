@@ -269,6 +269,7 @@
 <script setup lang="ts">
 import Navbar from '@/components/Navbar.vue'
 import { useCategories, type Category } from '@/composables/useCategories'
+import { useGifts } from '@/composables/useGifts'
 import { useDialog } from '@/composables/useDialog'
 import { useToast } from '@/composables/useToast'
 import { supabase } from '@/lib/supabase'
@@ -276,6 +277,7 @@ import { computed, onMounted, ref } from 'vue'
 
 const { showToast } = useToast()
 const { confirm: openConfirm } = useDialog()
+const { clearGiftsCache } = useGifts()
 
 // Color Map
 const colorMap: Record<string, string> = {
@@ -373,6 +375,7 @@ const assignCategory = async (souvenirName: string, categoryIdStr: string) => {
     .eq('classification_status', 'unclassified')
 
   if (!error) {
+    clearGiftsCache() // 清除所有年份快取，因為分類可能跨年份
     rawQueue.value = rawQueue.value.filter(item => item.souvenir_item !== souvenirName)
     showToast(`「${souvenirName}」已分類`, 'success')
   } else {

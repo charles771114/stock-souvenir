@@ -114,7 +114,9 @@ function processSheetData(rows) {
         source_url: parseUrl(row[10]),
       };
 
-      const doc_id = `${souvenir.code}_${souvenir.meeting_date}`;
+      const meeting_date = parseDate(row[5]);
+      const year = meeting_date ? meeting_date.split('-')[0] : new Date().getFullYear();
+      const doc_id = `${souvenir.code}_${year}`;
       const data_hash = crypto
         .createHash('sha1')
         .update(JSON.stringify(souvenir))

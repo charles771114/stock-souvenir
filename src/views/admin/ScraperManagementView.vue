@@ -131,10 +131,12 @@ import Navbar from '@/components/Navbar.vue'
 import ScraperLogTable from '@/components/ScraperLogTable.vue'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/composables/useToast'
+import { useGifts } from '@/composables/useGifts'
 import { onMounted, ref, computed } from 'vue'
 import Swal from 'sweetalert2'
 
 const { showToast } = useToast()
+const { clearGiftsCache } = useGifts()
 const running = ref(false)
 const loading = ref(false)
 const logs = ref([])
@@ -228,6 +230,10 @@ const handleTriggerScraper = async () => {
         })
         
         if (error) throw error
+        
+        // 爬蟲結束後清除快取
+        clearGiftsCache('2026')
+        clearGiftsCache('2025')
         
         Swal.fire({
             title: '執行成功',
