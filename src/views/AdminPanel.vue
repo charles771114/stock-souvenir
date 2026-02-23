@@ -258,6 +258,31 @@
             </div>
           </div>
         </router-link>
+        
+        <!-- 10. 通知管理 -->
+        <router-link to="/admin/notifications" class="admin-card group">
+          <div class="admin-card-inner">
+            <div class="card-icon card-icon-indigo">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">通知系統</span>
+                <span class="text-xs font-black text-indigo-100 group-hover:text-indigo-600 transition-colors">#10</span>
+              </div>
+              <h3 class="text-xl font-black text-slate-800 group-hover:text-indigo-600 transition-colors mb-2">通知管理</h3>
+              <p class="text-xs text-slate-400 font-medium leading-relaxed">預覽 LINE 通知訊息、手動推播與狀態監控</p>
+            </div>
+            <div class="card-arrow">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+        </router-link>
 
 
 

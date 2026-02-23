@@ -121,6 +121,12 @@ const routes = [
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
+    path: '/admin/notifications',
+    name: 'NotificationManagement',
+    component: () => import('@/views/admin/NotificationManagementView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
     path: '/admin/import/souvenirs',
     name: 'SouvenirBulkImport',
     component: () => import('@/views/admin/SouvenirImportView.vue'),
