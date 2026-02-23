@@ -2,7 +2,7 @@ import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
 import { processNotifications, verifyLineToken } from "./logic.ts";
 
 // Mock Supabase Client
-const createMockSupabase = (souvernis: any[], categories: any[] = []) => {
+const createMockSupabase = (souvernis: any[], categories: any[] = [], snapshots: any[] = []) => {
     return {
         from: (table: string) => ({
             select: () => ({
@@ -14,11 +14,16 @@ const createMockSupabase = (souvernis: any[], categories: any[] = []) => {
                 or: () => ({
                     order: () => Promise.resolve({ data: souvernis, error: null })
                 }),
-                order: () => Promise.resolve({ data: categories, error: null }),
+                order: () => ({
+                    limit: () => ({
+                        maybeSingle: () => Promise.resolve({ data: snapshots[0] || null, error: null })
+                    })
+                }),
                 eq: () => ({
                     maybeSingle: () => Promise.resolve({ data: null, error: null })
                 })
-            })
+            }),
+            insert: () => Promise.resolve({ error: null })
         })
     };
 };
@@ -78,6 +83,42 @@ Deno.test("Notification Logic - Recently Updated Alert", async () => {
     // Should appear in "資料更新提醒" section even if > 7 days away
     assertEquals(result.message?.includes("📢 【 資料更新提醒 】"), true);
     assertEquals(result.message?.includes("聯發科"), true);
+});
+
+Deno.test("Notification Logic - Alert Window (Too Early)", async () => {
+    const mockNow = new Date("2026-02-23T00:00:00Z"); // 08:00 AM UTC+8 (Before 9AM)
+    const mockSouvenirs = [
+        {
+            code: "2454",
+            name: "聯發科",
+            last_buy_date: "2026-03-10",
+            souvenir_item: "磁盤",
+            updated_at: new Date("2026-02-22T23:00:00Z").toISOString()
+        }
+    ];
+
+    const supabase = createMockSupabase(mockSouvenirs);
+    const result = await processNotifications(supabase, mockNow, { LINE_CHANNEL_ACCESS_TOKEN: "test" });
+
+    // Should NOT appear because it's before 9 AM
+    assertEquals(result.message?.includes("📢 【 資料更新提醒 】"), false);
+});
+
+Deno.test("Notification Logic - Deduplication Skip", async () => {
+    const mockNow = new Date("2026-02-23T01:00:00Z");
+    const mockSouvenirs = [{ code: "2330", name: "台積電", last_buy_date: "2026-02-23" }];
+
+    // First run to get expected message
+    const tempSupabase = createMockSupabase(mockSouvenirs);
+    const firstResult = await processNotifications(tempSupabase, mockNow, { LINE_CHANNEL_ACCESS_TOKEN: "test" });
+    const expectedMsg = firstResult.message;
+
+    // Second run with snapshot existing
+    const supabase = createMockSupabase(mockSouvenirs, [], [{ message_content: expectedMsg }]);
+    const result = await processNotifications(supabase, mockNow, { LINE_CHANNEL_ACCESS_TOKEN: "test" });
+
+    assertEquals(result.status, "skipped");
+    assertEquals(result.reason, "Redundant content (already sent)");
 });
 
 Deno.test("Notification Logic - Verify LINE Token", async () => {

@@ -114,7 +114,9 @@ export async function processNotifications(supabase: any, localNow: Date, config
         return isRecent && isFuture && !giftCards.includes(s)
     })
 
-    if (recentlyUpdated.length > 0 && isMorningPrep) {
+    const isUpdateWindow = currentHour >= 9 && currentHour < 22
+
+    if (recentlyUpdated.length > 0 && isMorningPrep && isUpdateWindow) {
         messageParts.push('📢 【 資料更新提醒 】')
         for (const item of recentlyUpdated) {
             const target = new Date(item.last_buy_date)
@@ -130,28 +132,6 @@ export async function processNotifications(supabase: any, localNow: Date, config
         const list = itemsByDiff[diff].filter((item: any) => !giftCards.includes(item) && !recentlyUpdated.includes(item))
         if (list.length === 0) continue
 
-        export async function verifyLineToken(token: string) {
-            try {
-                const response = await fetch('https://api.line.me/oauth2/v2.1/verify?access_token=' + token);
-                const data = await response.json();
-
-                if (response.ok) {
-                    return {
-                        valid: true,
-                        client_id: data.client_id,
-                        expires_in: data.expires_in,
-                        scope: data.scope
-                    };
-                } else {
-                    return {
-                        valid: false,
-                        error: data.error_description || data.error || 'Invalid token'
-                    };
-                }
-            } catch (e) {
-                return { valid: false, error: e.message };
-            }
-        }
 
         if (messageParts.length > 0 && messageParts[messageParts.length - 1] !== '\n---\n') {
             messageParts.push('\n---\n')
@@ -172,6 +152,23 @@ export async function processNotifications(supabase: any, localNow: Date, config
 
     messageParts.push('\n---\n點擊查看您的庫存狀態：\nhttps://stock-souvenir.vercel.app/gifts')
     const fullMessage = `📢 股東會紀念品最後買進日提醒\n\n${messageParts.join('\n\n')}`
+
+    // Deduplication check (only for automated runs)
+    if (!config.dryRun) {
+        const { data: lastSnapshot } = await supabase
+            .from('notification_broadcast_snapshots')
+            .select('message_content')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+
+        if (lastSnapshot && lastSnapshot.message_content === fullMessage) {
+            return { status: 'skipped', reason: 'Redundant content (already sent)' }
+        }
+
+        // Save new snapshot
+        await supabase.from('notification_broadcast_snapshots').insert({ message_content: fullMessage })
+    }
 
     return { status: 'success', message: fullMessage }
 }
