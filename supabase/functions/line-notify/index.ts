@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 
-import { processNotifications, verifyLineToken } from "./logic.ts"
+import { processNotifications, verifyLineToken, getLineQuota } from "./logic.ts"
 
 const LINE_CHANNEL_ACCESS_TOKEN = Deno.env.get('LINE_CHANNEL_ACCESS_TOKEN')
 const LINE_NOTIFY_TARGET_ID = Deno.env.get('LINE_NOTIFY_TARGET_ID')
@@ -34,7 +34,7 @@ serve(async (req) => {
         let dryRun = false
         let force = false
         let timeContext: 'morning' | 'afternoon' | undefined = undefined
-        let action: 'notify' | 'verify' = 'notify'
+        let action: 'notify' | 'verify' | 'quota' = 'notify'
 
         try {
             const body = await req.json()
@@ -42,6 +42,7 @@ serve(async (req) => {
             force = body.force === true
             timeContext = body.time_context
             if (body.action === 'verify') action = 'verify'
+            if (body.action === 'quota') action = 'quota'
         } catch (e) {
             // No body or not JSON, ignore
         }
@@ -49,6 +50,14 @@ serve(async (req) => {
         if (action === 'verify') {
             const verification = await verifyLineToken(LINE_CHANNEL_ACCESS_TOKEN!)
             return new Response(JSON.stringify(verification), {
+                status: 200,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            })
+        }
+
+        if (action === 'quota') {
+            const quota = await getLineQuota(LINE_CHANNEL_ACCESS_TOKEN!)
+            return new Response(JSON.stringify(quota), {
                 status: 200,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             })

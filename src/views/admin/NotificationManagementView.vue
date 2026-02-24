@@ -76,6 +76,31 @@
         <p class="text-2xl font-bold dark:text-white">{{ activeGroupsCount }} 個群組</p>
         <p class="text-xs text-gray-500 mt-1">已啟用的 LINE Notify 目標</p>
       </div>
+
+      <div class="card p-5 border-l-4 border-pink-500 bg-white dark:bg-gray-800 shadow-sm" :class="{ 'opacity-50': quotaLoading }">
+        <div class="flex justify-between items-start mb-2">
+          <div class="flex items-center gap-3">
+            <div class="p-2 bg-pink-100 dark:bg-pink-900/30 rounded-lg text-pink-600">
+              <i class="ri-mail-send-line text-xl"></i>
+            </div>
+            <h3 class="font-semibold text-gray-700 dark:text-gray-300">本月訊息剩餘</h3>
+          </div>
+          <div v-if="quotaInfo?.type === 'none'" class="px-2 py-0.5 rounded-full text-[10px] bg-green-100 text-green-600 font-bold">
+            無上限
+          </div>
+        </div>
+        <div v-if="quotaLoading" class="animate-pulse flex items-baseline gap-2">
+          <div class="h-8 w-16 bg-slate-100 rounded"></div>
+        </div>
+        <div v-else-if="quotaInfo?.error" class="text-sm text-red-500 font-bold">讀取失敗</div>
+        <div v-else class="flex items-baseline gap-2">
+          <p class="text-2xl font-bold dark:text-white" :class="{ 'text-red-500': quotaInfo?.remaining < 50 }">
+            {{ quotaInfo?.remaining ?? '---' }}
+          </p>
+          <span class="text-xs text-gray-400">/ {{ quotaInfo?.value || 0 }}</span>
+        </div>
+        <p class="text-xs text-gray-500 mt-1">Messaging API 免費額度</p>
+      </div>
     </div>
 
     <!-- 主要操作區 -->
@@ -155,24 +180,24 @@
 
         <div class="card p-6 bg-white dark:bg-gray-800 shadow-md border-t-4 border-yellow-500">
           <h3 class="font-bold mb-3 flex items-center gap-2 dark:text-white">
-             <i class="ri-information-line text-yellow-500"></i> 通知邏輯備忘錄
+             <i class="ri-information-line text-yellow-500"></i> 通知邏輯與限額備忘
           </h3>
           <ul class="text-sm space-y-3 text-gray-600 dark:text-gray-400">
+            <li class="flex gap-2">
+              <span class="text-yellow-600 font-bold">•</span>
+              <span><strong>限額說明</strong>：Messaging API 免費版每月有 200 則額度。若群組數較多，建議監控剩餘量。</span>
+            </li>
+            <li class="flex gap-2">
+              <span class="text-yellow-600 font-bold">•</span>
+              <span><strong>替代方案</strong>：若額度不足，可考慮將推播改為 <strong>LINE Notify (Service)</strong>，該服務完全免費且無上限，但訊息樣式較為簡化。</span>
+            </li>
             <li class="flex gap-2">
               <span class="text-yellow-600 font-bold">•</span>
               <span><strong>高優先順序</strong>：分類為「超商商品卡」的項目會顯示在最上方區塊，預告期設定為 7 天。</span>
             </li>
             <li class="flex gap-2">
               <span class="text-yellow-600 font-bold">•</span>
-              <span><strong>重複性優化</strong>：早上 9 點發送今日資料與預告；下午 1 點只會補發「今日截止」的催促訊息。</span>
-            </li>
-            <li class="flex gap-2">
-              <span class="text-yellow-600 font-bold">•</span>
-              <span><strong>資料更新提醒</strong>：若商品名稱從「尚未公布」更新為具體內容，系統會在 24 小時內自動發送更新提醒。</span>
-            </li>
-            <li class="flex gap-2">
-              <span class="text-yellow-600 font-bold">•</span>
-              <span><strong>資料抓取</strong>：目前的預告範圍標準化為未來 7 天，並根據截止熱度分群顯示。</span>
+              <span><strong>資料更新提醒</strong>：名稱從「尚未公布」更新後，系統會在 24 小時內自動發送更新提醒。</span>
             </li>
           </ul>
         </div>
@@ -198,6 +223,8 @@ const previewTime = ref('morning')
 const cronStatus = ref('讀取中...')
 const lastSentTime = ref('')
 const activeGroupsCount = ref(0)
+const quotaInfo = ref(null)
+const quotaLoading = ref(false)
 
 const refreshStatus = async () => {
   try {
@@ -222,8 +249,30 @@ const refreshStatus = async () => {
     if (latestAction?.last_active_at) {
       lastSentTime.value = new Date(latestAction.last_active_at).toLocaleString()
     }
+
+    // 4. Fetch Quota
+    fetchQuota()
   } catch (e) {
     console.error('Refresh status failed:', e)
+  }
+}
+
+const fetchQuota = async () => {
+  quotaLoading.value = true
+  try {
+    const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/line-notify`
+    const { data } = await axios.post(functionUrl, { action: 'quota' }, {
+       headers: {
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    })
+    quotaInfo.value = data
+  } catch (e) {
+    console.error('Fetch quota failed:', e)
+    quotaInfo.value = { error: true }
+  } finally {
+    quotaLoading.value = false
   }
 }
 

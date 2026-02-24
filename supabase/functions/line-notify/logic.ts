@@ -238,3 +238,37 @@ export async function verifyLineToken(token: string) {
         return { valid: false, error: (e as Error).message };
     }
 }
+
+export async function getLineQuota(token: string) {
+    try {
+        const cleanToken = token.trim();
+
+        // 1. Get Monthly Limit
+        const quotaRes = await fetch('https://api.line.me/v2/bot/message/quota', {
+            headers: { 'Authorization': `Bearer ${cleanToken}` }
+        });
+        const quotaData = await quotaRes.json();
+
+        // 2. Get Consumption
+        const consumptionRes = await fetch('https://api.line.me/v2/bot/message/quota/consumption', {
+            headers: { 'Authorization': `Bearer ${cleanToken}` }
+        });
+        const consumptionData = await consumptionRes.json();
+
+        if (quotaRes.ok && consumptionRes.ok) {
+            return {
+                type: quotaData.type, // 'none' or 'limited'
+                value: quotaData.value || 0, // max messages
+                consumed: consumptionData.totalUsage || 0,
+                remaining: Math.max(0, (quotaData.value || 0) - (consumptionData.totalUsage || 0))
+            };
+        } else {
+            return {
+                error: 'Failed to fetch quota',
+                details: { quota: quotaData, consumption: consumptionData }
+            };
+        }
+    } catch (e) {
+        return { error: (e as Error).message };
+    }
+}
