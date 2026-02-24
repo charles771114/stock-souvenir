@@ -1,7 +1,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-export async function processNotifications(supabase: any, localNow: Date, config: { LINE_CHANNEL_ACCESS_TOKEN: string, LINE_NOTIFY_TARGET_ID?: string, dryRun?: boolean, timeContext?: 'morning' | 'afternoon' }) {
+export async function processNotifications(supabase: any, localNow: Date, config: { LINE_CHANNEL_ACCESS_TOKEN: string, LINE_NOTIFY_TARGET_ID?: string, dryRun?: boolean, force?: boolean, timeContext?: 'morning' | 'afternoon' }) {
     let currentHour = localNow.getUTCHours()
     const currentDay = localNow.getUTCDay()
 
@@ -153,8 +153,8 @@ export async function processNotifications(supabase: any, localNow: Date, config
     messageParts.push('\n---\n點擊查看您的庫存狀態：\nhttps://stock-souvenir.vercel.app/gifts')
     const fullMessage = `📢 股東會紀念品最後買進日提醒\n\n${messageParts.join('\n\n')}`
 
-    // Deduplication check (only for automated runs)
-    if (!config.dryRun) {
+    // 7. Deduplication check (only for automated runs or if not forced)
+    if (!config.dryRun && !config.force) {
         const { data: lastSnapshot } = await supabase
             .from('notification_broadcast_snapshots')
             .select('message_content')
@@ -163,10 +163,43 @@ export async function processNotifications(supabase: any, localNow: Date, config
             .maybeSingle()
 
         if (lastSnapshot && lastSnapshot.message_content === fullMessage) {
-            return { status: 'skipped', reason: 'Redundant content (already sent)' }
+            // Smart Redundancy: If full message is redundant but there are items expiring TODAY,
+            // send a condensed "Urgent Reminder" instead.
+            const todayItems = itemsByDiff[0] || []
+            if (todayItems.length > 0 || giftCards.length > 0) {
+                const urgentParts: string[] = []
+                if (giftCards.length > 0) {
+                    urgentParts.push('💳 【 高優先：亮點商品卡 】')
+                    for (const item of giftCards) {
+                        const target = new Date(item.last_buy_date)
+                        const diff = Math.ceil((target.getTime() - todayMidnight.getTime()) / (1000 * 60 * 60 * 24))
+                        urgentParts.push(await formatItem(item, diff))
+                    }
+                    urgentParts.push('\n---\n')
+                }
+
+                if (todayItems.length > 0) {
+                    urgentParts.push('【 🔥 今天截止 🔥 】')
+                    for (const item of todayItems) {
+                        urgentParts.push(await formatItem(item, 0))
+                    }
+                }
+
+                const urgentMessage = `📢 股東會紀念品內容更新提醒\n\n${urgentParts.join('\n\n')}\n\n---\n(完整清單與昨日相同，此為今日重點提醒)\n點擊查看詳情：\nhttps://stock-souvenir.vercel.app/gifts`
+
+                if (lastSnapshot.message_content === urgentMessage) {
+                    return { status: 'skipped', reason: 'Redundant urgent message' }
+                }
+
+                // If we reached here, send the urgent message instead
+                await supabase.from('notification_broadcast_snapshots').insert({ message_content: urgentMessage })
+                return { status: 'success', message: urgentMessage }
+            }
+
+            return { status: 'skipped', reason: 'Redundant content (no urgent items)' }
         }
 
-        // Save new snapshot
+        // Save new snapshot for full message
         await supabase.from('notification_broadcast_snapshots').insert({ message_content: fullMessage })
     }
 
@@ -175,20 +208,30 @@ export async function processNotifications(supabase: any, localNow: Date, config
 
 export async function verifyLineToken(token: string) {
     try {
-        const response = await fetch('https://api.line.me/oauth2/v2.1/verify?access_token=' + token);
+        const cleanToken = token.trim();
+        // Use bot info endpoint which works for all Messaging API tokens (including stateless ones)
+        const response = await fetch('https://api.line.me/v2/bot/info', {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${cleanToken}` }
+        });
         const data = await response.json();
 
         if (response.ok) {
             return {
                 valid: true,
-                client_id: data.client_id,
-                expires_in: data.expires_in,
-                scope: data.scope
+                display_name: data.displayName,
+                basic_id: data.basicId,
+                premium_id: data.premiumId,
+                picture_url: data.pictureUrl,
+                chat_mode: data.chatMode,
+                mark_as_read_mode: data.markAsReadMode
             };
         } else {
+            console.error('LINE Bot Info Error:', data);
             return {
                 valid: false,
-                error: data.error_description || data.error || 'Invalid token'
+                error: data.message || 'Invalid token',
+                details: data
             };
         }
     } catch (e) {

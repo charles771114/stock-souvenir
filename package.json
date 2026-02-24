@@ -1,7 +1,7 @@
 {
   "name": "stock-souvenir",
   "private": true,
-  "version": "1.0.0",
+  "version": "3.4.1",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -1,29 +1,58 @@
-
 <template>
-  <div class="p-6 max-w-7xl mx-auto space-y-6">
-    <header class="flex justify-between items-center">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">通知管理中心</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400">管理與預覽 LINE 股東會紀念品提醒</p>
+  <div class="min-h-screen bg-[#fafafa]">
+    <Navbar />
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in">
+      <!-- Page Header -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-12 gap-6 animate-fade-in-up">
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <router-link to="/admin/panel"
+              class="group flex items-center gap-2 text-slate-400 hover:text-indigo-600 transition-all font-bold text-xs uppercase tracking-widest leading-none">
+              <div
+                class="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-indigo-50 group-hover:border-indigo-100 shadow-sm transition-all">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7" />
+                </svg>
+              </div>
+              管理主頁
+            </router-link>
+          </div>
+          <h1
+            class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 tracking-tighter mb-2">
+            通知管理中心
+          </h1>
+          <p class="text-slate-400 font-bold text-xs sm:text-sm uppercase tracking-wider">
+            管理與預覽 LINE 股東會紀念品提醒
+          </p>
+        </div>
+
+        <div class="flex gap-3">
+          <button @click="refreshStatus" 
+            class="h-12 px-6 bg-white border border-slate-100 text-slate-600 rounded-2xl shadow-sm hover:bg-slate-50 transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2 leading-none">
+            <i class="ri-refresh-line text-lg"></i>
+            刷新狀態
+          </button>
+        </div>
       </div>
-      <div class="flex gap-3">
-        <button @click="refreshStatus" class="btn-secondary flex items-center gap-2">
-          <i class="ri-refresh-line"></i> 刷新狀態
-        </button>
-      </div>
-    </header>
 
     <!-- 系統狀態卡片 -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="card p-5 border-l-4 border-blue-500 bg-white dark:bg-gray-800 shadow-sm">
-        <div class="flex items-center gap-3 mb-2">
-          <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600">
-            <i class="ri-time-line text-xl"></i>
+        <div class="flex justify-between items-start mb-2">
+          <div class="flex items-center gap-3">
+            <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600">
+              <i class="ri-time-line text-xl"></i>
+            </div>
+            <h3 class="font-semibold text-gray-700 dark:text-gray-300">自動發送排程</h3>
           </div>
-          <h3 class="font-semibold text-gray-700 dark:text-gray-300">自動發送排程</h3>
+          <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] bg-green-100 dark:bg-green-900/30 text-green-600 font-bold border border-green-200 dark:border-green-800/50">
+            <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+            運行中 (Active)
+          </div>
         </div>
         <p class="text-2xl font-bold dark:text-white">{{ cronStatus }}</p>
-        <p class="text-xs text-gray-500 mt-1">透過 Supabase pg_cron 執行</p>
+        <p class="text-xs text-gray-500 mt-1">每天 09:00 & 13:00 (pg_cron)</p>
       </div>
 
       <div class="card p-5 border-l-4 border-green-500 bg-white dark:bg-gray-800 shadow-sm">
@@ -148,14 +177,17 @@
           </ul>
         </div>
       </div>
-    </div>
+      </div>
+    </main>
   </div>
 </template>
 
 <script setup>
+import Navbar from '@/components/Navbar.vue'
 import { useToast } from '@/composables/useToast'
 import { supabase } from '@/lib/supabase'
 import axios from 'axios'
+import Swal from 'sweetalert2'
 import { onMounted, ref } from 'vue'
 
 const { showToast } = useToast()
@@ -228,12 +260,28 @@ const generatePreview = async () => {
 }
 
 const handleManualTrigger = async () => {
-  if (!confirm('確定要立即對所有 LINE 群組執行真實推播嗎？')) return
+  const result = await Swal.fire({
+    title: '確定要立即執行推播嗎？',
+    text: '這將對所有啟用的 LINE 群組發送最新的紀念品資訊推播。',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: '確定執行',
+    cancelButtonText: '取消',
+    confirmButtonColor: '#f97316',
+    reverseButtons: true,
+    customClass: {
+      popup: 'rounded-[1.5rem] bg-white dark:bg-gray-800 border-none shadow-2xl',
+      confirmButton: 'rounded-xl font-bold px-6 py-3 ml-2',
+      cancelButton: 'rounded-xl font-bold px-6 py-3'
+    }
+  })
+
+  if (!result.isConfirmed) return
   
   sending.value = true
   try {
     const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/line-notify`
-    await axios.post(functionUrl, {}, {
+    await axios.post(functionUrl, { force: true }, {
        headers: {
         'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         'Content-Type': 'application/json'
@@ -265,8 +313,7 @@ const testLineAuth = async () => {
     })
     
     if (data.valid) {
-      const expiryDays = Math.floor(data.expires_in / (24 * 3600))
-      showToast(`Token 有效！剩餘：${expiryDays} 天 (${data.scope})`, 'success')
+      showToast(`Token 有效！Bot：${data.display_name} (${data.basic_id})`, 'success')
     } else {
       showToast(`Token 已失效: ${data.error}`, 'error')
     }

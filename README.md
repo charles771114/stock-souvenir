@@ -125,5 +125,5 @@ npm run dev
 
 ---
 
-**最後更新**: 2026-02-23
-**版本**: v3.4.0 (Enhanced Notifications & Admin Management)
+**最後更新**: 2026-02-24
+**版本**: v3.4.1 (Enhanced Notifications & Admin Management Sync)
