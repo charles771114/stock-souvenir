@@ -128,23 +128,60 @@
         </ul>
       </div>
       
-      <!-- Help Section -->
-      <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <div class="flex">
-          <div class="flex-shrink-0">
-            <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-            </svg>
+      <!-- Improved Help Section -->
+      <div class="mt-12 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-8 sm:px-10">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="p-2 bg-indigo-50 rounded-lg">
+              <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900">如何加入並啟用群組通知</h3>
           </div>
-          <div class="ml-3">
-            <h3 class="text-sm font-medium text-blue-800">如何加入群組</h3>
-            <div class="mt-2 text-sm text-blue-700">
-              <ol class="list-decimal list-inside space-y-1">
-                <li>在 LINE 中搜尋您的 Bot</li>
-                <li>將 Bot 加入目標群組</li>
-                <li>群組會自動出現在此列表</li>
-                <li>使用切換開關啟用/停用通知</li>
-              </ol>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="flex flex-col gap-3">
+              <div class="flex items-center gap-2">
+                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold">1</span>
+                <span class="font-semibold text-gray-800">搜尋機器人</span>
+              </div>
+              <p class="text-sm text-gray-500 leading-relaxed">
+                在 LINE 中搜尋您的 Bot 並將其加入好友。
+              </p>
+            </div>
+            
+            <div class="flex flex-col gap-3">
+              <div class="flex items-center gap-2">
+                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold">2</span>
+                <span class="font-semibold text-gray-800">邀請至群組</span>
+              </div>
+              <p class="text-sm text-gray-500 leading-relaxed">
+                將 Bot 邀請進入目標群組，並在群組隨意發送一則訊息。
+              </p>
+            </div>
+            
+            <div class="flex flex-col gap-3">
+              <div class="flex items-center gap-2">
+                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold">3</span>
+                <span class="font-semibold text-gray-800">完成啟用</span>
+              </div>
+              <p class="text-sm text-gray-500 leading-relaxed">
+                重新整理此頁面，群組將自動出現在清單中。
+              </p>
+            </div>
+          </div>
+          
+          <div class="mt-8 pt-6 border-t border-gray-50 flex items-center justify-between">
+            <p class="text-xs text-gray-400">
+              提示：若要停止特定群組通知，只需在清單中點擊「停用」即可。
+            </p>
+            <div class="flex items-center gap-2 text-indigo-600">
+              <span class="text-xs font-semibold">運作狀態正常</span>
+              <span class="flex h-2 w-2 relative">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
             </div>
           </div>
         </div>
