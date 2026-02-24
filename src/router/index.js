@@ -25,6 +25,12 @@ const routes = [
     meta: { requiresAuth: false }
   },
   {
+    path: '/today',
+    name: 'TodayHighlights',
+    component: () => import('@/views/TodayHighlightsView.vue'),
+    meta: { requiresAuth: false } // Or true depending on if it needs auth
+  },
+  {
     path: '/my-collections',
     name: 'MyCollections',
     component: () => import('@/views/MyCollections.vue'),

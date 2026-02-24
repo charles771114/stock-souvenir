@@ -124,22 +124,28 @@ serve(async (req) => {
 
             if (event.type === 'message' && event.message.type === 'text') {
                 const replyToken = event.replyToken
-                const userMessage = event.message.text.trim()
+                const userMessage = event.message.text.trim().toLowerCase()
                 const lineUserId = event.source.userId
 
-                if (event.source.type !== 'user') {
+                // 1. Check for souvenir keywords (Works in Group & Personal chats)
+                const highlightsKeywords = ['最新', '紀念品', '今日', '重點', '禮物']
+                if (highlightsKeywords.some(k => userMessage.includes(k))) {
+                    const baseUrl = 'https://stock-souvenir.vercel.app'
+                    const highlightsText = `📢 這裡有為您整理好的「今日股東會重點」！\n\n包含尚未截止、且最近 48 小時內有更新情報的標的，以及未來 7 天內即將截止的項目：\n\n🔗 ${baseUrl}/today\n\n(點擊上方連結即可查看，不需登入帳號)`
+                    await replyMessage(replyToken, highlightsText, channelAccessToken)
                     continue
                 }
 
-                if (!lineUserId) continue
-
-                // Check for binding code (6 digits)
-                if (/^\d{6}$/.test(userMessage)) {
-                    await handleBinding(replyToken, userMessage, lineUserId, channelAccessToken)
-                } else {
-                    // Default reply
-                    const helpText = `你好！我是股東會紀念品小幫手。\n\n若要綁定帳號，請在網站上取得 6 位數綁定碼，並在此輸入。`
-                    await replyMessage(replyToken, helpText, channelAccessToken)
+                // 2. Binding logic (Only in Personal 1-on-1 Chat)
+                if (event.source.type === 'user' && lineUserId) {
+                    // Check for binding code (6 digits)
+                    if (/^\d{6}$/.test(userMessage)) {
+                        await handleBinding(replyToken, userMessage, lineUserId, channelAccessToken)
+                    } else {
+                        // Default help for personal chat
+                        const helpText = `你好！我是股東會紀念品小幫手。\n\n💡 輸入「最新」或「紀念品」可以查看今日重點快訊。\n\n🔐 若要綁定帳號以接收個人化推播，請輸入網站上顯示的 6 位數綁定碼。`
+                        await replyMessage(replyToken, helpText, channelAccessToken)
+                    }
                 }
             }
         }

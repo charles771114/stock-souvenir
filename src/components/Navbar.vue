@@ -17,6 +17,12 @@
 
           <!-- Nav Links -->
           <div class="hidden sm:ml-8 sm:flex sm:space-x-4">
+            <router-link to="/today"
+              class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+              :class="isActive('/today') ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:text-indigo-600 hover:bg-gray-50'">
+              <i class="ri-fire-fill mr-1 text-orange-500"></i> 今日重點
+            </router-link>
+
             <router-link to="/gifts"
               class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors"
               :class="isActive('/gifts') ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:text-indigo-600 hover:bg-gray-50'">
@@ -132,9 +138,15 @@
     >
       <div v-if="showMobileMenu" class="sm:hidden border-t border-gray-200/50 bg-white/95 backdrop-blur-lg overflow-hidden">
         <div class="pt-2 pb-3 space-y-1">
-          <router-link to="/gifts" 
+          <router-link to="/today" 
             class="block px-4 py-2.5 text-base font-medium transition-all duration-200 animate-slide-in"
             style="animation-delay: 0.05s"
+            :class="isActive('/today') ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600'">
+            <i class="ri-fire-fill mr-1 text-orange-500"></i> 今日重點
+          </router-link>
+          <router-link to="/gifts" 
+            class="block px-4 py-2.5 text-base font-medium transition-all duration-200 animate-slide-in"
+            style="animation-delay: 0.1s"
             :class="isActive('/gifts') ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600'">
             紀念品目錄
           </router-link>
