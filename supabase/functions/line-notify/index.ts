@@ -68,7 +68,11 @@ serve(async (req) => {
         }
 
         // 2. Fetch active groups for both broadcasting and reporting
-        const { data: activeGroups } = await supabase.from('line_groups').select('group_id').eq('is_active', true)
+        const { data: activeGroups } = await supabase
+            .from('line_groups')
+            .select('group_id')
+            .eq('is_active', true)
+            .neq('group_id', '您的_GROUP_ID') // Exclude placeholder entry
         const hasActiveGroups = activeGroups && activeGroups.length > 0
 
         // 3. Broadcast if success

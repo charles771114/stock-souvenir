@@ -145,6 +145,10 @@ async function handleBinding(replyToken: string, code: string, lineUserId: strin
 
 // Helper to upsert group info
 async function trackGroup(groupId: string) {
+    if (groupId === '您的_GROUP_ID' || !groupId) {
+        console.warn(`Ignoring invalid groupId: ${groupId}`)
+        return
+    }
     const supabase = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -184,7 +188,7 @@ async function trackGroup(groupId: string) {
     else console.log(`Tracked group: ${groupId} (${groupName})`)
 }
 
-// Helper to mark group as inactive
+// Helper to mark group as removed
 async function leaveGroup(groupId: string) {
     const supabase = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
@@ -193,10 +197,10 @@ async function leaveGroup(groupId: string) {
 
     await supabase
         .from('line_groups')
-        .update({ is_active: false })
+        .delete()
         .eq('group_id', groupId)
 
-    console.log(`Marked group inactive: ${groupId}`)
+    console.log(`Physically removed group record: ${groupId}`)
 }
 
 async function replyMessage(replyToken: string, text: string) {
