@@ -36,39 +36,49 @@ serve(async (req) => {
         let timeContext: 'morning' | 'afternoon' | undefined = undefined
         let action: 'notify' | 'verify' | 'quota' = 'notify'
 
+        let botId: string | null = null
+
         try {
             const body = await req.json()
             dryRun = body.dry_run === true
             force = body.force === true
             timeContext = body.time_context
+            botId = body.bot_id || null
             if (body.action === 'verify') action = 'verify'
             if (body.action === 'quota') action = 'quota'
         } catch (e) {
             // No body or not JSON, ignore
         }
 
-        if (action === 'verify') {
-            const verification = await verifyLineToken(LINE_CHANNEL_ACCESS_TOKEN!)
-            return new Response(JSON.stringify(verification), {
-                status: 200,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            })
+        // Handle verify/quota with bot_id
+        if (action === 'verify' || action === 'quota') {
+            let token = LINE_CHANNEL_ACCESS_TOKEN!
+            if (botId) {
+                const { data: bot } = await supabase.from('line_bots').select('channel_access_token').eq('id', botId).single()
+                if (bot) token = bot.channel_access_token
+            }
+
+            if (action === 'verify') {
+                const verification = await verifyLineToken(token)
+                return new Response(JSON.stringify(verification), {
+                    status: 200,
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                })
+            } else {
+                const quota = await getLineQuota(token)
+                return new Response(JSON.stringify(quota), {
+                    status: 200,
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                })
+            }
         }
 
-        if (action === 'quota') {
-            const quota = await getLineQuota(LINE_CHANNEL_ACCESS_TOKEN!)
-            return new Response(JSON.stringify(quota), {
-                status: 200,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            })
-        }
-
+        // Default Action: Notify
         const result = await processNotifications(supabase, localNow, {
-            LINE_CHANNEL_ACCESS_TOKEN: LINE_CHANNEL_ACCESS_TOKEN!,
-            LINE_NOTIFY_TARGET_ID: LINE_NOTIFY_TARGET_ID,
-            dryRun,
-            force,
-            timeContext
+            LINE_CHANNEL_ACCESS_TOKEN: LINE_CHANNEL_ACCESS_TOKEN!, // Fallback for some inner logic if any
+            dryRun: dryRun,
+            force: force,
+            timeContext: timeContext
         })
 
         // 1. Handle Weekend skip (No reporting update needed)
@@ -76,54 +86,35 @@ serve(async (req) => {
             return new Response(result.reason, { status: 200, headers: corsHeaders })
         }
 
-        // 2. Fetch active groups for both broadcasting and reporting
-        const { data: activeGroups } = await supabase
-            .from('line_groups')
-            .select('group_id')
-            .eq('is_active', true)
-            .neq('group_id', '您的_GROUP_ID') // Exclude placeholder entry
-        const hasActiveGroups = activeGroups && activeGroups.length > 0
-
-        // 3. Broadcast if success
-        if (result.status === 'success' && !dryRun) {
-            const fullMessage = result.message!
-            if (!hasActiveGroups) {
-                if (LINE_NOTIFY_TARGET_ID) await sendPush(LINE_NOTIFY_TARGET_ID, fullMessage)
-            } else {
-                console.log(`Broadcasting to ${activeGroups!.length} groups...`)
-                for (const group of activeGroups!) {
-                    await sendPush(group.group_id, fullMessage)
-                }
-            }
-        }
+    }
 
         // 4. Update reporting timestamp if the check actually ran (Success OR Redundant skip)
         // This ensures the dashboard reflects that the system is active today
         if (!dryRun && hasActiveGroups && (result.status === 'success' || (result.status === 'skipped' && result.reason?.includes('Redundant')))) {
-            await supabase
-                .from('line_groups')
-                .update({ last_active_at: new Date().toISOString() })
-                .in('group_id', activeGroups!.map((g: any) => g.group_id))
-        }
-
-        // 5. Handle Dry Run response
-        if (dryRun) {
-            if (result.status === 'success') {
-                return new Response(JSON.stringify({ status: 'preview', message: result.message }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-            } else {
-                return new Response(JSON.stringify({ status: result.status }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-            }
-        }
-
-        // 6. Final responses
-        if (result.status === 'skipped') return new Response(result.reason, { status: 200, headers: corsHeaders })
-        if (result.status === 'no_data' || result.status === 'no_notifications') return new Response('No notifications needed', { status: 200, headers: corsHeaders })
-
-        return new Response('Notifications processed', { status: 200, headers: corsHeaders })
-    } catch (error) {
-        console.error('Error:', error)
-        return new Response('Internal Server Error', { status: 500, headers: corsHeaders })
+        await supabase
+            .from('line_groups')
+            .update({ last_active_at: new Date().toISOString() })
+            .in('group_id', activeGroups!.map((g: any) => g.group_id))
     }
+
+    // 5. Handle Dry Run response
+    if (dryRun) {
+        if (result.status === 'success') {
+            return new Response(JSON.stringify({ status: 'preview', message: result.message }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        } else {
+            return new Response(JSON.stringify({ status: result.status }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        }
+    }
+
+    // 6. Final responses
+    if (result.status === 'skipped') return new Response(result.reason, { status: 200, headers: corsHeaders })
+    if (result.status === 'no_data' || result.status === 'no_notifications') return new Response('No notifications needed', { status: 200, headers: corsHeaders })
+
+    return new Response('Notifications processed', { status: 200, headers: corsHeaders })
+} catch (error) {
+    console.error('Error:', error)
+    return new Response('Internal Server Error', { status: 500, headers: corsHeaders })
+}
 })
 
 async function sendPush(to: string, text: string) {

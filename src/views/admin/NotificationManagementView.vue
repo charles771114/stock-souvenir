@@ -85,9 +85,9 @@
             </div>
             <h3 class="font-semibold text-gray-700 dark:text-gray-300">本月訊息剩餘</h3>
           </div>
-          <div v-if="quotaInfo?.type === 'none'" class="px-2 py-0.5 rounded-full text-[10px] bg-green-100 text-green-600 font-bold">
-            無上限
-          </div>
+          <select v-if="bots.length > 0" v-model="selectedBotId" @change="fetchQuota" class="text-[10px] bg-transparent border-none focus:ring-0 font-bold text-slate-400">
+            <option v-for="bot in bots" :key="bot.id" :value="bot.id">{{ bot.bot_name }}</option>
+          </select>
         </div>
         <div v-if="quotaLoading" class="animate-pulse flex items-baseline gap-2">
           <div class="h-8 w-16 bg-slate-100 rounded"></div>
@@ -100,6 +100,32 @@
           <span class="text-xs text-gray-400">/ {{ quotaInfo?.value || 0 }}</span>
         </div>
         <p class="text-xs text-gray-500 mt-1">Messaging API 免費額度</p>
+      </div>
+    </div>
+
+    <!-- 機器人狀態 (NEW section) -->
+    <div class="mt-8 mb-8 animate-fade-in-up">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+          <i class="ri-robot-2-line text-indigo-500"></i> Bot 狀態與管理
+        </h2>
+        <button @click="fetchBots" class="text-xs font-bold text-indigo-600 uppercase">更新列表</button>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div v-for="bot in bots" :key="bot.id" class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all">
+          <div class="flex items-center justify-between mb-3">
+            <div class="font-black text-slate-800 tracking-tighter">{{ bot.bot_name }}</div>
+            <div :class="bot.is_active ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'" class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase">
+              {{ bot.is_active ? 'Active' : 'Disabled' }}
+            </div>
+          </div>
+          <div class="text-[10px] text-slate-400 font-mono mb-3 truncate">{{ bot.id }}</div>
+          <div class="flex items-center gap-2">
+            <button @click="testLineAuth(bot.id)" class="flex-1 py-1.5 bg-slate-50 hover:bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-bold transition-all border border-slate-100">
+              驗證 Token
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -225,20 +251,18 @@ const lastSentTime = ref('')
 const activeGroupsCount = ref(0)
 const quotaInfo = ref(null)
 const quotaLoading = ref(false)
+const bots = ref([])
+const selectedBotId = ref(null)
 
 const refreshStatus = async () => {
   try {
-    // 1. Fetch Cron Status (needs admin role to query cron schema, or we might need a RPC/Function for this)
-    // For now, we'll try to get it from a safe view or just show it's scheduled.
-    // In many Supabase setups, you can't query the 'cron' schema directly via API easily.
-    // We'll simulate for now or get it from line_groups last_active_at.
     cronStatus.value = '2x / 每日'
     
-    // 2. Fetch Active Groups
+    // Fetch Active Groups
     const { count } = await supabase.from('line_groups').select('*', { count: 'exact', head: true }).eq('is_active', true)
     activeGroupsCount.value = count || 0
     
-    // 3. Last sent time (from a custom log or line_groups)
+    // Last sent time
     const { data: latestAction } = await supabase
       .from('line_groups')
       .select('last_active_at')
@@ -250,10 +274,19 @@ const refreshStatus = async () => {
       lastSentTime.value = new Date(latestAction.last_active_at).toLocaleString()
     }
 
-    // 4. Fetch Quota
+    // Fetch Bots and then Quota
+    await fetchBots()
     fetchQuota()
   } catch (e) {
     console.error('Refresh status failed:', e)
+  }
+}
+
+const fetchBots = async () => {
+  const { data } = await supabase.from('line_bots').select('*').order('created_at', { ascending: true })
+  bots.value = data || []
+  if (bots.value.length > 0 && !selectedBotId.value) {
+    selectedBotId.value = bots.value[0].id
   }
 }
 
@@ -261,7 +294,10 @@ const fetchQuota = async () => {
   quotaLoading.value = true
   try {
     const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/line-notify`
-    const { data } = await axios.post(functionUrl, { action: 'quota' }, {
+    const { data } = await axios.post(functionUrl, { 
+      action: 'quota',
+      bot_id: selectedBotId.value
+    }, {
        headers: {
         'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         'Content-Type': 'application/json'
@@ -351,10 +387,14 @@ const copyPreview = () => {
   showToast('已複製到剪貼簿', 'success')
 }
 
-const testLineAuth = async () => {
+const testLineAuth = async (botId = null) => {
   try {
+    const targetBotId = botId || selectedBotId.value
     const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/line-notify`
-    const { data } = await axios.post(functionUrl, { action: 'verify' }, {
+    const { data } = await axios.post(functionUrl, { 
+      action: 'verify', 
+      bot_id: targetBotId 
+    }, {
        headers: {
         'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         'Content-Type': 'application/json'
@@ -362,7 +402,7 @@ const testLineAuth = async () => {
     })
     
     if (data.valid) {
-      showToast(`Token 有效！Bot：${data.display_name} (${data.basic_id})`, 'success')
+      showToast(`Token 有效！Bot：${data.display_name}`, 'success')
     } else {
       showToast(`Token 已失效: ${data.error}`, 'error')
     }

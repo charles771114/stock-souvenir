@@ -68,13 +68,19 @@
                             <h3 class="text-base font-bold text-gray-900 truncate">
                                 {{ group.group_name || group.display_name || '未命名群組' }}
                             </h3>
-                            <div class="mt-1 flex items-center text-sm text-gray-500 font-mono">
-                                <span class="truncate block max-w-xs">{{ group.group_id }}</span>
-                                <button @click="copy(group.group_id)" class="ml-2 text-indigo-600 hover:text-indigo-800" title="複製 ID">
-                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                    </svg>
-                                </button>
+                            <div class="mt-1 flex items-center gap-3">
+                                <div class="flex items-center text-xs text-gray-400 font-mono">
+                                    <span class="truncate block max-w-[120px]">{{ group.group_id }}</span>
+                                    <button @click="copy(group.group_id)" class="ml-1 text-gray-400 hover:text-indigo-600 transition-colors" title="複製 ID">
+                                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <span v-if="group.line_bots?.bot_name" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-100 uppercase tracking-tighter">
+                                    <i class="ri-robot-2-line mr-1"></i>
+                                    {{ group.line_bots.bot_name }}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -204,7 +210,12 @@ const fetchGroups = async () => {
     loading.value = true
     const { data, error } = await supabase
         .from('line_groups')
-        .select('*')
+        .select(`
+            *,
+            line_bots (
+                bot_name
+            )
+        `)
         .order('last_active_at', { ascending: false })
     
     if (error) {
