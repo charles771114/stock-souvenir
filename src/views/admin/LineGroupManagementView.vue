@@ -86,46 +86,68 @@
                     </div>
                     
                     <!-- Status & Actions -->
-                    <div class="flex flex-col items-end gap-2">
-                        <!-- Active Status Badge -->
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                            :class="group.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
-                            {{ group.is_active ? '✓ 啟用通知' : '停用通知' }}
-                        </span>
+                    <div class="flex flex-col items-end gap-3">
+                        <!-- Status Badges Row -->
+                        <div class="flex items-center gap-2">
+                            <!-- Notification Status Badge -->
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border"
+                                :class="group.is_active 
+                                    ? 'bg-green-50 text-green-700 border-green-200' 
+                                    : 'bg-gray-50 text-gray-400 border-gray-200'">
+                                <i :class="group.is_active ? 'ri-notification-3-line' : 'ri-notification-3-off-line'" class="mr-1"></i>
+                                推播{{ group.is_active ? '中' : '關閉' }}
+                            </span>
+                            
+                            <!-- Keyword Status Badge -->
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border"
+                                :class="group.allow_keywords 
+                                    ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                                    : 'bg-gray-50 text-gray-400 border-gray-200'">
+                                <i :class="group.allow_keywords ? 'ri-questionnaire-line' : 'ri-questionnaire-line'" class="mr-1"></i>
+                                查詢{{ group.allow_keywords ? '中' : '關閉' }}
+                            </span>
+                        </div>
                         
                         <!-- Last Active Time -->
-                        <div class="text-xs text-gray-500">
+                        <div class="text-[10px] text-gray-400 font-medium">
                              最後活動: {{ formatDate(group.last_active_at) }}
                         </div>
                         
-                        <!-- Action Buttons -->
+                        <!-- Action Buttons Group -->
                         <div class="flex items-center gap-2 mt-1">
-                            <!-- Toggle Active Button -->
+                            <!-- Toggle Active (Notification) -->
                             <button 
                                 @click="toggleActive(group)"
-                                class="inline-flex items-center px-3 py-1.5 border text-xs font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors"
+                                class="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-200"
                                 :class="group.is_active 
-                                    ? 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50 focus:ring-gray-500' 
-                                    : 'border-green-300 text-green-700 bg-green-50 hover:bg-green-100 focus:ring-green-500'"
+                                    ? 'bg-green-50 text-green-600 hover:bg-green-100' 
+                                    : 'bg-gray-50 text-gray-400 hover:bg-gray-100'"
+                                :title="group.is_active ? '關閉廣播通知' : '開啟廣播通知'"
                             >
-                                <svg v-if="group.is_active" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                </svg>
-                                <svg v-else class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                {{ group.is_active ? '停用' : '啟用' }}
+                                <i :class="group.is_active ? 'ri-broadcast-line' : 'ri-broadcast-line'" class="text-lg"></i>
+                            </button>
+
+                            <!-- Toggle Keywords -->
+                            <button 
+                                @click="toggleKeywords(group)"
+                                class="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-200"
+                                :class="group.allow_keywords 
+                                    ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' 
+                                    : 'bg-gray-50 text-gray-400 hover:bg-gray-100'"
+                                :title="group.allow_keywords ? '關閉關鍵字查詢' : '開啟關鍵字查詢'"
+                            >
+                                <i class="ri-chat-search-line text-lg"></i>
                             </button>
                             
+                            <div class="w-[1px] h-4 bg-gray-200 mx-1"></div>
+
                             <!-- Remove Button -->
                             <button 
                                 @click="removeGroup(group)"
-                                class="inline-flex items-center px-3 py-1.5 border border-red-300 text-xs font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                                class="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
+                                title="移除群組"
                             >
-                                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                                移除
+                                <i class="ri-delete-bin-line text-lg"></i>
                             </button>
                         </div>
                     </div>
@@ -245,7 +267,26 @@ const toggleActive = async (group) => {
     } else {
         group.is_active = newStatus
         showToast(
-            newStatus ? '已啟用通知' : '已停用通知', 
+            newStatus ? '已開啟廣播通知' : '已關閉廣播通知', 
+            'success'
+        )
+    }
+}
+
+const toggleKeywords = async (group) => {
+    const newStatus = !group.allow_keywords
+    const { error } = await supabase
+        .from('line_groups')
+        .update({ allow_keywords: newStatus })
+        .eq('group_id', group.group_id)
+    
+    if (error) {
+        console.error(error)
+        showToast('更新失敗', 'error')
+    } else {
+        group.allow_keywords = newStatus
+        showToast(
+            newStatus ? '已開啟關鍵字查詢' : '已關閉關鍵字查詢', 
             'success'
         )
     }

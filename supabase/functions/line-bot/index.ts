@@ -126,11 +126,152 @@ serve(async (req) => {
                 const replyToken = event.replyToken
                 const userMessage = event.message.text.trim().toLowerCase()
                 const lineUserId = event.source.userId
+                console.log(`Received message: "${userMessage}" from ${lineUserId}`)
 
-                // 1. Check for souvenir keywords (Works in Group & Personal chats)
+                // 1. Check for specific keywords
+                const baseUrl = 'https://stock-souvenir.vercel.app'
+
+                // Group Restriction & Rate Limit Check
+                let allowKeywords = true
+                const sourceId = event.source.type === 'group' ? event.source.groupId : (event.source.type === 'room' ? event.source.roomId : event.source.userId)
+
+                if (event.source.type === 'group' || event.source.type === 'room') {
+                    const { data: groupData } = await supabase
+                        .from('line_groups')
+                        .select('allow_keywords')
+                        .eq('group_id', sourceId)
+                        .maybeSingle()
+
+                    if (groupData && groupData.allow_keywords === false) {
+                        allowKeywords = false
+                        console.log(`Keywords disabled for group: ${sourceId}`)
+                    }
+                }
+
+                // 30-second Cooldown Check
+                if (allowKeywords) {
+                    const { data: rateLimit } = await supabase
+                        .from('line_rate_limits')
+                        .select('last_replied_at')
+                        .eq('id', sourceId)
+                        .maybeSingle()
+
+                    if (rateLimit) {
+                        const lastReplied = new Date(rateLimit.last_replied_at).getTime()
+                        const now = new Date().getTime()
+                        if (now - lastReplied < 30 * 1000) {
+                            console.log(`Rate limit hit for ${sourceId}: ${Math.ceil((30 * 1000 - (now - lastReplied)) / 1000)}s remaining`)
+                            allowKeywords = false
+                        }
+                    }
+                }
+
+                if (allowKeywords && (userMessage.includes('近期') || userMessage.includes('下週') || userMessage.includes('下周'))) {
+                    const today = new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString().split('T')[0]
+                    const next7Days = new Date(new Date().getTime() + 8 * 60 * 60 * 1000 + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+
+                    const { data: soon } = await supabase
+                        .from('souvenirs')
+                        .select('code, name, souvenir_item, last_buy_date')
+                        .gte('last_buy_date', today)
+                        .lte('last_buy_date', next7Days)
+                        .order('last_buy_date')
+
+                    if (soon && soon.length > 0) {
+                        let text = `📅 【 近期截止預告 】\n\n未來 7 天內即將截止的公司共有 ${soon.length} 家：\n\n`
+                        soon.slice(0, 15).forEach(s => {
+                            text += `⏳ ${s.last_buy_date} [${s.code}] ${s.name}\n   ${s.souvenir_item || '尚未公告'}\n`
+                        })
+                        if (soon.length > 15) text += `\n...及其他 ${soon.length - 15} 家`
+                        text += `\n\n🔗 完整清單請見網站：${baseUrl}/today`
+                        await replyMessage(replyToken, text, channelAccessToken, sourceId, supabase)
+                    } else {
+                        await replyMessage(replyToken, '🔍 未來 7 天內暫無即將截止的公司。', channelAccessToken, sourceId, supabase)
+                    }
+                    continue
+                }
+
+                if (allowKeywords && (userMessage.includes('狀態') || userMessage.includes('status'))) {
+                    const { data: lastLog } = await supabase
+                        .from('scraper_logs')
+                        .select('*')
+                        .eq('scraper_name', 'gooddie')
+                        .order('created_at', { ascending: false })
+                        .limit(1)
+                        .maybeSingle()
+
+                    if (lastLog) {
+                        const time = new Date(lastLog.created_at).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })
+                        const statusEmoji = lastLog.status === 'success' ? '✅' : (lastLog.status === 'running' ? '⏳' : '❌')
+                        const statusText = lastLog.status === 'success' ? '正常執行' : (lastLog.status === 'running' ? '執行中' : '發生錯誤')
+
+                        let msg = `${statusEmoji} 【 爬蟲運作狀態 】\n\n`
+                        msg += `項目：Gooddie 爬蟲\n`
+                        msg += `狀態：${statusText}\n`
+                        msg += `時間：${time}\n`
+
+                        if (lastLog.status === 'success') {
+                            msg += `本次處理：${lastLog.items_processed || 0} 筆\n`
+                            msg += `來源：${lastLog.scraper_source || '未知'}\n`
+                        } else if (lastLog.status === 'error') {
+                            msg += `錯誤：${lastLog.message?.substring(0, 100) || '未知錯誤'}\n`
+                        }
+
+                        msg += `\n💡 爬蟲每日會自動執行，您也可以隨時輸入「更新」查看最新成果。`
+                        await replyMessage(replyToken, msg, channelAccessToken, sourceId, supabase)
+                    } else {
+                        await replyMessage(replyToken, '🔍 尚無爬蟲執行紀錄。', channelAccessToken, sourceId, supabase)
+                    }
+                    continue
+                }
+
+                if (allowKeywords && userMessage.includes('截止')) {
+                    const today = new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString().split('T')[0]
+                    const { data: deadlines } = await supabase
+                        .from('souvenirs')
+                        .select('code, name, souvenir_item')
+                        .eq('last_buy_date', today)
+                        .order('code')
+
+                    if (deadlines && deadlines.length > 0) {
+                        let text = `🔥 【 今日截止提醒 】\n\n今天是最後買進日的公司共有 ${deadlines.length} 家：\n\n`
+                        deadlines.slice(0, 20).forEach(d => {
+                            text += `📍 [${d.code}] ${d.name}\n   ${d.souvenir_item || '尚未公告'}\n`
+                        })
+                        if (deadlines.length > 20) text += `\n...及其他 ${deadlines.length - 20} 家`
+                        text += `\n\n⚠️ 請在 13:30 前完成交易。\n🔗 查看完整清單：${baseUrl}/today`
+                        await replyMessage(replyToken, text, channelAccessToken, sourceId, supabase)
+                    } else {
+                        await replyMessage(replyToken, '📅 今日沒有即將截止的公司。', channelAccessToken, sourceId, supabase)
+                    }
+                    continue
+                }
+
+                if (allowKeywords && userMessage.includes('更新')) {
+                    const last24h = new Date(new Date().getTime() - 24 * 60 * 60 * 1000).toISOString()
+                    const { data: updates } = await supabase
+                        .from('souvenirs')
+                        .select('code, name, souvenir_item, updated_at')
+                        .gt('updated_at', last24h)
+                        .order('updated_at', { ascending: false })
+
+                    if (updates && updates.length > 0) {
+                        let text = `✨ 【 最近更新項目 】\n\n近 24 小時內異動的公司共有 ${updates.length} 家：\n\n`
+                        updates.slice(0, 15).forEach(u => {
+                            text += `✅ [${u.code}] ${u.name}\n   ${u.souvenir_item || '尚未公告'}\n`
+                        })
+                        if (updates.length > 15) text += `\n...及其他 ${updates.length - 15} 家`
+                        text += `\n\n🔗 前往網站查看細節：${baseUrl}/today`
+                        await replyMessage(replyToken, text, channelAccessToken, sourceId, supabase)
+                    } else {
+                        await replyMessage(replyToken, '🔍 過去 24 小時內暫無更新。', channelAccessToken, sourceId, supabase)
+                    }
+                    continue
+                }
+
+                // Default highlights for other keywords
                 const highlightsKeywords = ['最新', '紀念品', '今日', '重點', '禮物']
                 if (highlightsKeywords.some(k => userMessage.includes(k))) {
-                    const baseUrl = 'https://stock-souvenir.vercel.app'
                     const highlightsText = `📢 這裡有為您整理好的「今日股東會重點」！\n\n包含尚未截止、且最近 48 小時內有更新情報的標的，以及未來 7 天內即將截止的項目：\n\n🔗 ${baseUrl}/today\n\n(點擊上方連結即可查看，不需登入帳號)`
                     await replyMessage(replyToken, highlightsText, channelAccessToken)
                     continue
@@ -238,17 +379,39 @@ async function leaveGroup(groupId: string) {
     await supabase.from('line_groups').delete().eq('group_id', groupId)
 }
 
-async function replyMessage(replyToken: string, text: string, channelAccessToken: string | undefined) {
-    if (!channelAccessToken) return
-    await fetch('https://api.line.me/v2/bot/message/reply', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${channelAccessToken}`,
-        },
-        body: JSON.stringify({
-            replyToken: replyToken,
-            messages: [{ type: 'text', text: text }],
-        }),
-    })
+async function replyMessage(replyToken: string, text: string, channelAccessToken: string | undefined, sourceId?: string, supabase?: any) {
+    if (!channelAccessToken) {
+        console.error('Missing channelAccessToken - cannot reply')
+        return
+    }
+    console.log(`Replying with token: ${replyToken.substring(0, 5)}...`)
+    try {
+        const response = await fetch('https://api.line.me/v2/bot/message/reply', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${channelAccessToken}`,
+            },
+            body: JSON.stringify({
+                replyToken: replyToken,
+                messages: [{ type: 'text', text: text }],
+            }),
+        })
+
+        if (!response.ok) {
+            const errorMsg = await response.text()
+            console.error('LINE API error:', errorMsg)
+        } else {
+            console.log('Successfully sent replyMessage')
+            // Update rate limit timestamp
+            if (sourceId && supabase) {
+                await supabase
+                    .from('line_rate_limits')
+                    .upsert({ id: sourceId, last_replied_at: new Date().toISOString() })
+                console.log(`Rate limit updated for ${sourceId}`)
+            }
+        }
+    } catch (e) {
+        console.error('Failed to call LINE API:', e)
+    }
 }

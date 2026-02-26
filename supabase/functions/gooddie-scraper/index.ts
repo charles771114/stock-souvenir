@@ -320,6 +320,35 @@ Deno.serve(async (req) => {
 
             addLog(`Step 2: Syncing ${rowsToSync.length} rows (Source: ${scrapSource})...`)
 
+            // --- Step 2: Deduplicate rowsToSync by doc_id before upsert ---
+            const uniqueMap = new Map()
+            const duplicates: string[] = []
+
+            for (const row of rowsToSync) {
+                const docId = row.doc_id.trim()
+                row.doc_id = docId // Ensure trimmed
+
+                const existing = uniqueMap.get(docId)
+                if (existing) {
+                    duplicates.push(docId)
+                    // If existing row has no souvenir, but current one does, prefer current one
+                    if (!existing.souvenir_item && row.souvenir_item) {
+                        uniqueMap.set(docId, row)
+                    }
+                } else {
+                    uniqueMap.set(docId, row)
+                }
+            }
+
+            const originalCount = rowsToSync.length
+            rowsToSync = Array.from(uniqueMap.values())
+
+            if (duplicates.length > 0) {
+                addLog(`Deduplication: Removed ${originalCount - rowsToSync.length} rows. Colliding IDs: ${duplicates.slice(0, 5).join(', ')}${duplicates.length > 5 ? '...' : ''}`)
+            } else {
+                addLog(`Deduplication: All ${rowsToSync.length} rows are unique.`)
+            }
+
             // --- Step 2: 查詢上次執行結果（用於比較變化）---
             const { data: lastLog } = await supabase
                 .from('scraper_logs')
@@ -533,7 +562,7 @@ Deno.serve(async (req) => {
             const { data: emptyGiftData } = await supabase
                 .from('souvenirs')
                 .select('*')
-                .not('doc_id', 'like', `%_%`)
+                .like('doc_id', `%_${TARGET_YEAR}`) // 只查詢當年度
                 .is('souvenir_item', null)
                 .not('last_buy_date', 'eq', today)
 
@@ -595,7 +624,7 @@ Deno.serve(async (req) => {
                 await sendLineBroadcast(notification)
             }
 
-            logEntry.message = `Processed ${currentItemsProcessed} items via ${scrapSource}. Sent ${notifications.length} notifications.`
+            logEntry.message = `Processed ${currentItemsProcessed} items via ${scrapSource}. Deduplicated ${originalCount - currentItemsProcessed} rows. Sent ${notifications.length} notifications.`
 
         } catch (error: any) {
             addLog(`Scraper Error: ${error.message}`)
