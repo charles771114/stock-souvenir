@@ -94,7 +94,7 @@
                                 :class="group.is_active 
                                     ? 'bg-green-50 text-green-700 border-green-200' 
                                     : 'bg-gray-50 text-gray-400 border-gray-200'">
-                                <i :class="group.is_active ? 'ri-notification-3-line' : 'ri-notification-3-off-line'" class="mr-1"></i>
+                                <i :class="group.is_active ? 'ri-notification-line' : 'ri-notification-off-line'" class="mr-1"></i>
                                 推播{{ group.is_active ? '中' : '關閉' }}
                             </span>
                             
@@ -103,7 +103,7 @@
                                 :class="group.allow_keywords 
                                     ? 'bg-blue-50 text-blue-700 border-blue-200' 
                                     : 'bg-gray-50 text-gray-400 border-gray-200'">
-                                <i :class="group.allow_keywords ? 'ri-questionnaire-line' : 'ri-questionnaire-line'" class="mr-1"></i>
+                                <i class="ri-search-eye-line mr-1"></i>
                                 查詢{{ group.allow_keywords ? '中' : '關閉' }}
                             </span>
                         </div>
@@ -136,7 +136,7 @@
                                     : 'bg-gray-50 text-gray-400 hover:bg-gray-100'"
                                 :title="group.allow_keywords ? '關閉關鍵字查詢' : '開啟關鍵字查詢'"
                             >
-                                <i class="ri-chat-search-line text-lg"></i>
+                                <i class="ri-search-2-line text-lg"></i>
                             </button>
                             
                             <div class="w-[1px] h-4 bg-gray-200 mx-1"></div>
