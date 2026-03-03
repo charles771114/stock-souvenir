@@ -172,194 +172,129 @@ serve(async (req) => {
                 if (allowKeywords && (userMessage.includes('近期') || userMessage.includes('下週') || userMessage.includes('下周'))) {
                     const today = new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString().split('T')[0]
                     const next7Days = new Date(new Date().getTime() + 8 * 60 * 60 * 1000 + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-
-                    const { data: soon } = await supabase
-                        .from('souvenirs')
-                        .select('code, name, souvenir_item, last_buy_date')
-                        .gte('last_buy_date', today)
-                        .lte('last_buy_date', next7Days)
-                        .order('last_buy_date')
+                    const { data: soon } = await supabase.from('souvenirs').select('code, name, souvenir_item, last_buy_date').gte('last_buy_date', today).lte('last_buy_date', next7Days).order('last_buy_date')
 
                     if (soon && soon.length > 0) {
-                        // Fetch last year info for pending items
-                        const needsRef = soon.filter(s => !s.souvenir_item || s.souvenir_item.includes('尚未公告'))
+                        const needsRef = soon.filter(s => !s.souvenir_item || s.souvenir_item.trim() === '' || s.souvenir_item.includes('尚未公告'))
                         let lastYearMap = new Map()
                         if (needsRef.length > 0) {
-                            const { data: prevData } = await supabase
-                                .from('souvenirs')
-                                .select('code, souvenir_item')
-                                .in('doc_id', needsRef.map(s => `${s.code}_${PREV_YEAR}`))
+                            const { data: prevData } = await supabase.from('souvenirs').select('code, souvenir_item').in('doc_id', needsRef.map(s => `${s.code}_${PREV_YEAR}`))
                             prevData?.forEach(p => lastYearMap.set(p.code, p.souvenir_item))
                         }
 
-                        if (allowKeywords && (userMessage.includes('近期') || userMessage.includes('下週') || userMessage.includes('下周'))) {
-                            const today = new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString().split('T')[0]
-                            const next7Days = new Date(new Date().getTime() + 8 * 60 * 60 * 1000 + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-
-                            const { data: soon } = await supabase
-                                .from('souvenirs')
-                                .select('code, name, souvenir_item, last_buy_date')
-                                .gte('last_buy_date', today)
-                                .lte('last_buy_date', next7Days)
-                                .order('last_buy_date')
-
-                            if (soon && soon.length > 0) {
-                                // Fetch last year info for pending items
-                                const needsRef = soon.filter(s => !s.souvenir_item || s.souvenir_item.includes('尚未公告'))
-                                let lastYearMap = new Map()
-                                if (needsRef.length > 0) {
-                                    const { data: prevData } = await supabase
-                                        .from('souvenirs')
-                                        .select('code, souvenir_item')
-                                        .in('doc_id', needsRef.map(s => `${s.code}_${PREV_YEAR}`))
-                                    prevData?.forEach(p => lastYearMap.set(p.code, p.souvenir_item))
-                                }
-
-                                let text = `📅 【 近期截止預告 】\n\n未來 7 天內即將截止的公司共有 ${soon.length} 家：\n\n`
-                                soon.slice(0, 15).forEach(s => {
-                                    const isNew = s.souvenir_item && !s.souvenir_item.includes('尚未公告')
-                                    const daysDiff = Math.ceil((new Date(s.last_buy_date).getTime() - new Date(today).getTime()) / (1000 * 60 * 60 * 24))
-
-                                    text += `📌 ${s.code} ${s.name}\n`
-                                    if (isNew) {
-                                        text += `紀念品：${s.souvenir_item}\n`
-                                    } else {
-                                        const lastGift = lastYearMap.get(s.code)
-                                        text += `去年：${lastGift || '尚未公告'}\n`
-                                    }
-                                    text += `最後買進日：${s.last_buy_date} (還有${daysDiff}天)\n\n`
-                                })
-                                if (soon.length > 15) text += `...及其他 ${soon.length - 15} 家\n\n`
-                                text += `🔗 完整清單：${baseUrl}/today`
-                                await replyMessage(replyToken, text, channelAccessToken, sourceId, supabase)
+                        let text = `📅 【 近期截止預告 】\n\n未來 7 天內即將截止的公司共有 ${soon.length} 家：\n\n`
+                        let itemCount = 0
+                        for (const s of soon) {
+                            if (text.length > 4000 || itemCount >= 30) break
+                            const isNew = s.souvenir_item && s.souvenir_item.trim() !== '' && !s.souvenir_item.includes('尚未公告')
+                            const daysDiff = Math.ceil((new Date(s.last_buy_date).getTime() - new Date(today).getTime()) / (1000 * 60 * 60 * 24))
+                            text += `📌 ${s.code} ${s.name}\n`
+                            if (isNew) {
+                                text += `紀念品：${s.souvenir_item}\n`
                             } else {
-                                await replyMessage(replyToken, '🔍 未來 7 天內暫無即將截止的公司。', channelAccessToken, sourceId, supabase)
+                                const lastGift = lastYearMap.get(s.code)
+                                text += `去年：${lastGift || '尚未公告'}\n`
                             }
-                            continue
+                            text += `最後買進日：${s.last_buy_date} (還有${daysDiff}天)\n\n`
+                            itemCount++
                         }
+                        if (soon.length > itemCount) text += `...及其他 ${soon.length - itemCount} 家\n\n`
+                        text += `🔗 完整清單：${baseUrl}/today`
+                        await replyMessage(replyToken, text, channelAccessToken, sourceId, supabase)
+                    } else {
+                        await replyMessage(replyToken, '🔍 未來 7 天內暫無即將截止的公司。', channelAccessToken, sourceId, supabase)
+                    }
+                    continue
+                }
 
-                        if (allowKeywords && (userMessage.includes('狀態') || userMessage.includes('status'))) {
-                            const { data: lastLog } = await supabase
-                                .from('scraper_logs')
-                                .select('*')
-                                .eq('scraper_name', 'gooddie')
-                                .order('created_at', { ascending: false })
-                                .limit(1)
-                                .maybeSingle()
+                if (allowKeywords && (userMessage.includes('狀態') || userMessage.includes('status'))) {
+                    const { data: lastLog } = await supabase.from('scraper_logs').select('*').eq('scraper_name', 'gooddie').order('created_at', { ascending: false }).limit(1).maybeSingle()
+                    if (lastLog) {
+                        const time = new Date(lastLog.created_at).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })
+                        const statusEmoji = lastLog.status === 'success' ? '✅' : (lastLog.status === 'running' ? '⏳' : '❌')
+                        const statusText = lastLog.status === 'success' ? '正常執行' : (lastLog.status === 'running' ? '執行中' : '發生錯誤')
+                        let msg = `${statusEmoji} 【 爬蟲運作狀態 】\n\n項目：Gooddie 爬蟲\n狀態：${statusText}\n時間：${time}\n`
+                        if (lastLog.status === 'success') {
+                            msg += `本次處理：${lastLog.items_processed || 0} 筆\n來源：${lastLog.scraper_source || '未知'}\n`
+                        } else if (lastLog.status === 'error') {
+                            msg += `錯誤：${lastLog.message?.substring(0, 100) || '未知錯誤'}\n`
+                        }
+                        msg += `\n💡 爬蟲每日會自動執行，您也可以隨時輸入「更新」查看最新成果。`
+                        await replyMessage(replyToken, msg, channelAccessToken, sourceId, supabase)
+                    } else {
+                        await replyMessage(replyToken, '🔍 尚無爬蟲執行紀錄。', channelAccessToken, sourceId, supabase)
+                    }
+                    continue
+                }
 
-                            if (lastLog) {
-                                const time = new Date(lastLog.created_at).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })
-                                const statusEmoji = lastLog.status === 'success' ? '✅' : (lastLog.status === 'running' ? '⏳' : '❌')
-                                const statusText = lastLog.status === 'success' ? '正常執行' : (lastLog.status === 'running' ? '執行中' : '發生錯誤')
-
-                                let msg = `${statusEmoji} 【 爬蟲運作狀態 】\n\n`
-                                msg += `項目：Gooddie 爬蟲\n`
-                                msg += `狀態：${statusText}\n`
-                                msg += `時間：${time}\n`
-
-                                if (lastLog.status === 'success') {
-                                    msg += `本次處理：${lastLog.items_processed || 0} 筆\n`
-                                    msg += `來源：${lastLog.scraper_source || '未知'}\n`
-                                } else if (lastLog.status === 'error') {
-                                    msg += `錯誤：${lastLog.message?.substring(0, 100) || '未知錯誤'}\n`
-                                }
-
-                                msg += `\n💡 爬蟲每日會自動執行，您也可以隨時輸入「更新」查看最新成果。`
-                                await replyMessage(replyToken, msg, channelAccessToken, sourceId, supabase)
+                if (allowKeywords && userMessage.includes('截止')) {
+                    const today = new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString().split('T')[0]
+                    const { data: deadlines } = await supabase.from('souvenirs').select('code, name, souvenir_item').eq('last_buy_date', today).order('code')
+                    if (deadlines && deadlines.length > 0) {
+                        const needsRef = deadlines.filter(d => !d.souvenir_item || d.souvenir_item.trim() === '' || d.souvenir_item.includes('尚未公告'))
+                        let lastYearMap = new Map()
+                        if (needsRef.length > 0) {
+                            const { data: prevData } = await supabase.from('souvenirs').select('code, souvenir_item').in('doc_id', needsRef.map(d => `${d.code}_${PREV_YEAR}`))
+                            prevData?.forEach(p => lastYearMap.set(p.code, p.souvenir_item))
+                        }
+                        let text = `🔥 【 今日截止提醒 】\n\n今天是最後買進日的公司共有 ${deadlines.length} 家：\n\n`
+                        let itemCount = 0
+                        for (const d of deadlines) {
+                            if (text.length > 4000 || itemCount >= 30) break
+                            const isNew = d.souvenir_item && d.souvenir_item.trim() !== '' && !d.souvenir_item.includes('尚未公告')
+                            text += `📌 ${d.code} ${d.name}\n`
+                            if (isNew) {
+                                text += `紀念品：${d.souvenir_item}\n`
                             } else {
-                                await replyMessage(replyToken, '🔍 尚無爬蟲執行紀錄。', channelAccessToken, sourceId, supabase)
+                                const lastGift = lastYearMap.get(d.code)
+                                text += `去年：${lastGift || '尚未公告'}\n`
                             }
-                            continue
+                            text += `最後買進日：🔥 今天截止 (⚠️ 13:30 前)\n\n`
+                            itemCount++
                         }
+                        if (deadlines.length > itemCount) text += `...及其他 ${deadlines.length - itemCount} 家\n\n`
+                        text += `⚠️ 請在 13:30 前完成交易。\n🔗 完整清單：${baseUrl}/today`
+                        await replyMessage(replyToken, text, channelAccessToken, sourceId, supabase)
+                    } else {
+                        await replyMessage(replyToken, '📅 今日沒有即將截止的公司。', channelAccessToken, sourceId, supabase)
+                    }
+                    continue
+                }
 
-                        if (allowKeywords && userMessage.includes('截止')) {
-                            const today = new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString().split('T')[0]
-                            const { data: deadlines } = await supabase
-                                .from('souvenirs')
-                                .select('code, name, souvenir_item')
-                                .eq('last_buy_date', today)
-                                .order('code')
-
-                            if (deadlines && deadlines.length > 0) {
-                                // Fetch last year info for pending items
-                                const needsRef = deadlines.filter(d => !d.souvenir_item || d.souvenir_item.includes('尚未公告'))
-                                let lastYearMap = new Map()
-                                if (needsRef.length > 0) {
-                                    const { data: prevData } = await supabase
-                                        .from('souvenirs')
-                                        .select('code, souvenir_item')
-                                        .in('doc_id', needsRef.map(d => `${d.code}_${PREV_YEAR}`))
-                                    prevData?.forEach(p => lastYearMap.set(p.code, p.souvenir_item))
-                                }
-
-                                let text = `🔥 【 今日截止提醒 】\n\n今天是最後買進日的公司共有 ${deadlines.length} 家：\n\n`
-                                deadlines.slice(0, 20).forEach(d => {
-                                    const isNew = d.souvenir_item && !d.souvenir_item.includes('尚未公告')
-                                    text += `📌 ${d.code} ${d.name}\n`
-                                    if (isNew) {
-                                        text += `紀念品：${d.souvenir_item}\n`
-                                    } else {
-                                        const lastGift = lastYearMap.get(d.code)
-                                        text += `去年：${lastGift || '尚未公告'}\n`
-                                    }
-                                    text += `最後買進日：🔥 今天截止 (⚠️ 13:30 前)\n\n`
-                                })
-                                if (deadlines.length > 20) text += `...及其他 ${deadlines.length - 20} 家\n\n`
-                                text += `⚠️ 請在 13:30 前完成交易。\n🔗 完整清單：${baseUrl}/today`
-                                await replyMessage(replyToken, text, channelAccessToken, sourceId, supabase)
+                if (allowKeywords && userMessage.includes('更新')) {
+                    const last24h = new Date(new Date().getTime() - 24 * 60 * 60 * 1000).toISOString()
+                    const { data: updates } = await supabase.from('souvenirs').select('code, name, souvenir_item, updated_at, last_buy_date').gt('updated_at', last24h).order('updated_at', { ascending: false })
+                    if (updates && updates.length > 0) {
+                        const needsRef = updates.filter(u => !u.souvenir_item || u.souvenir_item.trim() === '' || u.souvenir_item.includes('尚未公告'))
+                        let lastYearMap = new Map()
+                        if (needsRef.length > 0) {
+                            const { data: prevData } = await supabase.from('souvenirs').select('code, souvenir_item').in('doc_id', needsRef.map(u => `${u.code}_${PREV_YEAR}`))
+                            prevData?.forEach(p => lastYearMap.set(p.code, p.souvenir_item))
+                        }
+                        const today = new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString().split('T')[0]
+                        let text = `✨ 【 最近更新項目 】\n\n近 24 小時內異動的公司共有 ${updates.length} 家：\n\n`
+                        let itemCount = 0
+                        for (const u of updates) {
+                            if (text.length > 4200 || itemCount >= 60) break
+                            const isNew = u.souvenir_item && u.souvenir_item.trim() !== '' && !u.souvenir_item.includes('尚未公告')
+                            const daysDiff = u.last_buy_date ? Math.ceil((new Date(u.last_buy_date).getTime() - new Date(today).getTime()) / (1000 * 60 * 60 * 24)) : null
+                            text += `📌 ${u.code} ${u.name}\n`
+                            if (isNew) {
+                                text += `紀念品：${u.souvenir_item}\n`
                             } else {
-                                await replyMessage(replyToken, '📅 今日沒有即將截止的公司。', channelAccessToken, sourceId, supabase)
+                                const lastGift = lastYearMap.get(u.code)
+                                text += `去年：${lastGift || '尚未公告'}\n`
                             }
-                            continue
-                        }
-
-                        if (allowKeywords && userMessage.includes('更新')) {
-                            const last24h = new Date(new Date().getTime() - 24 * 60 * 60 * 1000).toISOString()
-                            const { data: updates } = await supabase
-                                .from('souvenirs')
-                                .select('code, name, souvenir_item, updated_at', 'last_buy_date')
-                                .gt('updated_at', last24h)
-                                .order('updated_at', { ascending: false })
-
-                            if (updates && updates.length > 0) {
-                                // Fetch last year info for pending items
-                                const needsRef = updates.filter(u => !u.souvenir_item || u.souvenir_item.includes('尚未公告'))
-                                let lastYearMap = new Map()
-                                if (needsRef.length > 0) {
-                                    const { data: prevData } = await supabase
-                                        .from('souvenirs')
-                                        .select('code, souvenir_item')
-                                        .in('doc_id', needsRef.map(u => `${u.code}_${PREV_YEAR}`))
-                                    prevData?.forEach(p => lastYearMap.set(p.code, p.souvenir_item))
-                                }
-
-                                const today = new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString().split('T')[0]
-                                let text = `✨ 【 最近更新項目 】\n\n近 24 小時內異動的公司共有 ${updates.length} 家：\n\n`
-                                updates.slice(0, 15).forEach(u => {
-                                    const isNew = u.souvenir_item && !u.souvenir_item.includes('尚未公告')
-                                    const daysDiff = u.last_buy_date ? Math.ceil((new Date(u.last_buy_date).getTime() - new Date(today).getTime()) / (1000 * 60 * 60 * 24)) : null
-
-                                    text += `📌 ${u.code} ${u.name}\n`
-                                    if (isNew) {
-                                        text += `紀念品：${u.souvenir_item}\n`
-                                    } else {
-                                        const lastGift = lastYearMap.get(u.code)
-                                        text += `去年：${lastGift || '尚未公告'}\n`
-                                    }
-                                    if (daysDiff !== null) {
-                                        text += `最後買進日：${u.last_buy_date} (${daysDiff === 0 ? '🔥 今天截止' : `還有${daysDiff}天`})\n\n`
-                                    } else {
-                                        text += `\n`
-                                    }
-                                })
-                                if (updates.length > 15) text += `...及其他 ${updates.length - 15} 家\n\n`
-                                text += `🔗 完整清單：${baseUrl}/today`
-                                await replyMessage(replyToken, text, channelAccessToken, sourceId, supabase)
+                            if (daysDiff !== null) {
+                                text += `最後買進日：${u.last_buy_date} (${daysDiff === 0 ? '🔥 今天截止' : `還有${daysDiff}天`})\n\n`
                             } else {
-                                await replyMessage(replyToken, '🔍 過去 24 小時內暫無更新。', channelAccessToken, sourceId, supabase)
+                                text += `\n`
                             }
-                            continue
+                            itemCount++
                         }
+                        if (updates.length > itemCount) text += `...及其他 ${updates.length - itemCount} 家\n\n`
+                        text += `🔗 完整清單：${baseUrl}/today`
+                        await replyMessage(replyToken, text, channelAccessToken, sourceId, supabase)
                     } else {
                         await replyMessage(replyToken, '🔍 過去 24 小時內暫無更新。', channelAccessToken, sourceId, supabase)
                     }
