@@ -195,16 +195,17 @@ serve(async (req) => {
                         let text = `📅 【 近期截止預告 】\n\n未來 7 天內即將截止的公司共有 ${soon.length} 家：\n\n`
                         soon.slice(0, 15).forEach(s => {
                             const isNew = s.souvenir_item && !s.souvenir_item.includes('尚未公告')
-                            text += `⏳ ${s.last_buy_date} [${s.code}] ${s.name}\n`
+                            text += `🔹 [${s.code}] ${s.name}\n`
                             if (isNew) {
-                                text += `   🎁 ${s.souvenir_item}\n`
+                                text += `   📦 紀念品：${s.souvenir_item}\n`
                             } else {
                                 const lastGift = lastYearMap.get(s.code)
-                                text += `   👉 尚未公告 ${lastGift ? `(去年：${lastGift})` : ''}\n`
+                                text += `   🔍 尚未公告 ${lastGift ? `(去年：${lastGift})` : ''}\n`
                             }
+                            text += `   ⏳ 最後買進：${s.last_buy_date}\n\n`
                         })
-                        if (soon.length > 15) text += `\n...及其他 ${soon.length - 15} 家`
-                        text += `\n\n🔗 完整清單請見網站：${baseUrl}/today`
+                        if (soon.length > 15) text += `...及其他 ${soon.length - 15} 家\n\n`
+                        text += `🔗 完整清單請見網站：${baseUrl}/today`
                         await replyMessage(replyToken, text, channelAccessToken, sourceId, supabase)
                     } else {
                         await replyMessage(replyToken, '🔍 未來 7 天內暫無即將截止的公司。', channelAccessToken, sourceId, supabase)
@@ -271,14 +272,14 @@ serve(async (req) => {
                             const isNew = d.souvenir_item && !d.souvenir_item.includes('尚未公告')
                             text += `📍 [${d.code}] ${d.name}\n`
                             if (isNew) {
-                                text += `   🎁 ${d.souvenir_item}\n`
+                                text += `   📦 紀念品：${d.souvenir_item}\n\n`
                             } else {
                                 const lastGift = lastYearMap.get(d.code)
-                                text += `   👉 尚未公告 ${lastGift ? `(去年：${lastGift})` : ''}\n`
+                                text += `   🔍 尚未公告 ${lastGift ? `(去年：${lastGift})` : ''}\n\n`
                             }
                         })
-                        if (deadlines.length > 20) text += `\n...及其他 ${deadlines.length - 20} 家`
-                        text += `\n\n⚠️ 請在 13:30 前完成交易。\n🔗 查看完整清單：${baseUrl}/today`
+                        if (deadlines.length > 20) text += `...及其他 ${deadlines.length - 20} 家\n\n`
+                        text += `⚠️ 請在 13:30 前完成交易。\n🔗 查看完整清單：${baseUrl}/today`
                         await replyMessage(replyToken, text, channelAccessToken, sourceId, supabase)
                     } else {
                         await replyMessage(replyToken, '📅 今日沒有即將截止的公司。', channelAccessToken, sourceId, supabase)
@@ -311,14 +312,14 @@ serve(async (req) => {
                             const isNew = u.souvenir_item && !u.souvenir_item.includes('尚未公告')
                             text += `✅ [${u.code}] ${u.name}\n`
                             if (isNew) {
-                                text += `   🎁 ${u.souvenir_item}\n`
+                                text += `   📦 紀念品：${u.souvenir_item}\n\n`
                             } else {
                                 const lastGift = lastYearMap.get(u.code)
-                                text += `   👉 尚未公告 ${lastGift ? `(去年：${lastGift})` : ''}\n`
+                                text += `   🔍 尚未公告 ${lastGift ? `(去年：${lastGift})` : ''}\n\n`
                             }
                         })
-                        if (updates.length > 15) text += `\n...及其他 ${updates.length - 15} 家`
-                        text += `\n\n🔗 前往網站查看細節：${baseUrl}/today`
+                        if (updates.length > 15) text += `...及其他 ${updates.length - 15} 家\n\n`
+                        text += `🔗 前往網站查看細節：${baseUrl}/today`
                         await replyMessage(replyToken, text, channelAccessToken, sourceId, supabase)
                     } else {
                         await replyMessage(replyToken, '🔍 過去 24 小時內暫無更新。', channelAccessToken, sourceId, supabase)
