@@ -325,10 +325,16 @@ Deno.serve(async (req) => {
             const collisions: any[] = []
 
             for (const row of rowsToSync) {
-                // Aggressive normalization: trim and remove non-printable characters
+                // Aggressive normalization: 
+                // 1. Convert to string
+                // 2. Normalize to NFC (consistent Unicode composition)
+                // 3. Trim whitespace
+                // 4. Remove all non-printable/control characters (U+0000-U+001F, U+007F-U+009F)
+                // 5. Remove zero-width and other invisible characters (U+200B-U+200D, U+FEFF)
                 const normalizedDocId = row.doc_id.toString()
+                    .normalize('NFC')
                     .trim()
-                    .replace(/[\u0000-\u001F\u007F-\u009F]/g, "")
+                    .replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200D\uFEFF]/g, "")
 
                 row.doc_id = normalizedDocId
 
@@ -351,12 +357,29 @@ Deno.serve(async (req) => {
             const originalCount = rowsToSync.length
             rowsToSync = Array.from(uniqueMap.values())
 
+            // FINAL DEFENSIVE CHECK: Ensure no duplicate doc_ids in the array before database call
+            const finalCheckSet = new Set()
+            rowsToSync = rowsToSync.filter(r => {
+                if (finalCheckSet.has(r.doc_id)) {
+                    console.warn(`[DEFENSIVE] Detected duplicate doc_id in final sync array: ${r.doc_id}. Removing.`)
+                    return false
+                }
+                finalCheckSet.add(r.doc_id)
+                return true
+            })
+
             if (collisions.length > 0) {
                 const collisionSummary = collisions.slice(0, 3).map(c => `${c.id} (${c.prev.name} vs ${c.curr.name})`).join(', ')
                 addLog(`Deduplication: Removed ${originalCount - rowsToSync.length} rows. Collisions: ${collisionSummary}${collisions.length > 3 ? '...' : ''}`)
                 console.log('Detailed Collisions:', JSON.stringify(collisions, null, 2))
             } else {
                 addLog(`Deduplication: All ${rowsToSync.length} rows are unique.`)
+            }
+
+            // Verify first few rows for logging
+            if (rowsToSync.length > 0) {
+                console.log('Sync Header Verification (First 5):')
+                rowsToSync.slice(0, 5).forEach(r => console.log(` - ${r.doc_id}: ${r.name}`))
             }
 
             // --- Step 2: 查詢上次執行結果（用於比較變化）---
