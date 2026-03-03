@@ -322,29 +322,39 @@ Deno.serve(async (req) => {
 
             // --- Step 2: Deduplicate rowsToSync by doc_id before upsert ---
             const uniqueMap = new Map()
-            const duplicates: string[] = []
+            const collisions: any[] = []
 
             for (const row of rowsToSync) {
-                const docId = row.doc_id.trim()
-                row.doc_id = docId // Ensure trimmed
+                // Aggressive normalization: trim and remove non-printable characters
+                const normalizedDocId = row.doc_id.toString()
+                    .trim()
+                    .replace(/[\u0000-\u001F\u007F-\u009F]/g, "")
 
-                const existing = uniqueMap.get(docId)
+                row.doc_id = normalizedDocId
+
+                const existing = uniqueMap.get(normalizedDocId)
                 if (existing) {
-                    duplicates.push(docId)
+                    collisions.push({
+                        id: normalizedDocId,
+                        prev: { code: existing.code, name: existing.name, souvenir: existing.souvenir_item },
+                        curr: { code: row.code, name: row.name, souvenir: row.souvenir_item }
+                    })
                     // If existing row has no souvenir, but current one does, prefer current one
                     if (!existing.souvenir_item && row.souvenir_item) {
-                        uniqueMap.set(docId, row)
+                        uniqueMap.set(normalizedDocId, row)
                     }
                 } else {
-                    uniqueMap.set(docId, row)
+                    uniqueMap.set(normalizedDocId, row)
                 }
             }
 
             const originalCount = rowsToSync.length
             rowsToSync = Array.from(uniqueMap.values())
 
-            if (duplicates.length > 0) {
-                addLog(`Deduplication: Removed ${originalCount - rowsToSync.length} rows. Colliding IDs: ${duplicates.slice(0, 5).join(', ')}${duplicates.length > 5 ? '...' : ''}`)
+            if (collisions.length > 0) {
+                const collisionSummary = collisions.slice(0, 3).map(c => `${c.id} (${c.prev.name} vs ${c.curr.name})`).join(', ')
+                addLog(`Deduplication: Removed ${originalCount - rowsToSync.length} rows. Collisions: ${collisionSummary}${collisions.length > 3 ? '...' : ''}`)
+                console.log('Detailed Collisions:', JSON.stringify(collisions, null, 2))
             } else {
                 addLog(`Deduplication: All ${rowsToSync.length} rows are unique.`)
             }

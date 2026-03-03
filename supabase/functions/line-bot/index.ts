@@ -357,18 +357,40 @@ async function trackGroup(groupId: string, channelAccessToken: string | undefine
         }
     }
 
-    const { error } = await supabase
+    // Step 1: Check if group already exists
+    const { data: existingGroup } = await supabase
         .from('line_groups')
-        .upsert({
-            group_id: groupId,
-            group_name: groupName || null,
-            picture_url: pictureUrl || null,
-            is_active: true,
-            bot_id: botId,
-            last_active_at: new Date().toISOString()
-        }, { onConflict: 'group_id' })
+        .select('group_id, is_active, allow_keywords')
+        .eq('group_id', groupId)
+        .maybeSingle()
 
-    if (error) console.error('Error tracking group:', error)
+    if (existingGroup) {
+        // Step 2: Update only relevant info, preserving user settings
+        const { error } = await supabase
+            .from('line_groups')
+            .update({
+                group_name: groupName || existingGroup.group_name,
+                picture_url: pictureUrl || existingGroup.picture_url,
+                bot_id: botId,
+                last_active_at: new Date().toISOString()
+            })
+            .eq('group_id', groupId)
+        if (error) console.error('Error updating group info:', error)
+    } else {
+        // Step 3: Insert new group with default active status
+        const { error } = await supabase
+            .from('line_groups')
+            .insert({
+                group_id: groupId,
+                group_name: groupName || null,
+                picture_url: pictureUrl || null,
+                is_active: true,
+                allow_keywords: true,
+                bot_id: botId,
+                last_active_at: new Date().toISOString()
+            })
+        if (error) console.error('Error tracking new group:', error)
+    }
 }
 
 async function leaveGroup(groupId: string) {
