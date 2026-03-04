@@ -119,9 +119,11 @@ export function useCollection() {
     /**
      * 新增持股至庫存 (寫入 user_inventory)
      */
-    const addToInventory = async (stockCode, stockName) => {
+    const addToInventory = async (stockCode, stockName, portfolioId = null) => {
         if (!user.value) return { success: false, error: '未登入' }
-        if (isCombinedView.value || !currentPortfolioId.value) {
+
+        const targetId = portfolioId || currentPortfolioId.value
+        if (isCombinedView.value || !targetId) {
             return { success: false, error: '請先選擇一個特定的帳戶，不能在歸戶模式下新增' }
         }
 
@@ -130,7 +132,7 @@ export function useCollection() {
                 .from('user_inventory')
                 .upsert({
                     user_id: user.value.id,
-                    portfolio_id: currentPortfolioId.value,
+                    portfolio_id: targetId,
                     stock_code: stockCode,
                     stock_name: stockName,
                     updated_at: new Date().toISOString()
@@ -141,8 +143,8 @@ export function useCollection() {
             if (error) throw error
 
             // Invalidate cache immediately on change
-            const currentId = isCombinedView.value ? 'combined' : currentPortfolioId.value
-            cache.remove(`inventory:${user.value.id}:${currentId}`)
+            const currentCacheId = isCombinedView.value ? 'combined' : targetId
+            cache.remove(`inventory:${user.value.id}:${currentCacheId}`)
 
             return { success: true, data }
         } catch (err) {
@@ -151,9 +153,11 @@ export function useCollection() {
         }
     }
 
-    const addToCollection = async (souvenirId, status = 'collected') => {
+    const addToCollection = async (souvenirId, status = 'collected', portfolioId = null) => {
         if (!user.value) return { success: false, error: '未登入' }
-        if (isCombinedView.value || !currentPortfolioId.value) {
+
+        const targetId = portfolioId || currentPortfolioId.value
+        if (isCombinedView.value || !targetId) {
             return { success: false, error: '請先選擇一個特定的帳戶，不能在歸戶模式下新增' }
         }
 
@@ -167,7 +171,7 @@ export function useCollection() {
                     .single()
 
                 if (souvenir) {
-                    await addToInventory(souvenir.code, souvenir.name)
+                    await addToInventory(souvenir.code, souvenir.name, targetId)
                 }
             }
 
@@ -176,7 +180,7 @@ export function useCollection() {
                 .from('user_collections')
                 .upsert({
                     user_id: user.value.id,
-                    portfolio_id: currentPortfolioId.value,
+                    portfolio_id: targetId,
                     souvenir_id: souvenirId,
                     status
                 }, { onConflict: 'portfolio_id,souvenir_id' })

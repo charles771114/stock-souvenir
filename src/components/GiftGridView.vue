@@ -11,6 +11,7 @@
           :isExpired="isExpired"
           :disabled="disabled"
           @toggle-collection="$emit('toggle-collection', item)"
+          @toggle-inventory="$emit('toggle-inventory', item)"
         />
       </div>
     </transition-group>
@@ -35,7 +36,7 @@ defineProps({
   }
 })
 
-defineEmits(['toggle-collection'])
+defineEmits(['toggle-collection', 'toggle-inventory'])
 </script>
 
 <style scoped>

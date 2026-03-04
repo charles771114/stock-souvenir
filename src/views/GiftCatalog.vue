@@ -199,13 +199,15 @@
           <!-- Grid View -->
           <GiftGridView v-if="viewMode === 'grid'" :items="paginatedMappedGifts" :isExpired="isExpired"
             :disabled="!isCurrentYear"
-            @toggle-collection="handleToggleCollection" />
+            @toggle-collection="handleToggleCollection"
+            @toggle-inventory="handleToggleInventory" />
 
           <!-- List View -->
           <TableView v-else :items="paginatedMappedGifts" :isExpired="isExpired"
             :disabled="!isCurrentYear"
             :sort-by="filters.sort"
             @toggle-collection="handleToggleCollection"
+            @toggle-inventory="handleToggleInventory"
             @sort="handleSort" />
 
           <div v-if="!isCurrentYear" class="mt-8 p-4 bg-amber-50 rounded-2xl border border-amber-100 text-center">
@@ -557,6 +559,31 @@ const handleToggleCollection = async (gift) => {
         throw error
       }
       showToast('已加入收藏', 'success', 1000)
+    }
+  } catch (e) {
+    console.error(e)
+    showToast(e.message, 'error')
+  }
+}
+
+const handleToggleInventory = async (gift) => {
+  if (isCombinedView.value) {
+    showToast('請先選擇一個特定的帳戶，不能在歸戶模式下新增', 'warning')
+    return
+  }
+
+  try {
+    const { success, error } = await addToCollection(gift.id, 'holding')
+    if (error && error.message === '未登入') {
+      showToast('請先登入才能新增庫存', 'warning')
+      openAuthModal()
+      return
+    } else if (error) {
+      throw error
+    }
+
+    if (success) {
+      showToast(`「${gift.name}」已直接加入庫存`, 'success', 2000)
     }
   } catch (e) {
     console.error(e)

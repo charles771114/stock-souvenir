@@ -408,13 +408,15 @@ export function useGifts() {
     }
   }
 
-  const addToCollection = async (giftId, status = 'collected') => {
+  const addToCollection = async (giftId, status = 'collected', portfolioId = null) => {
     loading.value = true
     error.value = null
 
     try {
       if (!user.value) throw new Error('未登入')
-      if (isCombinedView.value || !currentPortfolioId.value) {
+
+      const targetId = portfolioId || currentPortfolioId.value
+      if (isCombinedView.value || !targetId) {
         throw new Error('請先選擇一個特定的帳戶，不能在歸戶模式下新增')
       }
 
@@ -429,7 +431,7 @@ export function useGifts() {
         if (souvenir) {
           await supabase.from('user_inventory').upsert({
             user_id: user.value.id,
-            portfolio_id: currentPortfolioId.value,
+            portfolio_id: targetId,
             stock_code: souvenir.code,
             stock_name: souvenir.name,
             updated_at: new Date().toISOString()
@@ -442,7 +444,7 @@ export function useGifts() {
         .from('user_collections')
         .upsert({
           user_id: user.value.id,
-          portfolio_id: currentPortfolioId.value,
+          portfolio_id: targetId,
           souvenir_id: giftId,
           status
         }, { onConflict: 'portfolio_id,souvenir_id' })

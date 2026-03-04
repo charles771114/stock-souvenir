@@ -79,6 +79,7 @@
             :is-active="item.isCollected"
             :disabled="disabled"
             @toggle="$emit('toggle-collection', item)"
+            @toggle-inventory="$emit('toggle-inventory', item)"
             :class="{ 'opacity-30 grayscale pointer-events-none': disabled }"
           />
           <router-link v-else to="/inventory" class="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
@@ -186,6 +187,7 @@
                 <FavoriteButton v-else :gift="item" :is-active="item.isCollected" 
                   :disabled="disabled"
                   @toggle="$emit('toggle-collection', item)" 
+                  @toggle-inventory="$emit('toggle-inventory', item)"
                   :class="{ 'opacity-30 grayscale pointer-events-none': disabled }"
                 />
               </td>
@@ -207,7 +209,7 @@ defineProps({
   sortBy: String
 })
 
-defineEmits(['toggle-collection'])
+defineEmits(['toggle-collection', 'toggle-inventory'])
 
 const getCategoryColor = (color) => {
     const map = {

@@ -215,11 +215,13 @@ const handleSearch = () => {
   loadingSearch.value = true
   debounceTimer = setTimeout(async () => {
     try {
-      // 1. 優先搜尋現有紀念品
+      // 1. 優先搜尋現有紀念品 (限定 2026 年度)
       const { data, error } = await supabase
         .from('souvenirs')
         .select('id, name, souvenir_item, code, meeting_date')
         .or(`name.ilike.%${searchQuery.value}%,code.ilike.%${searchQuery.value}%,souvenir_item.ilike.%${searchQuery.value}%`)
+        .gte('meeting_date', '2026-01-01')
+        .lte('meeting_date', '2026-12-31')
         .limit(10)
 
       if (error) throw error
@@ -288,7 +290,7 @@ const autoAddStock = async (stock) => {
     }
 
     // 加入庫存
-    const { success, error } = await addToCollection(souvenirId, targetPortfolioId.value)
+    const { success, error } = await addToCollection(souvenirId, 'holding', targetPortfolioId.value)
     if (!success) throw new Error(error)
 
     showToast(`已自動新增「${stock.name} (${stock.code})」到庫存`, 'success')
@@ -357,7 +359,7 @@ const handleSubmit = async () => {
     }
 
     // 加入庫存（status = 'holding'）
-    const { success, error } = await addToCollection(souvenirId, targetPortfolioId.value)
+    const { success, error } = await addToCollection(souvenirId, 'holding', targetPortfolioId.value)
 
     if (!success) throw new Error(error)
 

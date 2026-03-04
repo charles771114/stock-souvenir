@@ -47,18 +47,8 @@
           </span>
         </div>
 
-        <!-- Favorite Button (Hidden for inventory items) -->
-        <button v-if="!gift.isInInventory" @click.stop="$emit('toggle-collection', gift)"
-          :disabled="disabled"
-          class="relative p-2 rounded-full transition-colors hover:bg-gray-50 focus:outline-none group/btn disabled:opacity-30 disabled:grayscale disabled:pointer-events-none"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transition-all duration-300"
-            :class="gift.isCollected ? 'text-rose-500 fill-current transform scale-110' : 'text-gray-300 hover:text-rose-400 group-hover/btn:scale-110'"
-            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-          </svg>
-        </button>
+        <!-- (Action buttons moved to footer for better text support) -->
+        <div v-if="!gift.isInInventory" class="h-6 w-6"></div>
       </div>
 
       <!-- Company Name -->
@@ -114,14 +104,25 @@
         </div>
 
         <!-- Action Button -->
-        <router-link v-if="gift.isInInventory" to="/inventory"
-          class="mt-4 w-full inline-flex items-center justify-center px-4 py-2.5 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-colors shadow-sm">
-          <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-          管理庫存
-        </router-link>
+        <div v-if="gift.isInInventory">
+          <router-link to="/inventory"
+            class="mt-4 w-full inline-flex items-center justify-center px-4 py-2.5 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-colors shadow-sm">
+            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            管理庫存
+          </router-link>
+        </div>
+        <div v-else class="mt-4">
+          <FavoriteButton 
+            :gift="gift" 
+            :is-active="gift.isCollected" 
+            :disabled="disabled"
+            @toggle="$emit('toggle-collection', gift)"
+            @toggle-inventory="$emit('toggle-inventory', gift)"
+          />
+        </div>
       </div>
 
     </div>
@@ -129,6 +130,8 @@
 </template>
 
 <script setup>
+import FavoriteButton from './FavoriteButton.vue'
+
 const props = defineProps({
   gift: {
     type: Object,
@@ -144,7 +147,7 @@ const props = defineProps({
   }
 })
 
-defineEmits(['toggle-collection'])
+defineEmits(['toggle-collection', 'toggle-inventory'])
 
 // Helper to check urgency (within 7 days)
 const isUrgent = (dateString) => {
