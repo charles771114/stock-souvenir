@@ -231,42 +231,25 @@ export function useCollection() {
     const removeFromCollection = async (id, isInventory = false) => {
         if (!user.value) return { success: false, error: '未登入' }
         try {
-            // 如果 id 是字串且帶有 "inv_" 前綴，代表來自 fetchInventoryWithGifts 的對照 ID
-            let targetId = id
-            if (typeof id === 'string' && id.startsWith('inv_')) {
-                targetId = parseInt(id.replace('inv_', ''), 10)
-                isInventory = true // 強制修正為 inventory 表
-            }
-
             if (isInventory) {
                 // 1. 如果是從 inventory 移除
-                const { data: invItem } = await supabase
-                    .from('user_inventory')
-                    .select('portfolio_id, stock_code')
-                    .eq('id', targetId)
-                    .single()
-
                 const { error: delError } = await supabase
                     .from('user_inventory')
                     .delete()
-                    .eq('id', targetId)
+                    .eq('id', id)
 
                 if (delError) throw delError
 
-                const currentId = isCombinedView.value ? 'combined' : (invItem?.portfolio_id || currentPortfolioId.value)
-                cache.remove(`inventory:${user.value.id}:${currentId}`)
+                // 徹底清除快取，不論是在哪個分身或綜合視圖
+                const userId = user.value.id
+                const allKeys = Object.keys(localStorage)
+                allKeys.filter(k => k.includes(`inventory:${userId}:`)).forEach(k => localStorage.removeItem(k))
             } else {
                 // 2. 如果是從 collections 移除
-                const { data: collItem } = await supabase
-                    .from('user_collections')
-                    .select('portfolio_id, souvenir_id, status')
-                    .eq('id', targetId)
-                    .single()
-
                 const { error: delError } = await supabase
                     .from('user_collections')
                     .delete()
-                    .eq('id', targetId)
+                    .eq('id', id)
 
                 if (delError) throw delError
             }
@@ -324,6 +307,35 @@ export function useCollection() {
             return { success: false, error: err.message }
         }
     }
+    const clearOnlyPlannedCollections = async () => {
+        if (!user.value) return { success: false, error: '未登入' }
+        try {
+            // 僅刪除 user_collections 中狀態為 collected 的項目
+            let query = supabase
+                .from('user_collections')
+                .delete()
+                .eq('user_id', user.value.id)
+                .eq('status', 'collected')
+
+            if (!isCombinedView.value && currentPortfolioId.value) {
+                query = query.eq('portfolio_id', currentPortfolioId.value)
+            }
+
+            const { error: delError } = await query
+            if (delError) throw delError
+
+            // 清除本地相關快取
+            const userId = user.value.id
+            const allKeys = Object.keys(localStorage)
+            allKeys.filter(k => k.includes(`collections:${userId}:`)).forEach(k => localStorage.removeItem(k))
+
+            return { success: true }
+        } catch (err) {
+            console.error('Clear planned collections failed:', err)
+            return { success: false, error: err.message }
+        }
+    }
+
     const fetchCollection = async () => {
         if (!user.value) return
 
@@ -371,6 +383,7 @@ export function useCollection() {
         addToCollection,
         removeFromInventoryCompletely,
         removeFromCollection,
-        clearAllCollections
+        clearAllCollections,
+        clearOnlyPlannedCollections
     }
 }

@@ -31,16 +31,24 @@
             我的購股計畫
           </h1>
           <p class="text-base font-black text-slate-400 uppercase tracking-widest mt-2">
-            優先追蹤待買清單，紀錄您的入袋成就
+            管理您的領取計畫，追蹤各項紀念品的入袋進度
           </p>
         </div>
         
-        <div class="flex items-center gap-2 p-1.5 bg-slate-100/50 rounded-2xl border border-slate-200/30 backdrop-blur-sm self-start md:self-auto shadow-sm">
-          <button v-for="y in ['2026', '2025']" :key="y" @click="selectedYear = y"
-            class="px-6 py-2.5 rounded-xl text-base font-black transition-all uppercase tracking-widest shadow-sm shadow-transparent"
-            :class="selectedYear === y ? 'bg-white text-brand-primary shadow-slate-200/50' : 'text-slate-500 hover:text-brand-primary hover:bg-white/50'">
-            {{ y }}
+        <div class="flex flex-col sm:flex-row items-center gap-4 self-start md:self-auto">
+          <button v-if="aggregatedPlanned.length > 0" @click="handleClearAll"
+            class="px-6 py-2.5 rounded-xl text-sm font-black transition-all uppercase tracking-widest bg-rose-50 text-rose-500 hover:bg-rose-100 border border-rose-100 flex items-center gap-2 group shadow-sm">
+            <i class="ri-delete-bin-7-line text-lg group-hover:shake"></i>
+            移除全部優先待買清單
           </button>
+          
+          <div class="flex items-center gap-2 p-1.5 bg-slate-100/50 rounded-2xl border border-slate-200/30 backdrop-blur-sm shadow-sm">
+            <button v-for="y in ['2026', '2025']" :key="y" @click="selectedYear = y"
+              class="px-6 py-2.5 rounded-xl text-base font-black transition-all uppercase tracking-widest shadow-sm shadow-transparent"
+              :class="selectedYear === y ? 'bg-white text-brand-primary shadow-slate-200/50' : 'text-slate-500 hover:text-brand-primary hover:bg-white/50'">
+              {{ y }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -88,9 +96,19 @@
                                 <h3 class="text-xl font-black text-slate-800 truncate tracking-tight group-hover:text-brand-primary transition-colors">
                                     {{ item.gift?.name }}
                                 </h3>
-                                <p class="text-base font-bold text-slate-500 mt-1.5 truncate">
-                                    {{ item.gift?.souvenir_item || '尚未公布名稱' }}
-                                </p>
+                                <div class="min-w-0">
+                                    <div class="font-black tracking-tight"
+                                      :class="isPlaceholder(item.gift?.souvenir_item) ? 'text-brand-primary text-base' : 'text-slate-700 text-base'">
+                                      <template v-if="isPlaceholder(item.gift?.souvenir_item)">
+                                        <div v-if="previousYearSouvenirs.get(item.gift?.code)" class="flex flex-col gap-1">
+                                          <span class="text-brand-primary">(去) {{ previousYearSouvenirs.get(item.gift?.code) }}</span>
+                                          <span class="text-[10px] text-slate-400 italic font-bold">今年：{{ item.gift?.souvenir_item || '尚未公布' }}</span>
+                                        </div>
+                                        <span v-else class="text-slate-400 text-sm italic">尚未公布</span>
+                                      </template>
+                                      <span v-else>{{ item.gift?.souvenir_item }}</span>
+                                    </div>
+                                </div>
                             </div>
                             <button @click="addToInventory(item.souvenir_id)" 
                                     :disabled="addingToInventory === item.souvenir_id || confirmedIds.has(item.souvenir_id)"
@@ -133,70 +151,12 @@
           </div>
         </div>
         
-        <!-- 2. 等待公布 (Owned Stock but Souvenir TBD) -->
-        <div v-if="aggregatedWaiting.length > 0" class="stagger-item-3 animate-fade-in">
-          <div class="flex items-center gap-4 mb-8 px-2">
-            <div class="w-2 h-8 bg-slate-300 rounded-full"></div>
-            <h2 class="text-2xl font-black text-slate-500 tracking-tight">持股待公布項目</h2>
-          </div>
-
-          <div v-if="isCurrentYear" class="space-y-4">
-              <div v-for="group in aggregatedWaiting" :key="group.souvenir_item" 
-                   class="glass-card overflow-hidden bg-slate-50/50 border-dashed border-slate-200 group/waiting">
-                  
-                  <div class="px-8 py-6 flex items-center justify-between cursor-pointer"
-                       @click="toggleDetails('wait_' + group.souvenir_item)">
-                      <div class="flex items-center gap-6">
-                           <div class="w-14 h-14 rounded-2xl bg-white text-slate-300 flex items-center justify-center border border-slate-100 shadow-sm">
-                              <i class="ri-eye-line text-2xl"></i>
-                           </div>
-                           <div>
-                               <h3 class="text-lg font-black text-slate-400">{{ group.souvenir_item }}</h3>
-                               <p class="text-base font-bold text-slate-500 mt-1 uppercase tracking-widest">
-                                  {{ group.companies.length }} 家持股正等待今年度資訊
-                                </p>
-                           </div>
-                      </div>
-                      <div class="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 transition-transform bg-white border border-slate-100 shadow-sm"
-                           :class="{ 'rotate-180': isExpanded('wait_' + group.souvenir_item) }">
-                          <i class="ri-arrow-down-s-line text-2xl"></i>
-                      </div>
-                  </div>
-
-                  <div v-if="isExpanded('wait_' + group.souvenir_item)" class="bg-white/40 border-t border-slate-100 px-6 py-4 space-y-3">
-                      <div v-for="item in group.companies" :key="item.id" 
-                           class="flex items-center justify-between gap-4 p-4 bg-white/60 rounded-2xl border border-slate-100 shadow-sm">
-                          <div class="flex items-center gap-5 min-w-0">
-                              <span class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 font-mono text-base font-black tracking-tighter border border-slate-100">
-                                  {{ item.gift?.code }}
-                              </span>
-                              <div class="min-w-0">
-                                  <span class="text-base font-black text-slate-700 truncate">{{ item.gift?.name }}</span>
-                                  <div class="flex items-center gap-2 mt-1">
-                                      <div class="w-2 h-2 rounded-full bg-slate-300 animate-pulse"></div>
-                                      <span class="text-sm font-black text-slate-400 uppercase tracking-widest">等待公布</span>
-                                  </div>
-                              </div>
-                          </div>
-                          <button @click="handleRemove(item.id)" :disabled="removing === item.id"
-                                  class="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-rose-500 transition-colors bg-white rounded-xl shadow-sm border border-slate-100">
-                                  <i v-if="removing === item.id" class="ri-loader-4-line animate-spin text-xl"></i>
-                                  <i v-else class="ri-delete-bin-line text-xl"></i>
-                          </button>
-                      </div>
-                  </div>
-              </div>
-          </div>
-          <div v-else class="text-center py-12 glass-card bg-slate-50/30 border-dashed border-slate-200">
-             <p class="text-slate-400 text-sm font-bold uppercase tracking-widest">非當年度資料僅供查詢</p>
-          </div>
-        </div>
 
         <!-- 3. 已達成清單 (Achieved Achievement) -->
         <div v-if="aggregatedInventory.length > 0" class="stagger-item-4 pb-20">
           <div class="flex items-center gap-4 mb-8 px-2">
             <div class="w-2 h-8 bg-emerald-500 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.4)]"></div>
-            <h2 class="text-2xl font-black text-slate-800 tracking-tight">已達成入袋清單</h2>
+            <h2 class="text-2xl font-black text-slate-800 tracking-tight">已在庫存清單</h2>
           </div>
 
           <div v-if="isCurrentYear" class="space-y-4">
@@ -206,13 +166,10 @@
                   <div class="px-8 py-6 flex items-center justify-between cursor-pointer"
                        @click="toggleDetails('inv_' + group.souvenir_item)">
                       <div class="flex items-center gap-6">
-                           <div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner border border-emerald-100/50">
-                              <i class="ri-medal-fill text-2xl"></i>
-                           </div>
                            <div>
                                <h3 class="text-lg font-black text-slate-800">{{ group.souvenir_item }}</h3>
                                <p class="text-base font-black text-slate-600 mt-1 uppercase tracking-widest">
-                                  達成率: {{ group.companies.length }} 家已解鎖
+                                  {{ group.companies.length }} 家已解鎖
                                 </p>
                            </div>
                       </div>
@@ -243,20 +200,11 @@
                                           {{ getPortfolioName(item.portfolio_id) }}
                                       </span>
                                   </div>
-                                  <div class="flex items-center gap-2 mt-1.5">
-                                      <i class="ri-checkbox-circle-fill text-emerald-500 text-base"></i>
-                                      <span class="text-sm font-black text-emerald-600 uppercase tracking-widest">領取成就已達成</span>
-                                  </div>
                               </div>
                           </div>
                           <div class="flex items-center justify-end gap-3 shrink-0">
-                               <button @click="handleUndoInventory(item.souvenir_id)"
-                                      class="flex items-center gap-3 px-6 py-3 bg-slate-100 text-slate-600 rounded-2xl border border-slate-200 hover:bg-brand-primary hover:text-white hover:border-brand-primary transition-all cursor-pointer group/undo shadow-sm">
-                                      <i class="ri-history-line text-lg"></i>
-                                      <span class="text-base font-black tracking-widest uppercase">移回計畫</span>
-                               </button>
-                               <button @click="handleRemove(item.id)" :disabled="removing === item.id"
-                                      class="w-12 h-12 flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl transition-all border border-transparent hover:border-rose-100 shadow-sm bg-white">
+                               <button @click="handleRemoveInventory(item.souvenir_id, item.id)" :disabled="removing === item.id"
+                                      class="w-12 h-12 flex items-center justify-center text-rose-500 hover:bg-rose-50 rounded-2xl transition-all border border-rose-100 shadow-sm bg-white hover:border-rose-200">
                                       <i v-if="removing === item.id" class="ri-loader-4-line animate-spin text-xl"></i>
                                       <i v-else class="ri-delete-bin-line text-xl"></i>
                                </button>
@@ -314,7 +262,7 @@ const { user } = useAuth()
 const { pullDistance, isRefreshing } = usePullRefresh(async () => {
   await fetchMyCollections(selectedYear.value)
 })
-const { addToCollection, removeFromInventoryCompletely, removeFromCollection } = useCollection()
+const { addToCollection, removeFromInventoryCompletely, removeFromCollection, clearOnlyPlannedCollections } = useCollection()
 
 const {
   myCollections,
@@ -344,7 +292,8 @@ const getPortfolioName = (id) => {
 const isPlaceholder = (val) => {
   if (!val) return true
   const s = String(val).trim()
-  return s === '' || s === '尚未公布' || s.includes('再行公告') || s === '尚未公告'
+  const p = ['尚未公布', '尚未公告', '尚未提供', 'NA', 'N/A', '-', '待公告']
+  return p.includes(s) || s.includes('再行公告') || s.includes('再行公佈')
 }
 
 // Helper to check if a date is expired (past the last buy date)
@@ -458,13 +407,7 @@ const groupedCollections = computed(() => {
     return (item.status === 'holding' || isInInventory) && !isRecentlyConfirmed
   })
 
-  // 待公布：已持有股票但紀念品名稱為預填/尚未公布
-  const waiting = ownedItems.filter(item => isPlaceholder(item.gift?.souvenir_item))
-  
-  // 已達成：已持有股票且紀念品名稱已公布
-  const achieved = ownedItems.filter(item => !isPlaceholder(item.gift?.souvenir_item))
-
-  return { planned, waiting, achieved }
+  return { planned, ownedItems }
 })
 
 // 🆕 聚合邏輯: 待買標的 (改為扁平列表)
@@ -516,11 +459,11 @@ const aggregatedWaiting = computed(() => {
   return Array.from(map.values()).sort((a, b) => b.count - a.count)
 })
 
-// 🆕 聚合邏輯: 已入袋
+// 🆕 聚合邏輯: 已入袋 (合併所有持股項)
 const aggregatedInventory = computed(() => {
   const map = new Map()
-  groupedCollections.value.achieved.forEach(item => {
-    const name = item.gift?.souvenir_item || '未知物品'
+  groupedCollections.value.ownedItems.forEach(item => {
+    const name = item.gift?.souvenir_item || '尚未公布'
     if (!map.has(name)) {
       map.set(name, {
         souvenir_item: name,
@@ -658,6 +601,49 @@ const handleRemove = async (id) => {
       showToast('移除失敗', 'error')
     }
     removing.value = null
+  }
+}
+
+const handleClearAll = async () => {
+  const scopeText = isCombinedView.value ? '所有帳戶' : '目前選定帳戶'
+  const message = `確定要清空「${scopeText}」下所有「優先待買」的計畫嗎？\n(這不會影響已入袋的庫存項目)`
+  
+  if (await confirm(message, '移除全部優先待買清單')) {
+    loading.value = true
+    try {
+      const { success, error } = await clearOnlyPlannedCollections()
+      if (success) {
+        showToast('已移除優先待買清單', 'success')
+        await loadData()
+      } else {
+        showToast(error || '清空失敗', 'error')
+      }
+    } catch (e) {
+      console.error('Clear planned error:', e)
+      showToast('操作失敗', 'error')
+    } finally {
+      loading.value = false
+    }
+  }
+}
+
+const handleRemoveInventory = async (souvenirId, collectionId) => {
+  if (await confirm('確定要從庫存與領取計畫中徹底移除這項標的嗎？', '移除庫存標的')) {
+    removing.value = collectionId
+    try {
+      const { success, error } = await removeFromInventoryCompletely(souvenirId)
+      if (success) {
+        showToast('已徹底移除', 'success')
+        await loadData()
+      } else {
+        showToast(error || '移除失敗', 'error')
+      }
+    } catch (e) {
+      console.error('Delete inventory error:', e)
+      showToast('操作失敗', 'error')
+    } finally {
+      removing.value = null
+    }
   }
 }
 

@@ -100,15 +100,16 @@
                     <i class="fas fa-gift text-slate-300 mt-1 transition-colors group-hover:text-amber-400 text-sm"></i>
                     <div>
                       <div class="font-black tracking-tight leading-snug"
-                        :class="isPlaceholder(item.souvenir_item) ? 'text-slate-400 text-sm italic' : 'text-slate-700 text-base'">
-                        <span v-if="isPlaceholder(item.souvenir_item)">
-                          {{ item.previousYearSouvenir ? `(去) ${item.previousYearSouvenir}` : '尚未公布' }}
-                        </span>
+                        :class="isPlaceholder(item.souvenir_item) ? 'text-brand-primary text-base' : 'text-slate-700 text-base'">
+                        <template v-if="isPlaceholder(item.souvenir_item)">
+                          <div v-if="item.previousYearSouvenir" class="flex flex-col gap-1">
+                            <span class="text-brand-primary">(去) {{ item.previousYearSouvenir }}</span>
+                            <span class="text-[10px] text-slate-400 italic font-bold">今年資訊：{{ item.souvenir_item }}</span>
+                          </div>
+                          <span v-else class="text-slate-400 text-sm italic">尚未公布</span>
+                        </template>
                         <span v-else>{{ item.souvenir_item }}</span>
                       </div>
-                        <div class="text-sm text-slate-500 mt-2 font-bold flex items-center gap-1.5" v-if="item.previousYearSouvenir">
-                          <span class="text-slate-400 font-black">去年：</span> {{ item.previousYearSouvenir }}
-                       </div>
                     </div>
                   </div>
                   <div class="text-slate-200 group-hover:text-brand-primary group-hover:translate-x-1 transition-all">
@@ -158,14 +159,15 @@
                     <i class="fas fa-sync-alt text-amber-400 mt-1 transition-transform group-hover:rotate-180 duration-500"></i>
                     <div>
                       <div class="font-black tracking-tight"
-                        :class="isPlaceholder(item.souvenir_item) ? 'text-slate-400 text-sm italic' : 'text-slate-700 text-sm'">
-                        <span v-if="isPlaceholder(item.souvenir_item)">
-                          {{ item.previousYearSouvenir ? `(去) ${item.previousYearSouvenir}` : '尚未公布' }}
-                        </span>
+                        :class="isPlaceholder(item.souvenir_item) ? 'text-brand-primary text-sm' : 'text-slate-700 text-sm'">
+                        <template v-if="isPlaceholder(item.souvenir_item)">
+                          <div v-if="item.previousYearSouvenir" class="flex flex-col gap-1">
+                            <span class="text-brand-primary">(去) {{ item.previousYearSouvenir }}</span>
+                            <span class="text-[10px] text-slate-400 italic font-bold">今年：{{ item.souvenir_item }}</span>
+                          </div>
+                          <span v-else class="text-slate-400 italic">尚未公布</span>
+                        </template>
                         <span v-else>{{ item.souvenir_item }}</span>
-                      </div>
-                      <div class="text-sm text-slate-500 mt-2 font-bold flex items-center gap-1.5" v-if="item.previousYearSouvenir">
-                        <span class="text-slate-400 font-black">去年：</span> {{ item.previousYearSouvenir }}
                       </div>
                     </div>
                   </div>
@@ -288,8 +290,9 @@ const hasAnyGroups = computed(() => {
 // Helpers
 const isPlaceholder = (val) => {
   if (!val) return true
-  const p = ['尚未公布', '尚未公告', '尚未提供', 'NA', 'N/A', '-']
-  return p.includes(val.trim())
+  const s = String(val).trim()
+  const p = ['尚未公布', '尚未公告', '尚未提供', 'NA', 'N/A', '-', '待公告']
+  return p.includes(s) || s.includes('再行公告') || s.includes('再行公佈')
 }
 
 const formatDate = (dateString) => {

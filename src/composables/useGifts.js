@@ -609,6 +609,7 @@ export function useGifts() {
     fetchAllUserCollections,
     fetchUserInventoryIds,
     fetchPreviousYearSouvenirs,
+    enrichWithPreviousYear,
     reassignCollectionPortfolio,
     isInCollection,
     getCollection,

@@ -24,6 +24,26 @@
     </div>
 
     <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-10 w-full animate-fade-in-up">
+      
+      <!-- Global Batch Add Overlay -->
+      <Transition name="fade">
+        <div v-if="isBatchAdding" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+          <div class="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center max-w-sm w-full mx-4 border border-slate-100">
+            <div class="w-16 h-16 border-4 border-slate-100 border-t-brand-primary rounded-full animate-spin mb-6"></div>
+            <h3 class="text-xl font-black text-slate-800 mb-2">正在批次新增庫存</h3>
+            <p class="text-sm font-bold text-slate-500 mb-6 uppercase tracking-widest text-center">
+              請勿關閉視窗或重新整理
+            </p>
+            <div class="w-full bg-slate-50 rounded-full h-3 max-w-[200px] border border-slate-100 overflow-hidden">
+              <div class="bg-brand-primary h-3 rounded-full transition-all duration-300" :style="{ width: `${(batchProgress.current / batchProgress.total) * 100}%` }"></div>
+            </div>
+            <p class="text-xs font-black text-slate-400 mt-3 font-mono">
+              {{ batchProgress.current }} / {{ batchProgress.total }}
+            </p>
+          </div>
+        </div>
+      </Transition>
+
       <!-- Header -->
       <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6 stagger-item-1">
         <div>
@@ -265,17 +285,27 @@
                     </td>
                     <td class="px-8 py-6 text-right">
                       <button @click.stop="handleDeleteItem(item)"
-                        class="p-2.5 rounded-xl transition-all flex items-center justify-center ml-auto"
+                        class="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 ml-auto border shadow-sm group"
                         :class="[
                           confirmingId === item.id 
-                            ? 'bg-status-error text-white shadow-lg shadow-status-error/20 animate-pulse' 
-                            : 'text-slate-300 hover:text-status-error hover:bg-rose-50'
-                        ]"
-                        :title="confirmingId === item.id ? '點擊確認移除' : '移除持股'">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
+                            ? 'bg-rose-500 text-white border-rose-500 animate-pulse shadow-rose-200 shadow-lg' 
+                            : 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50'
+                        ]">
+                        <!-- Confirmation Icon -->
+                        <i v-if="confirmingId === item.id" class="ri-error-warning-fill text-sm"></i>
+                        <!-- Default/Hover Icons -->
+                        <template v-else>
+                          <i class="ri-checkbox-circle-fill text-sm group-hover:hidden"></i>
+                          <i class="ri-delete-bin-line text-sm hidden group-hover:inline-block"></i>
+                        </template>
+                        
+                        <span>
+                          <template v-if="confirmingId === item.id">確定移除？</template>
+                          <template v-else>
+                            <span class="group-hover:hidden">在庫存中</span>
+                            <span class="hidden group-hover:inline">移除庫存</span>
+                          </template>
+                        </span>
                       </button>
                     </td>
                   </tr>
@@ -351,6 +381,9 @@ const isDragging = ref(false)
 const pdfPassword = ref('')
 const confirmingId = ref(null)
 let confirmTimer = null
+
+const isBatchAdding = ref(false)
+const batchProgress = ref({ current: 0, total: 0 })
 
 // Aliases
 const inventoryItems = collection
@@ -428,7 +461,9 @@ const addAllToInventory = async () => {
   const confirmed = await confirm(`確定要將這 ${scraperResults.value.length} 筆資料新增至庫存嗎？`, '批次新增庫存')
   if (!confirmed) return
 
-  loading.value = true
+  isBatchAdding.value = true
+  batchProgress.value = { current: 0, total: scraperResults.value.length }
+  
   let successCount = 0
   let skipCount = 0
 
@@ -437,6 +472,8 @@ const addAllToInventory = async () => {
 
   try {
     for (const item of scraperResults.value) {
+      batchProgress.value.current++
+      
       if (existingCodes.has(item.code)) {
         skipCount++
         continue
@@ -448,14 +485,15 @@ const addAllToInventory = async () => {
       else skipCount++
     }
 
-    showToast(`成功新增 ${successCount} 筆，${skipCount} 筆失敗`, successCount > 0 ? 'success' : 'error')
+    showToast(`成功新增 ${successCount} 筆，${skipCount} 筆失敗或重複`, successCount > 0 ? 'success' : 'error')
     if (successCount > 0) scraperResults.value = []
-    await fetchAllInventory()
+    await fetchAllInventory(true) // 強制忽略快取
   } catch (err) {
     console.error('Batch add failed:', err)
     showToast('批次新增失敗', 'error')
   } finally {
-    loading.value = false
+    isBatchAdding.value = false
+    batchProgress.value = { current: 0, total: 0 }
   }
 }
 
@@ -484,12 +522,17 @@ const handleDeleteItem = async (item) => {
 }
 
 const deleteItem = async (item) => {
-  const { success, error: deleteError } = await removeFromCollection(item.id, true)
-  if (success) {
-    showToast('已從庫存移除', 'success', 1000)
-    await fetchAllInventory()
-  } else {
-    showToast(deleteError || '移除失敗', 'error')
+  loading.value = true
+  try {
+    const { success, error: deleteError } = await removeFromCollection(item.id, true)
+    if (success) {
+      showToast('已從庫存移除', 'success', 1000)
+      await fetchAllInventory(true) // 強制重新整理並忽略快取
+    } else {
+      showToast(deleteError || '移除失敗', 'error')
+    }
+  } finally {
+    loading.value = false
   }
 }
 

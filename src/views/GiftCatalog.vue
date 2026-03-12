@@ -102,7 +102,7 @@
         <!-- Category List -->
         <div class="flex items-center gap-4 overflow-x-auto no-scrollbar py-3 min-h-[70px]">
           <div v-if="sortedCategories.length > 0" class="flex gap-4 whitespace-nowrap">
-            <button v-for="cat in sortedCategories" :key="cat.id" @click="setCategory(cat.name)"
+            <button v-for="cat in sortedCategories" :key="cat.name" @click="setCategory(cat.name)"
               class="px-6 py-4 rounded-2xl text-[13px] font-black uppercase tracking-widest transition-all border flex items-center gap-2.5"
               :class="filters.category === cat.name ? getCategoryActiveClasses(cat.color) + ' shadow-xl' : 'bg-white text-slate-400 border-slate-100 hover:bg-slate-50'">
               <i :class="getCategoryIcon(cat.name)" class="text-xl"></i>
