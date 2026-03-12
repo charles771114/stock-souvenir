@@ -143,8 +143,9 @@ export function useCollection() {
             if (error) throw error
 
             // Invalidate cache immediately on change
-            const currentCacheId = isCombinedView.value ? 'combined' : targetId
-            cache.remove(`inventory:${user.value.id}:${currentCacheId}`)
+            // Remove both the specific portfolio cache and the combined view cache to be safe
+            cache.remove(`inventory:${user.value.id}:${targetId}`)
+            cache.remove(`inventory:${user.value.id}:combined`)
 
             return { success: true, data }
         } catch (err) {
@@ -162,20 +163,7 @@ export function useCollection() {
         }
 
         try {
-            // 1. 如果是轉為持股狀態，先更新 inventory 表
-            if (status === 'holding') {
-                const { data: souvenir } = await supabase
-                    .from('souvenirs')
-                    .select('code, name')
-                    .eq('id', souvenirId)
-                    .single()
-
-                if (souvenir) {
-                    await addToInventory(souvenir.code, souvenir.name, targetId)
-                }
-            }
-
-            // 2. 更新 collections 表
+            // 1. 更新 collections 表
             const { data, error: insertError } = await supabase
                 .from('user_collections')
                 .upsert({
@@ -195,10 +183,12 @@ export function useCollection() {
         }
     }
 
+
     /**
-     * 撤銷入庫：將狀態改回 collected，並從 user_inventory 移除
+     * 完全移除：從 user_inventory 移除，同時也從 user_collections 移除 (追蹤也消失)
+     * 達到使用者要求的「不論有沒有追蹤都完全消失」
      */
-    const moveToPlanned = async (souvenirId) => {
+    const removeFromInventoryCompletely = async (souvenirId) => {
         if (!user.value) return { success: false, error: '未登入' }
         if (isCombinedView.value || !currentPortfolioId.value) {
             return { success: false, error: '請先選擇一個特定的帳戶，不能在歸戶模式下操作' }
@@ -224,17 +214,16 @@ export function useCollection() {
                 cache.remove(`inventory:${user.value.id}:${currentId}`)
             }
 
-            // 3. 將 user_collections 狀態改回 collected
-            const { error: updateError } = await supabase
+            // 3. 從 user_collections 完全刪除 (不再是改狀態)
+            await supabase
                 .from('user_collections')
-                .update({ status: 'collected' })
+                .delete()
                 .eq('portfolio_id', currentPortfolioId.value)
                 .eq('souvenir_id', souvenirId)
 
-            if (updateError) throw updateError
             return { success: true }
         } catch (err) {
-            console.error('Move back to planned failed:', err)
+            console.error('Complete removal failed:', err)
             return { success: false, error: err.message }
         }
     }
@@ -242,19 +231,44 @@ export function useCollection() {
     const removeFromCollection = async (id, isInventory = false) => {
         if (!user.value) return { success: false, error: '未登入' }
         try {
-            const table = isInventory ? 'user_inventory' : 'user_collections'
-            const { error: delError } = await supabase
-                .from(table)
-                .delete()
-                .eq('id', id)
-                .eq('user_id', user.value.id)
+            // 如果 id 是字串且帶有 "inv_" 前綴，代表來自 fetchInventoryWithGifts 的對照 ID
+            let targetId = id
+            if (typeof id === 'string' && id.startsWith('inv_')) {
+                targetId = parseInt(id.replace('inv_', ''), 10)
+                isInventory = true // 強制修正為 inventory 表
+            }
 
-            if (delError) throw delError
-
-            // Invalidate cache if inventory item removed
             if (isInventory) {
-                const currentId = isCombinedView.value ? 'combined' : currentPortfolioId.value
+                // 1. 如果是從 inventory 移除
+                const { data: invItem } = await supabase
+                    .from('user_inventory')
+                    .select('portfolio_id, stock_code')
+                    .eq('id', targetId)
+                    .single()
+
+                const { error: delError } = await supabase
+                    .from('user_inventory')
+                    .delete()
+                    .eq('id', targetId)
+
+                if (delError) throw delError
+
+                const currentId = isCombinedView.value ? 'combined' : (invItem?.portfolio_id || currentPortfolioId.value)
                 cache.remove(`inventory:${user.value.id}:${currentId}`)
+            } else {
+                // 2. 如果是從 collections 移除
+                const { data: collItem } = await supabase
+                    .from('user_collections')
+                    .select('portfolio_id, souvenir_id, status')
+                    .eq('id', targetId)
+                    .single()
+
+                const { error: delError } = await supabase
+                    .from('user_collections')
+                    .delete()
+                    .eq('id', targetId)
+
+                if (delError) throw delError
             }
 
             return { success: true }
@@ -267,19 +281,42 @@ export function useCollection() {
     const clearAllCollections = async (onlyInventory = true) => {
         if (!user.value) return { success: false, error: '未登入' }
         try {
-            const table = onlyInventory ? 'user_inventory' : 'user_collections'
+            // 1. 從 user_inventory 刪除
             const { error: delError } = await supabase
-                .from(table)
+                .from('user_inventory')
                 .delete()
                 .eq('user_id', user.value.id)
 
             if (delError) throw delError
 
-            // Invalidate ALL inventory caches for this user
+            // 2. 如果是清空庫存，也要把 user_collections 裡的 holding 狀態改為 collected
             if (onlyInventory) {
-                const allKeys = Object.keys(localStorage)
-                allKeys.filter(k => k.startsWith(`inventory:${user.value.id}:`)).forEach(k => cache.remove(k))
+                const { error: updateError } = await supabase
+                    .from('user_collections')
+                    .update({ status: 'collected' })
+                    .eq('user_id', user.value.id)
+                    .eq('status', 'holding')
+
+                if (updateError) throw updateError
+            } else {
+                // 如果是清空「全部」（收藏+庫存），則刪除 user_collections
+                const { error: delCollError } = await supabase
+                    .from('user_collections')
+                    .delete()
+                    .eq('user_id', user.value.id)
+
+                if (delCollError) throw delCollError
             }
+
+            // 3. 徹底清除快取
+            const userId = user.value.id
+            const allKeys = Object.keys(localStorage)
+            
+            // 清除庫存快取
+            allKeys.filter(k => k.includes(`inventory:${userId}:`)).forEach(k => localStorage.removeItem(k))
+            
+            // 清除收藏快取 (因為狀態可能從 holding 變回 collected)
+            allKeys.filter(k => k.includes(`collections:${userId}:`)).forEach(k => localStorage.removeItem(k))
 
             return { success: true }
         } catch (err) {
@@ -332,7 +369,7 @@ export function useCollection() {
         fetchAllInventory,
         addToInventory,
         addToCollection,
-        moveToPlanned,
+        removeFromInventoryCompletely,
         removeFromCollection,
         clearAllCollections
     }

@@ -22,6 +22,9 @@ module.exports = {
           900: '#312e81',
           950: '#1e1b4b',
         },
+        // Brand Identity
+        'brand-primary': 'var(--brand-primary)',
+        'brand-secondary': 'var(--brand-secondary)',
         // Deep Surface colors for Dark Mode PRO MAX
         surface: {
           50: '#f8fafc',

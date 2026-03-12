@@ -213,59 +213,7 @@ describe('useGifts', () => {
     })
   })
 
-  describe('addToCollection', () => {
-    it('should return error when user is not logged in', async () => {
-      mockUser.value = null
-      const { addToCollection } = useGifts()
-
-      const result = await addToCollection('gift-1')
-
-      expect(result.data).toBe(null)
-      expect(result.error).toBeDefined()
-    })
-
-    it('should add gift to collection when logged in', async () => {
-      mockUser.value = { id: 'test-user-id' }
-
-      const mockInsertBuilder = createQueryBuilder({ data: { id: 'new-coll' }, error: null })
-      const mockFetchBuilder = createQueryBuilder({ data: [], error: null })
-      mockSupabase.from.mockImplementation((t) => t === 'user_collections' ? mockFetchBuilder : mockInsertBuilder)
-      // specifically we want upsert to return success
-      mockSupabase.from.mockReturnValue(createQueryBuilder({ data: { id: 'new-coll' }, error: null }))
-
-      const { addToCollection } = useGifts()
-      const result = await addToCollection('gift-1')
-
-      expect(result.error).toBe(null)
-    })
-  })
-
-  describe('removeFromCollection', () => {
-    it('should remove collection item', async () => {
-      const mockDeleteBuilder = createQueryBuilder({ error: null })
-      mockSupabase.from.mockReturnValue(mockDeleteBuilder)
-
-      const { removeFromCollection, myCollections } = useGifts()
-      myCollections.value = [
-        { id: 'coll-1', souvenir_id: 'gift-1' },
-      ]
-
-      const result = await removeFromCollection('coll-1')
-
-      expect(result.error).toBe(null)
-    })
-
-    it('should handle deletion errors', async () => {
-      const deleteError = new Error('Delete failed')
-      const mockDeleteBuilder = createQueryBuilder({ error: deleteError })
-      mockSupabase.from.mockReturnValue(mockDeleteBuilder)
-
-      const { removeFromCollection } = useGifts()
-      const result = await removeFromCollection('coll-1')
-
-      expect(result.error).not.toBe(null)
-    })
-  })
+  // Mutation tests moved to useCollection.spec.js
 
   describe('fetchUserInventoryIds', () => {
     it('should return empty set when user is not logged in', async () => {

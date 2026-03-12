@@ -4,256 +4,230 @@
 
     <main class="flex-grow max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
 
-      <!-- Sticky Header & Filter Bar -->
-      <div
-        class="sticky top-0 z-30 pt-4 pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 bg-gray-50/95 backdrop-blur-sm transition-all duration-300">
+      <!-- Branded Title (Non-sticky or separate) -->
+      <div class="mb-10 px-1 flex flex-col gap-2">
+        <h1 class="text-4xl font-black text-slate-800 tracking-tight">紀念品目錄</h1>
+        <p class="text-base font-black text-slate-400 uppercase tracking-widest">
+          全台上市櫃公司 {{ gifts.length }} 份
+        </p>
+      </div>
 
-        <!-- Header Content -->
-        <div class="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h1
-              class="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 tracking-tighter animate-fade-in-up">
-              股東會紀念品目錄
-            </h1>
-            <p class="text-sm text-gray-500 mt-1">
-              探索 {{ gifts.length }} 份紀念品，總有一款打動你
-            </p>
-          </div>
-
-          <!-- View Toggle & Sort (Mobile Optimized) -->
-          <div class="flex items-center gap-3 self-end md:self-auto">
-            <!-- View Toggle -->
-            <div class="bg-white rounded-lg p-1 border border-gray-200 shadow-sm flex items-center">
-              <button @click="viewMode = 'grid'" class="p-2 rounded-md transition-all duration-200"
-                :class="viewMode === 'grid' ? 'bg-indigo-50 text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'"
-                title="網格視圖">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-              </button>
-              <button @click="viewMode = 'list'" class="p-2 rounded-md transition-all duration-200"
-                :class="viewMode === 'list' ? 'bg-indigo-50 text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'"
-                title="列表視圖">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-            </div>
-
-            <!-- Sort Dropdown -->
-            <div class="relative">
-              <select v-model="filters.sort"
-                class="pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-lg shadow-sm text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none cursor-pointer hover:bg-gray-50 transition-colors">
-                <option value="date_desc">依日期 (新到舊)</option>
-                <option value="date_asc">依日期 (舊到新)</option>
-                <option value="code_asc">依代號 (0-9)</option>
-                <option value="code_desc">依代號 (9-0)</option>
-              </select>
-              <div class="absolute right-3 top-3 pointer-events-none">
-                <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Glassmorphic Filter Bar -->
-        <div
-          class="bg-white/80 backdrop-blur-2xl rounded-2xl md:rounded-[2rem] border border-white/50 shadow-2xl shadow-indigo-500/10 p-3 md:p-6 mb-2 relative overflow-hidden group animate-fade-in-up delay-150">
-          <!-- Decor -->
-          <div
-            class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-full blur-3xl opacity-50 -z-10 group-hover:scale-110 transition-transform duration-700">
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-            <!-- Category Filters (Dynamic) -->
-            <div class="md:col-span-8 flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
-
-              <!-- All / Collection Toggles -->
-              <div class="flex gap-2 flex-shrink-0">
-                <button @click="setCategory(null)"
-                  class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 border"
-                  :class="!filters.category ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">
-                  全部
-                </button>
-                <button @click="currentView === 'collection' ? currentView = 'all' : currentView = 'collection'"
-                  class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 border"
-                  :class="currentView === 'collection' ? 'bg-amber-400 text-white border-amber-400 shadow-md shadow-amber-200' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">
-                  <svg class="w-3.5 h-3.5" :class="currentView === 'collection' ? 'fill-current' : 'fill-none'"
-                    viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                  收藏
-                </button>
-              </div>
-
-              <div class="h-6 w-px bg-gray-200 mx-1 flex-shrink-0"></div>
-
-              <!-- Dynamic Categories -->
-              <div class="flex gap-2">
-                <button v-for="cat in categories" :key="cat.id" @click="setCategory(cat.name)"
-                  class="px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 border whitespace-nowrap flex items-center gap-1.5"
-                  :class="filters.category === cat.name ? getCategoryActiveClasses(cat.color) : 'bg-white text-gray-500 border-gray-100 hover:border-gray-200 hover:text-gray-700'">
-                  <span :class="`w-1.5 h-1.5 rounded-full ${getCategoryDotClass(cat.color)}`"></span>
-                  {{ cat.name }}
-                </button>
-              </div>
-            </div>
-
-            <!-- Search Bar -->
-            <div class="md:col-span-4 relative group/search">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="h-5 w-5 text-gray-400 group-focus-within/search:text-indigo-500 transition-colors"
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
+      <!-- Sticky Expanded Dashboard (Adaptive Stacked Mobile / Unified Bar Desktop) -->
+      <div class="sticky top-0 z-30 -mx-4 px-4 bg-gray-50/95 backdrop-blur-md pt-2 pb-4 flex flex-col gap-4">
+        
+        <!-- Top Control Surface: Unified on Desktop -->
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:bg-white lg:border lg:border-slate-200 lg:rounded-[2rem] lg:shadow-2xl lg:shadow-slate-200/40 lg:gap-0 lg:p-1">
+          
+          <!-- Layer 1: Search (Flexible width) -->
+          <div class="relative group/search flex-1 min-w-0">
+            <div class="absolute inset-0 bg-brand-primary/10 rounded-2xl blur-xl opacity-0 hover:opacity-100 transition-opacity hidden lg:block"></div>
+            <div class="relative flex items-center bg-white border border-slate-200 shadow-xl shadow-slate-200/50 rounded-2xl overflow-hidden transition-all focus-within:ring-4 focus-within:ring-brand-primary/10 focus-within:border-brand-primary/30 lg:border-none lg:shadow-none lg:bg-transparent">
+              <i class="ri-search-2-line ml-5 text-slate-400 text-xl"></i>
               <input v-model="filters.search"
-                class="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-shadow shadow-sm"
-                placeholder="搜尋公司、代號或紀念品..." type="search" />
+                class="flex-grow pl-3 pr-4 py-4 lg:py-5 bg-transparent border-none text-base font-black text-slate-700 placeholder-slate-400 focus:outline-none"
+                placeholder="搜尋公司名稱或代號..." type="search" @input="debouncedSearch" />
+              <span v-if="filters.search" @click="filters.search = ''; applyFilters()" 
+                class="pr-5 cursor-pointer text-slate-400 hover:text-rose-500 transition-colors">
+                <i class="ri-close-circle-fill text-2xl"></i>
+              </span>
             </div>
           </div>
-        </div>
 
-        <!-- Active Context Bar (Filters & Pagination Stats) -->
-        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center px-2 mt-4 gap-4">
-          <div class="flex flex-wrap items-center gap-3">
-            <!-- Year Selector (Compact) -->
-            <div class="flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg flex-shrink-0">
+          <!-- Divider -->
+          <div class="hidden lg:block w-px h-8 bg-slate-100 mx-2"></div>
+
+          <!-- Layer 2: Main States (All / Following) -->
+          <div class="relative flex bg-slate-100 p-2 rounded-2xl lg:rounded-xl lg:w-72">
+            <!-- Sliding Indicator -->
+            <div class="absolute inset-y-2 transition-all duration-300 ease-out bg-white rounded-xl shadow-md border border-slate-200/50"
+              :style="{ 
+                left: currentView === 'collection' ? 'calc(50% + 2px)' : '8px', 
+                width: 'calc(50% - 10px)' 
+              }"></div>
+            
+            <button @click="currentView = 'all'; triggerFilterAnimation()"
+              class="relative z-10 flex-1 px-4 lg:px-2 py-3 text-base font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+              :class="currentView === 'all' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'">
+              全部
+            </button>
+            <button @click="currentView = 'collection'; triggerFilterAnimation()"
+              class="relative z-10 flex-1 px-4 lg:px-2 py-3 text-base font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+              :class="currentView === 'collection' ? 'text-brand-primary' : 'text-slate-400 hover:text-slate-600'">
+              <i class="ri-heart-fill" :class="currentView === 'collection' ? 'animate-pulse' : ''"></i>
+              追蹤
+            </button>
+          </div>
+
+          <!-- Divider -->
+          <div class="hidden lg:block w-px h-8 bg-slate-100 mx-2"></div>
+
+          <!-- Layer 3: Unified Control Panel (Sort, Year, View) -->
+          <div class="flex items-center gap-3 w-full lg:w-auto pb-1 lg:pb-0 overflow-x-auto no-scrollbar scrollbar-hide px-0.5">
+            <!-- Sort Sector (Custom Dropdown) -->
+            <CustomDropdown 
+              v-model="filters.sort"
+              :options="sortOptions"
+              icon="ri-sort-desc"
+              class="shrink-0"
+              customClass="lg:py-4"
+            />
+
+            <div class="h-6 w-px bg-slate-100 shrink-0 hidden sm:block"></div>
+
+            <!-- Year Sector -->
+            <div class="flex items-center bg-slate-50 p-1 rounded-2xl shrink-0 shadow-sm">
               <button v-for="year in ['2026', '2025', '2024']" :key="year" @click="setYear(year)"
-                class="px-2.5 py-1 rounded-md text-[10px] font-black transition-all"
-                :class="filters.year === year ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'">
+                class="px-3 sm:px-4 py-2.5 rounded-xl text-[13px] font-black transition-all whitespace-nowrap"
+                :class="filters.year === year ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:bg-white/50'">
                 {{ year }}
               </button>
             </div>
 
-            <!-- Active Filters Text -->
-            <div v-if="hasActiveFilters" class="flex flex-wrap items-center gap-2">
-              <span v-if="filters.category" class="text-[10px] font-black text-indigo-600 bg-indigo-50/80 border border-indigo-100 px-2 py-0.5 rounded-lg">
-                {{ filters.category }}
-              </span>
-              <button @click="clearFilters" class="text-[10px] font-black text-gray-400 hover:text-red-500 underline decoration-gray-200 transition-colors">
-                清除全部
+            <div class="h-6 w-px bg-slate-100 shrink-0 lg:hidden"></div>
+
+            <!-- View Sector -->
+            <div class="flex items-center bg-slate-50 p-1 rounded-2xl shrink-0 shadow-sm">
+              <button @click="viewMode = 'grid'" :class="viewMode === 'grid' ? 'bg-white shadow-sm text-brand-primary' : 'text-slate-300'"
+                class="p-2 sm:p-2.5 rounded-xl transition-all">
+                <i class="ri-grid-fill text-lg"></i>
+              </button>
+              <button @click="viewMode = 'list'" :class="viewMode === 'list' ? 'bg-white shadow-sm text-brand-primary' : 'text-slate-300'"
+                class="p-2 sm:p-2.5 rounded-xl transition-all">
+                <i class="ri-list-check-3 text-lg"></i>
               </button>
             </div>
           </div>
+        </div>
 
-          <div class="flex items-center justify-between sm:justify-end gap-6 border-t border-gray-100 sm:border-none pt-3 sm:pt-0">
-            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-              Total {{ paginatedMappedGifts.length }} Items
-            </p>
-            <!-- Page Size -->
-            <div class="flex items-center gap-2">
-              <select v-model="pageSize" @change="handlePageSizeChange"
-                class="block w-full pl-1 pr-6 py-1 text-[10px] border-none bg-transparent focus:ring-0 text-gray-800 font-black cursor-pointer uppercase">
-                <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }} / Page</option>
-              </select>
-            </div>
+        <!-- Category List -->
+        <div class="flex items-center gap-4 overflow-x-auto no-scrollbar py-3 min-h-[70px]">
+          <div v-if="sortedCategories.length > 0" class="flex gap-4 whitespace-nowrap">
+            <button v-for="cat in sortedCategories" :key="cat.id" @click="setCategory(cat.name)"
+              class="px-6 py-4 rounded-2xl text-[13px] font-black uppercase tracking-widest transition-all border flex items-center gap-2.5"
+              :class="filters.category === cat.name ? getCategoryActiveClasses(cat.color) + ' shadow-xl' : 'bg-white text-slate-400 border-slate-100 hover:bg-slate-50'">
+              <i :class="getCategoryIcon(cat.name)" class="text-xl"></i>
+              {{ cat.name }}
+            </button>
+          </div>
+          <div v-else class="flex gap-4">
+             <div v-for="i in 5" :key="i" class="w-32 h-14 bg-slate-100 animate-pulse rounded-2xl"></div>
           </div>
         </div>
       </div>
 
       <!-- Main Content Zone -->
-      <div class="mt-6 min-h-[500px]">
-        <!-- Loading -->
-        <div v-if="loading" class="flex flex-col justify-center items-center py-20">
-          <LoadingSpinner />
-          <p class="mt-4 text-gray-500 font-medium animate-pulse">正在為您準備紀念品清單...</p>
-        </div>
-
-        <!-- Error -->
-        <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-2xl p-8 text-center mx-auto max-w-2xl">
-          <svg class="mx-auto h-12 w-12 text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h3 class="text-lg font-bold text-red-800 mb-2">無法載入資料</h3>
-          <p class="text-red-600">{{ error }}</p>
-          <button @click="window.location.reload()"
-            class="mt-4 px-4 py-2 bg-white border border-red-300 text-red-700 rounded-lg hover:bg-red-50">重新整理</button>
-        </div>
-
-        <!-- Empty -->
-        <div v-else-if="paginatedMappedGifts.length === 0"
-          class="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
-          <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-          <h3 class="text-xl font-bold text-gray-900 mb-2">沒有找到相關紀念品</h3>
-          <p class="text-gray-500 max-w-sm mx-auto mb-6">試試看調整關鍵字或年份，或清除篩選條件重新搜尋</p>
-          <button @click="clearFilters"
-            class="px-6 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200">
-            清除所有篩選
-          </button>
-        </div>
-
-        <!-- Content List/Grid -->
-        <div v-else>
-          <!-- Grid View -->
-          <GiftGridView v-if="viewMode === 'grid'" :items="paginatedMappedGifts" :isExpired="isExpired"
-            :disabled="!isCurrentYear"
-            @toggle-collection="handleToggleCollection"
-            @toggle-inventory="handleToggleInventory" />
-
-          <!-- List View -->
-          <TableView v-else :items="paginatedMappedGifts" :isExpired="isExpired"
-            :disabled="!isCurrentYear"
-            :sort-by="filters.sort"
-            @toggle-collection="handleToggleCollection"
-            @toggle-inventory="handleToggleInventory"
-            @sort="handleSort" />
-
-          <div v-if="!isCurrentYear" class="mt-8 p-4 bg-amber-50 rounded-2xl border border-amber-100 text-center">
-            <p class="text-xs font-bold text-amber-700">⚠️ 非當年度資料僅供參考，無法執行收藏或領取操作。</p>
-          </div>
-
-          <!-- Pagination (Pro Max Focused) -->
-          <div v-if="totalPages > 1" class="mt-16 flex flex-col items-center justify-center gap-6">
-            <div class="flex items-center bg-white/60 backdrop-blur-xl border border-gray-100 p-1.5 rounded-[1.25rem] shadow-xl shadow-indigo-100/50">
-              <button @click="prevPage" :disabled="!hasPrevPage"
-                class="h-10 px-3 sm:px-4 rounded-xl border border-transparent text-xs font-black text-gray-700 hover:bg-white hover:shadow-md disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-2 group">
-                <svg class="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7" />
-                </svg>
-                <span class="hidden min-[400px]:inline">上一頁</span>
-              </button>
-
-              <div class="h-6 w-px bg-gray-200 mx-1"></div>
-
-              <div class="px-2 sm:px-4 flex items-center gap-2 sm:gap-3">
-                <span class="text-[10px] sm:text-xs text-gray-400 font-bold uppercase tracking-tight whitespace-nowrap">
-                  <span class="hidden min-[450px]:inline">第</span> <span class="text-indigo-600 font-black">{{ currentPage }}</span> / {{ totalPages }} <span class="hidden min-[450px]:inline">頁</span>
-                </span>
-                <div class="relative group/select">
-                  <select :value="currentPage" @change="goToPage($event.target.value)"
-                    class="appearance-none bg-indigo-50 text-indigo-700 text-[10px] font-black pl-2 pr-6 sm:pl-3 sm:pr-8 py-1.5 rounded-lg border-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
-                    <option v-for="page in totalPages" :key="page" :value="page">跳至 {{ page }}</option>
-                  </select>
-                  <svg class="absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-indigo-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-
-              <div class="h-6 w-px bg-gray-200 mx-1"></div>
-
-              <button @click="nextPage" :disabled="!hasNextPage"
-                class="h-10 px-3 sm:px-4 rounded-xl border border-transparent text-xs font-black text-gray-700 hover:bg-white hover:shadow-md disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-2 group">
-                <span class="hidden min-[400px]:inline">下一頁</span>
-                <svg class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
+      <div class="mt-6 min-h-[500px] relative">
+        <!-- Segmented Control Loading Overlay -->
+        <Transition name="fade">
+          <div v-if="isFiltering" 
+            class="absolute inset-x-0 top-0 z-20 bg-gray-50/40 backdrop-blur-[2px] h-[300px] flex items-center justify-center transition-all">
+            <div class="bg-white/90 p-5 rounded-[2.5rem] shadow-2xl border border-white flex items-center gap-4">
+              <div class="w-8 h-8 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin"></div>
+              <span class="text-sm font-black uppercase tracking-[0.2em] text-slate-500">正在整理數據...</span>
             </div>
           </div>
-        </div>
+        </Transition>
+
+        <Transition name="fade-slide" mode="out-in">
+          <div :key="currentView + filters.category + filters.year + viewMode" class="py-4">
+            <template v-if="loading && gifts.length === 0">
+              <LoadingSpinner message="正在同步股東資料..." />
+            </template>
+            
+            <template v-else-if="error">
+              <div class="bg-rose-50 border border-rose-100 rounded-[2.5rem] p-12 text-center mx-auto max-w-2xl">
+                <div class="w-20 h-20 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <i class="ri-error-warning-fill text-rose-500 text-4xl"></i>
+                </div>
+                <h3 class="text-xl font-black text-rose-900 mb-2">無法載入資料</h3>
+                <p class="text-rose-600 mb-6">{{ error }}</p>
+                <button @click="applyFilters" 
+                  class="px-8 py-3 bg-rose-500 text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-rose-200 hover:bg-rose-600 transition-all">
+                  重試一次
+                </button>
+              </div>
+            </template>
+
+            <template v-else-if="paginatedMappedGifts.length === 0">
+              <div class="bg-white rounded-[2.5rem] border border-slate-100 p-16 text-center shadow-sm">
+                <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <i class="ri-inbox-line text-slate-200 text-5xl"></i>
+                </div>
+                <h3 class="text-slate-600 font-black text-xl mb-2">未找到符合條件的紀念品</h3>
+                <p class="text-sm text-slate-400 max-w-xs mx-auto mb-8">試著調整篩選條件、年份，或重新搜尋關鍵字</p>
+                <button @click="clearFilters"
+                  class="px-8 py-3 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 transition-all">
+                  清除所有篩選
+                </button>
+              </div>
+            </template>
+
+            <template v-else>
+              <!-- Info Bar -->
+              <div v-if="!isCurrentYear" class="mb-8 p-6 bg-amber-50 rounded-[2rem] border border-amber-100 text-center">
+                <p class="text-base font-black text-amber-700 uppercase tracking-widest flex items-center justify-center gap-2">
+                  <i class="ri-error-warning-fill text-xl"></i>
+                  非當年度資料僅供參考，部分操作可能受限
+                </p>
+              </div>
+
+              <!-- Grid View -->
+              <GiftGridView v-if="viewMode === 'grid'" 
+                :items="paginatedMappedGifts" 
+                :isExpired="isExpired"
+                :disabled="!isCurrentYear"
+                :processing-ids="processingIds"
+                :inventory-processing-ids="inventoryProcessingIds"
+                @toggle-collection="handleToggleCollection"
+                @toggle-inventory="handleToggleInventory" />
+
+              <!-- Table View -->
+              <TableView v-else 
+                :items="paginatedMappedGifts" 
+                :isExpired="isExpired"
+                :disabled="!isCurrentYear"
+                :sort-by="filters.sort"
+                :processing-ids="processingIds"
+                :inventory-processing-ids="inventoryProcessingIds"
+                @toggle-collection="handleToggleCollection"
+                @toggle-inventory="handleToggleInventory"
+                @sort="handleSort" />
+
+              <!-- Pagination -->
+              <div v-if="totalPages > 1" class="mt-12 mb-8 flex flex-col sm:flex-row items-center justify-between gap-6 px-4 py-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm">
+                <div class="flex items-center gap-4">
+                  <span class="text-sm font-black uppercase tracking-widest text-slate-400">每頁顯示</span>
+                  <select v-model="pageSize" @change="handlePageSizeChange"
+                    class="bg-slate-50 border-none rounded-xl text-base font-black text-slate-700 px-4 py-2 cursor-pointer focus:ring-2 focus:ring-slate-200">
+                    <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+                  </select>
+                </div>
+
+                <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-2xl">
+                  <button @click="prevPage" :disabled="!hasPrevPage"
+                    class="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-white hover:shadow-sm disabled:opacity-20 disabled:hover:bg-transparent">
+                    <i class="ri-arrow-left-s-line text-lg"></i>
+                  </button>
+                  
+                  <div class="flex items-center px-6 gap-3">
+                    <span class="text-base font-black text-slate-900">{{ currentPage }}</span>
+                    <span class="text-slate-300 text-sm">/</span>
+                    <span class="text-sm font-black text-slate-400">{{ totalPages }}</span>
+                  </div>
+
+                  <button @click="nextPage" :disabled="!hasNextPage"
+                    class="w-12 h-12 rounded-xl flex items-center justify-center transition-all hover:bg-white hover:shadow-md disabled:opacity-20 disabled:hover:bg-transparent">
+                    <i class="ri-arrow-right-s-line text-2xl"></i>
+                  </button>
+                </div>
+
+                <div class="hidden sm:block text-sm font-black text-slate-400 uppercase tracking-widest">
+                  顯示第 {{ startIndex + 1 }}-{{ endIndex }} 筆，共 {{ sortedMappedGifts.length }} 筆
+                </div>
+              </div>
+            </template>
+          </div>
+        </Transition>
       </div>
 
     </main>
@@ -265,12 +239,15 @@ import GiftGridView from '@/components/GiftGridView.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import Navbar from '@/components/Navbar.vue'
 import TableView from '@/components/TableView.vue'
+import CustomDropdown from '@/components/CustomDropdown.vue'
 import { useAuthModal } from '@/composables/useAuthModal'
 import { useCategories } from '@/composables/useCategories'
+import { useCollection } from '@/composables/useCollection'
 import { useGifts } from '@/composables/useGifts'
 import { usePagination } from '@/composables/usePagination'
-import { usePortfolio } from '@/composables/usePortfolio'; // Added
+import { usePortfolio } from '@/composables/usePortfolio'
 import { useToast } from '@/composables/useToast'
+import { getCategoryIcon, getCategoryStyles } from '@/utils/categoryUtils'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -278,9 +255,10 @@ const {
   gifts, myCollections, allUserCollections, loading, error, 
   fetchAllGifts, fetchMyCollections, fetchAllUserCollections, 
   fetchUserInventoryIds, fetchPreviousYearSouvenirs, enrichWithPreviousYear, 
-  addToCollection, removeFromCollection, getCollection 
+  getCollection 
 } = useGifts()
-const { portfolios, currentPortfolioId, isCombinedView } = usePortfolio() // Added
+const { addToCollection, removeFromCollection, addToInventory, removeFromInventoryCompletely } = useCollection()
+const { portfolios, currentPortfolioId, isCombinedView } = usePortfolio()
 const { categories, fetchCategories, matchCategory } = useCategories()
 const { showToast } = useToast()
 const { openAuthModal } = useAuthModal()
@@ -292,6 +270,25 @@ const currentView = ref('all') // 'all' | 'collection'
 const userInventoryIds = ref(new Set()) // Track user's inventory items
 const previousYearSouvenirs = ref(new Map()) // Track previous year souvenirs for reference
 
+// Localized Loading States
+const processingIds = ref(new Set())
+const inventoryProcessingIds = ref(new Set())
+const isFiltering = ref(false)
+
+const sortOptions = [
+  { label: '買進日期 ▼', value: 'date_desc' },
+  { label: '買進日期 ▲', value: 'date_asc' },
+  { label: '股票代號 ▲', value: 'code_asc' },
+  { label: '股票代號 ▼', value: 'code_desc' }
+]
+
+const triggerFilterAnimation = () => {
+  isFiltering.value = true
+  setTimeout(() => {
+    isFiltering.value = false
+  }, 300)
+}
+
 // Filters
 const filters = ref({
   search: '',
@@ -302,19 +299,24 @@ const filters = ref({
 
 const isCurrentYear = computed(() => filters.value.year === new Date().getFullYear().toString())
 
-// Color Helpers for Category Buttons
+const sortedCategories = computed(() => {
+  const all = { id: 'all', name: '全部', color: 'gray' }
+  const fallbacks = [
+    { id: 1, name: '超商商品卡', color: 'blue' },
+    { id: 2, name: '生技醫療', color: 'emerald' },
+    { id: 3, name: '旅遊住宿', color: 'indigo' },
+    { id: 4, name: '食品飲料', color: 'amber' },
+    { id: 5, name: '生活用品', color: 'purple' }
+  ]
+  const existingNames = new Set(categories.value.map(c => c.name))
+  const uniqueFallbacks = fallbacks.filter(f => !existingNames.has(f.name))
+  
+  return [all, ...categories.value, ...uniqueFallbacks]
+})
+
+// Color Helpers for Category Buttons - Use Centralized Utility
 const getCategoryActiveClasses = (color) => {
-  const map = {
-    gray: 'bg-gray-500 text-white border-gray-600 shadow-md shadow-gray-200',
-    red: 'bg-red-500 text-white border-red-600 shadow-md shadow-red-200',
-    yellow: 'bg-yellow-400 text-yellow-900 border-yellow-500 shadow-md shadow-yellow-200',
-    green: 'bg-emerald-500 text-white border-emerald-600 shadow-md shadow-emerald-200',
-    blue: 'bg-blue-500 text-white border-blue-600 shadow-md shadow-blue-200',
-    indigo: 'bg-indigo-500 text-white border-indigo-600 shadow-md shadow-indigo-200',
-    purple: 'bg-purple-500 text-white border-purple-600 shadow-md shadow-purple-200',
-    pink: 'bg-pink-500 text-white border-pink-600 shadow-md shadow-pink-200',
-  }
-  return map[color] || map['gray']
+  return getCategoryStyles(color).tab
 }
 
 const getCategoryDotClass = (color) => {
@@ -338,16 +340,36 @@ const isPlaceholder = (val) => {
   return s === '' || s === '尚未公布' || s.includes('再行公告') || s === '尚未公告'
 }
 
+// Optimized Lookups for O(N) performance
+const collectionIdsSet = computed(() => {
+  return new Set(myCollections.value.map(c => c.souvenir_id))
+})
+
+const allUserCollectionsMap = computed(() => {
+  const map = new Map()
+  allUserCollections.value.forEach(c => {
+    const code = String(c.gift?.code || '').trim()
+    if (!map.has(code)) map.set(code, [])
+    map.get(code).push(c)
+  })
+  return map
+})
+
+const portfoliosMap = computed(() => {
+  const map = new Map()
+  portfolios.value.forEach(p => map.set(p.id, p))
+  return map
+})
+
 // Data Filtering
 const filteredGifts = computed(() => {
   let result = gifts.value
 
-  // 1. Filter by Collection (if active)
+  // 1. Filter by Collection (if active) - Optimized with Set O(1)
   if (currentView.value === 'collection') {
-    const collectionIds = myCollections.value.map(c => c.souvenir_id)
-    // Only show items that are in collection BUT NOT in inventory
+    const collSet = collectionIdsSet.value
     result = result.filter(g => {
-      const isInMyCollection = collectionIds.includes(g.id)
+      const isInMyCollection = collSet.has(g.id)
       const isInInventory = userInventoryIds.value.has(g.code)
       return isInMyCollection && !isInInventory
     })
@@ -364,7 +386,7 @@ const filteredGifts = computed(() => {
   }
 
   // 3. Filter by Category
-  if (filters.value.category) {
+  if (filters.value.category && filters.value.category !== '全部') {
     result = result.filter(g => {
       // Check current year match
       const currentMatch = matchCategory(g.souvenir_item)
@@ -403,9 +425,9 @@ const mappedGifts = computed(() => {
     const categoryObj = categories.value.find(c => c.id === match.id)
 
     const normalizedCode = String(g.code || '').trim()
-    const collectedIn = allUserCollections.value.filter(c => String(c.gift?.code || '').trim() === normalizedCode)
+    const collectedIn = allUserCollectionsMap.value.get(normalizedCode) || []
     const collectedPortfolios = collectedIn.map(c => {
-      const p = portfolios.value.find(port => port.id === c.portfolio_id)
+      const p = portfoliosMap.value.get(c.portfolio_id)
       const pName = p?.name || '未知'
       return {
         id: c.portfolio_id,
@@ -544,25 +566,33 @@ const handleToggleCollection = async (gift) => {
     return
   }
 
+  processingIds.value.add(gift.id)
   try {
-    const collection = getCollection(gift.id)
-    if (collection) {
-      await removeFromCollection(collection.id)
-      showToast('已移除收藏', 'success', 1000)
-    } else {
-      const { error } = await addToCollection(gift.id)
-      if (error && error.message === '未登入') {
-        showToast('請先登入才能收藏紀念品', 'warning')
-        openAuthModal()
-        return
-      } else if (error) {
-        throw error
+      const collection = getCollection(gift.id)
+      if (collection) {
+        await removeFromCollection(collection.id)
+        showToast('已取消追蹤', 'success', 1000)
+      } else {
+        const { error } = await addToCollection(gift.id)
+        if (error && error.message === '未登入') {
+          showToast('請先登入才能追蹤紀念品', 'warning')
+          openAuthModal()
+          return
+        } else if (error) {
+          throw error
+        }
+        showToast('已加入追蹤清單', 'success', 1000)
       }
-      showToast('已加入收藏', 'success', 1000)
-    }
+      // Refresh data
+      await Promise.all([
+        fetchMyCollections(),
+        fetchAllUserCollections(filters.value.year)
+      ])
   } catch (e) {
     console.error(e)
     showToast(e.message, 'error')
+  } finally {
+    processingIds.value.delete(gift.id)
   }
 }
 
@@ -572,22 +602,43 @@ const handleToggleInventory = async (gift) => {
     return
   }
 
+  inventoryProcessingIds.value.add(gift.id)
   try {
-    const { success, error } = await addToCollection(gift.id, 'holding')
-    if (error && error.message === '未登入') {
-      showToast('請先登入才能新增庫存', 'warning')
-      openAuthModal()
-      return
-    } else if (error) {
-      throw error
+    if (gift.isInInventory) {
+      // 徹底移除：不論有沒有追蹤都完全消失
+      const { success, error } = await removeFromInventoryCompletely(gift.id)
+      if (error) throw error
+      
+      if (success) {
+        showToast(`已從庫存移除 「${gift.name}」`, 'success', 1000)
+      }
+    } else {
+      // 直接入庫：不再連動追蹤狀態
+      const { success, error } = await addToInventory(gift.code, gift.name)
+      if (error && error.message === '未登入') {
+        showToast('請先登入才能新增庫存', 'warning')
+        openAuthModal()
+        return
+      } else if (error) {
+        throw error
+      }
+
+      if (success || !error) {
+        showToast(`「${gift.name}」已直接加入庫存`, 'success', 2000)
+      }
     }
 
-    if (success) {
-      showToast(`「${gift.name}」已直接加入庫存`, 'success', 2000)
-    }
+    // Refresh data for both add and remove
+    await Promise.all([
+      fetchMyCollections(),
+      fetchAllUserCollections(filters.value.year),
+      fetchUserInventoryIds().then(ids => userInventoryIds.value = ids)
+    ])
   } catch (e) {
     console.error(e)
     showToast(e.message, 'error')
+  } finally {
+    inventoryProcessingIds.value.delete(gift.id)
   }
 }
 
@@ -650,5 +701,42 @@ onMounted(async () => {
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Pro Max Transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(20px) scale(0.98);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-20px) scale(1.02);
+}
+
+/* Pulse animation for the heart icon in active state */
+@keyframes heart-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.animate-pulse-heart {
+  animation: heart-pulse 1.5s infinite ease-in-out;
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-[#fafafa]">
+  <div class="min-h-screen bg-surface-50">
     <Navbar />
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in">
@@ -8,9 +8,9 @@
         <div>
           <div class="flex items-center gap-2 mb-4">
             <router-link to="/admin/panel"
-              class="group flex items-center gap-2 text-slate-400 hover:text-indigo-600 transition-all font-bold text-xs uppercase tracking-widest leading-none">
+              class="group flex items-center gap-2 text-slate-400 hover:text-brand-primary transition-all font-black text-[10px] uppercase tracking-[0.2em] leading-none">
               <div
-                class="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-indigo-50 group-hover:border-indigo-100 shadow-sm transition-all">
+                class="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-amber-50 group-hover:border-amber-100 shadow-sm transition-all">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7" />
                 </svg>
@@ -19,7 +19,7 @@
             </router-link>
           </div>
           <h1
-            class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 tracking-tighter mb-2">
+            class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-br from-slate-900 via-brand-primary to-slate-700 tracking-tighter mb-2">
             庫存歸戶管理
           </h1>
           <p class="text-slate-400 font-bold text-xs sm:text-sm uppercase tracking-wider">
@@ -28,7 +28,7 @@
         </div>
 
         <router-link to="/admin/import/inventory"
-          class="h-12 px-8 bg-white border border-slate-100 text-indigo-600 rounded-2xl shadow-sm hover:bg-indigo-50 transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2 leading-none">
+          class="h-12 px-8 bg-white border border-slate-100 text-brand-primary rounded-2xl shadow-sm hover:bg-amber-50 transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2 leading-none">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
               d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -50,7 +50,7 @@
           <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">待處理總筆數</span>
           <div class="flex items-end gap-2">
             <span class="text-4xl font-black text-slate-800 tracking-tighter">{{ stats.pendingCount }}</span>
-            <span class="text-[10px] font-black text-rose-500 mb-1.5 uppercase tracking-widest">筆紀錄</span>
+            <span class="status-badge status-badge-error border-none ml-1 uppercase tracking-widest leading-none">筆紀錄</span>
           </div>
         </div>
 
@@ -72,7 +72,7 @@
 
         <div class="glass-card p-2 sm:p-4 flex items-center relative overflow-hidden group/search">
           <div class="absolute inset-y-0 left-6 sm:left-10 flex items-center pointer-events-none z-10">
-            <svg class="h-5 w-5 text-indigo-400 transition-transform" fill="none" viewBox="0 0 24 24"
+            <svg class="h-5 w-5 text-brand-primary transition-transform" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -86,8 +86,8 @@
       <!-- Main Content Area -->
       <div class="animate-fade-in-up delay-200">
         <div v-if="loading" class="py-24 flex flex-col items-center gap-6">
-          <div class="w-16 h-16 border-8 border-indigo-50 border-t-indigo-600 rounded-full animate-spin"></div>
-          <p class="text-sm font-black text-indigo-300 uppercase tracking-[0.2em] animate-pulse">正在精準同步大數據...</p>
+          <div class="w-16 h-16 border-8 border-slate-50 border-t-brand-primary rounded-full animate-spin"></div>
+          <p class="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em] animate-pulse">正在精準同步大數據...</p>
         </div>
 
         <div v-else-if="groupedStaging.length === 0" class="glass-card py-24 text-center border-emerald-100/30">
@@ -103,7 +103,7 @@
 
         <div v-else class="glass-card overflow-hidden p-0">
           <!-- Multi-action Header -->
-          <div v-if="autoMatchedCount > 0" class="px-8 py-4 bg-indigo-600 flex items-center justify-between animate-fade-in">
+          <div v-if="autoMatchedCount > 0" class="px-8 py-4 bg-brand-primary flex items-center justify-between animate-fade-in">
             <div class="flex items-center gap-3">
               <div class="w-2 h-2 rounded-full bg-white animate-pulse"></div>
               <span class="text-[10px] font-black text-white uppercase tracking-widest leading-none">
@@ -116,18 +116,18 @@
           <div class="hidden lg:block overflow-x-auto">
             <table class="w-full border-separate border-spacing-0">
               <thead>
-                <tr class="bg-slate-50/50 border-b border-slate-100">
+                <tr class="bg-amber-50 border-b border-amber-100">
                   <th
-                    class="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                    class="px-8 py-5 text-left text-[10px] font-black text-brand-primary/60 uppercase tracking-widest leading-none">
                     待歸戶對象 (來源姓名)</th>
                   <th
-                    class="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                    class="px-6 py-5 text-left text-[10px] font-black text-brand-primary/60 uppercase tracking-widest leading-none">
                     組合項目組成</th>
                   <th
-                    class="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                    class="px-6 py-5 text-center text-[10px] font-black text-brand-primary/60 uppercase tracking-widest leading-none">
                     筆數</th>
                   <th
-                    class="px-6 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none pr-10">
+                    class="px-6 py-5 text-right text-[10px] font-black text-brand-primary/60 uppercase tracking-widest leading-none pr-10">
                     系統對齊決策</th>
                 </tr>
               </thead>
@@ -137,13 +137,13 @@
                   <td class="px-8 py-6">
                     <div class="flex items-center gap-4">
                       <div
-                        class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-xl shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500">
+                        class="w-12 h-12 rounded-2xl bg-amber-50 text-brand-primary flex items-center justify-center font-black text-xl shadow-sm group-hover:bg-brand-primary group-hover:text-white transition-all duration-500">
                         {{ group.owner_name.charAt(0) }}
                       </div>
                       <div>
                         <div class="text-xl font-black text-slate-800 tracking-tighter">{{ group.owner_name }}</div>
                         <div v-if="group.match" class="mt-1 flex items-center gap-1.5">
-                          <span class="px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase tracking-widest border border-emerald-100 leading-none">✨ 智能匹配</span>
+                          <span class="status-badge status-badge-success leading-none">✨ 智能匹配</span>
                           <span class="text-[9px] font-bold text-slate-300 leading-none">{{ group.match.profile.email.split('@')[0] }}</span>
                         </div>
                         <div v-else class="text-[10px] font-bold text-slate-300 uppercase tracking-widest leading-none mt-1">
@@ -154,7 +154,7 @@
                   <td class="px-6 py-6 max-w-lg">
                     <div class="flex flex-wrap gap-1.5">
                       <span v-for="(item, idx) in group.items.slice(0, 4)" :key="idx"
-                        class="px-2.5 py-1.5 rounded-lg text-[9px] font-black bg-white border border-slate-100 text-slate-500 uppercase tracking-wider shadow-sm group-hover:border-indigo-200 transition-all">
+                        class="status-badge status-badge-neutral hover:border-amber-200">
                         {{ item.stock_name || item.stock_code }}
                       </span>
                       <div v-if="group.items.length > 4"
@@ -165,13 +165,13 @@
                   </td>
                   <td class="px-6 py-6 text-center">
                     <span
-                      class="text-sm font-black text-slate-700 bg-amber-50 border border-amber-100 px-4 py-2 rounded-2xl shadow-sm group-hover:scale-110 transition-transform inline-block">
+                      class="status-badge status-badge-primary !px-4 !py-2 !rounded-2xl group-hover:scale-110 transition-transform inline-block">
                       {{ group.items.length }}
                     </span>
                   </td>
                   <td class="px-6 py-6 text-right pr-8">
                     <button @click="openLinkModal(group)"
-                      class="h-12 px-6 bg-indigo-600 text-white text-[10px] font-black rounded-2xl uppercase tracking-widest hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 ml-auto shadow-lg shadow-indigo-100 relative group/btn overflow-hidden">
+                      class="h-12 px-6 bg-brand-primary text-white text-[10px] font-black rounded-2xl uppercase tracking-widest hover:bg-brand-primary/95 hover:shadow-xl hover:shadow-amber-200 transition-all active:scale-95 flex items-center justify-center gap-2 ml-auto shadow-lg shadow-2xl relative group/btn overflow-hidden">
                       <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:animate-shimmer"></div>
                       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -188,16 +188,16 @@
           <!-- Mobile Cards -->
           <div class="lg:hidden p-6 sm:p-8 space-y-4">
             <div v-for="(group, gIdx) in filteredGroups" :key="group.owner_name"
-              class="p-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:border-indigo-200 transition-all group active:scale-[0.98]">
+              class="p-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:border-amber-200 transition-all group active:scale-[0.98]">
               <div class="flex items-center justify-between mb-6">
                 <div class="flex items-center gap-3">
                   <div
-                    class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-xl shadow-xl shadow-indigo-100">
+                    class="w-12 h-12 rounded-2xl bg-brand-primary text-white flex items-center justify-center font-black text-xl shadow-xl shadow-amber-200">
                     {{ group.owner_name.charAt(0) }}
                   </div>
                   <div class="text-xl font-black text-slate-800 tracking-tighter">{{ group.owner_name }}</div>
                 </div>
-                <span class="h-10 px-4 flex items-center rounded-xl bg-amber-50 text-amber-600 text-xs font-black">{{
+                <span class="h-10 px-4 flex items-center rounded-xl bg-amber-50 text-brand-primary text-xs font-black">{{
                   group.items.length }} 筆</span>
               </div>
 
@@ -212,7 +212,7 @@
               </div>
 
               <button @click="openLinkModal(group)"
-                class="w-full flex items-center justify-center h-14 bg-indigo-600 text-white text-[10px] font-black rounded-2xl uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
+                class="w-full flex items-center justify-center h-14 bg-brand-primary text-white text-[10px] font-black rounded-2xl uppercase tracking-widest hover:bg-brand-primary/95 transition-all shadow-lg shadow-amber-200">
                 連結使用者帳戶
               </button>
             </div>
@@ -227,12 +227,12 @@
         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-fade-in" @click="closeModal"></div>
         <div class="relative bg-white rounded-[2.5rem] w-full max-w-xl shadow-2xl animate-bounce-in overflow-hidden">
           <!-- Top Accent -->
-          <div class="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+          <div class="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-slate-900 via-brand-primary to-slate-700"></div>
 
           <div class="p-8 sm:p-12">
             <div class="flex items-center justify-between mb-10">
               <div>
-                <span class="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] block mb-1">Staging
+                <span class="text-[10px] font-black text-brand-primary uppercase tracking-[0.2em] block mb-1">Staging
                   暫存交接</span>
                 <h3 class="text-4xl font-black text-slate-800 tracking-tighter">歸戶協作</h3>
               </div>
@@ -241,7 +241,7 @@
             </div>
 
             <div
-              class="p-8 rounded-[2rem] bg-indigo-50/50 border border-indigo-100 mb-10 group/owner relative overflow-hidden">
+              class="p-8 rounded-[2rem] bg-amber-50 border border-amber-100 mb-10 group/owner relative overflow-hidden">
               <div
                 class="absolute top-0 right-0 p-4 opacity-5 pointer-events-none group-hover/owner:opacity-10 transition-opacity">
                 <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 24 24">
@@ -249,11 +249,11 @@
                     d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08s5.97 1.09 6 3.08c-1.29 1.94-3.5 3.22-6 3.22z" />
                 </svg>
               </div>
-              <span class="text-[10px] font-black text-indigo-300 uppercase tracking-widest block mb-1">Source Dataset
+              <span class="text-[10px] font-black text-amber-400 uppercase tracking-widest block mb-1">Source Dataset
                 來源數據實體</span>
-              <div class="text-3xl font-black text-indigo-950 tracking-tighter">{{ selectedGroup?.owner_name }}</div>
+              <div class="text-3xl font-black text-slate-900 tracking-tighter">{{ selectedGroup?.owner_name }}</div>
               <div
-                class="inline-flex items-center gap-2 mt-2 px-3 py-1 rounded-lg bg-white border border-indigo-100 text-[10px] font-black text-indigo-600 uppercase tracking-widest shadow-sm">
+                class="inline-flex items-center gap-2 mt-2 px-3 py-1 rounded-lg bg-white border border-amber-100 text-[10px] font-black text-brand-primary uppercase tracking-widest shadow-sm">
                 {{ selectedGroup?.items.length }} 筆待處理紀錄
               </div>
             </div>
@@ -262,12 +262,12 @@
             <div class="space-y-6">
               <div class="relative group">
                 <span
-                  class="absolute left-6 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 group-focus-within:text-indigo-600 uppercase tracking-widest pointer-events-none transition-colors">Find
+                  class="absolute left-6 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 group-focus-within:text-brand-primary uppercase tracking-widest pointer-events-none transition-colors">Find
                   尋找對象:</span>
                 <input v-model="userSearch" @input="searchUsers" type="text" placeholder="電子郵件或暱稱..."
-                  class="w-full h-16 pl-28 pr-6 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-black focus:bg-white focus:border-indigo-200 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none" />
+                  class="w-full h-16 pl-28 pr-6 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-black focus:bg-white focus:border-amber-200 focus:ring-4 focus:ring-amber-50 transition-all outline-none" />
                 <div v-if="searchingUsers" class="absolute right-6 top-1/2 -translate-y-1/2">
-                  <svg class="animate-spin h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24">
+                  <svg class="animate-spin h-5 w-5 text-brand-primary" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor"
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
@@ -279,22 +279,22 @@
               <!-- User Search Results -->
               <div v-if="!targetUser" class="max-h-60 overflow-y-auto custom-scrollbar pr-2 space-y-2">
                 <div v-for="user in userResults" :key="user.id" @click="selectUser(user)"
-                  class="p-4 bg-white border border-slate-100 rounded-2xl flex items-center justify-between group transition-all cursor-pointer hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/5 active:scale-[0.98]">
+                  class="p-4 bg-white border border-slate-100 rounded-2xl flex items-center justify-between group transition-all cursor-pointer hover:border-amber-300 hover:shadow-lg hover:shadow-amber-50 active:scale-[0.98]">
                   <div class="flex items-center gap-4">
                     <div
-                      class="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center font-black text-sm group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                      class="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center font-black text-sm group-hover:bg-brand-primary group-hover:text-white transition-all">
                       {{ user.full_name?.charAt(0) || '?' }}
                     </div>
                     <div class="min-w-0">
                       <div class="text-sm font-black text-slate-800 tracking-tight leading-none mb-1">
                         {{ user.full_name || '匿名用戶' }}
-                        <span v-if="user.nickname" class="text-indigo-400 font-bold ml-1 text-xs">@{{ user.nickname
+                        <span v-if="user.nickname" class="text-brand-primary font-bold ml-1 text-xs">@{{ user.nickname
                         }}</span>
                       </div>
                       <div class="text-[9px] font-bold text-slate-300 uppercase leading-none">{{ user.email }}</div>
                     </div>
                   </div>
-                  <svg class="w-4 h-4 text-slate-200 group-hover:text-indigo-600 transition-colors" fill="none"
+                  <svg class="w-4 h-4 text-slate-200 group-hover:text-brand-primary transition-colors" fill="none"
                     viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" />
                   </svg>
@@ -304,7 +304,7 @@
               <!-- Portfolio Choice -->
               <div v-else class="space-y-4 animate-bounce-in">
                 <div
-                  class="p-6 bg-indigo-600 rounded-3xl text-white shadow-xl shadow-indigo-100 flex items-center justify-between">
+                  class="p-6 bg-brand-primary rounded-3xl text-white shadow-xl shadow-amber-200 flex items-center justify-between">
                   <div class="flex items-center gap-4">
                     <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center font-black text-xl">
                       {{ targetUser.email.charAt(0).toUpperCase() }}</div>
@@ -322,22 +322,22 @@
                 <div class="space-y-3">
                   <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest block ml-4">目標歸戶分身 (Avatars)</span>
                   <div v-if="fetchingPortfolios" class="py-12 flex flex-col items-center gap-4">
-                    <div class="w-8 h-8 border-4 border-indigo-50 border-t-indigo-600 rounded-full animate-spin"></div>
+                    <div class="w-8 h-8 border-4 border-amber-50 border-t-brand-primary rounded-full animate-spin"></div>
                     <span
-                      class="text-[10px] font-black text-indigo-300 uppercase tracking-widest animate-pulse">Scanning
+                      class="text-[10px] font-black text-amber-400 uppercase tracking-widest animate-pulse">Scanning
                       正在搜尋帳戶環境...</span>
                   </div>
                   <div v-else class="space-y-3">
                     <div v-for="port in targetPortfolios" :key="port.id" @click="selectedPortfolioId = port.id"
                       class="p-5 rounded-[2rem] border-2 transition-all cursor-pointer flex items-center justify-between group overflow-hidden relative"
-                      :class="selectedPortfolioId === port.id ? 'border-indigo-600 bg-indigo-50 shadow-2xl shadow-indigo-500/10 scale-[1.02]' : 'border-slate-50 bg-slate-50/50 hover:border-indigo-200 hover:bg-white'">
+                      :class="selectedPortfolioId === port.id ? 'border-brand-primary bg-amber-50 shadow-2xl shadow-2xl scale-[1.02]' : 'border-slate-50 bg-slate-50/50 hover:border-amber-200 hover:bg-white'">
                       <div v-if="selectedPortfolioId === port.id" class="absolute top-0 right-0 p-3">
-                         <div class="w-2 h-2 rounded-full bg-indigo-600 animate-ping"></div>
+                         <div class="w-2 h-2 rounded-full bg-brand-primary animate-ping"></div>
                       </div>
                       <div class="flex items-center gap-4">
                         <div
                           class="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black transition-all duration-500"
-                          :class="selectedPortfolioId === port.id ? 'bg-indigo-600 text-white shadow-xl rotate-6' : 'bg-white text-slate-300 border border-slate-100'">
+                          :class="selectedPortfolioId === port.id ? 'bg-brand-primary text-white shadow-xl rotate-6' : 'bg-white text-slate-300 border border-slate-100'">
                           {{ port.name.charAt(0) }}
                         </div>
                         <div>
@@ -346,16 +346,16 @@
                         </div>
                       </div>
                       <div v-if="port.is_default"
-                        class="text-[9px] font-black text-indigo-400 uppercase bg-white border border-indigo-100 px-3 py-1 rounded-full shadow-sm">
+                        class="text-[9px] font-black text-brand-primary uppercase bg-white border border-amber-100 px-3 py-1 rounded-full shadow-sm">
                         本人主要</div>
                     </div>
 
                     <div v-if="targetPortfolios.length === 0" @click="selectedPortfolioId = 'NEW_DEFAULT'"
                       class="p-8 rounded-[2.5rem] border-2 border-dashed transition-all cursor-pointer flex items-center justify-between"
-                      :class="selectedPortfolioId === 'NEW_DEFAULT' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-100 bg-slate-50/30 hover:border-indigo-200 hover:bg-white text-slate-300'">
+                      :class="selectedPortfolioId === 'NEW_DEFAULT' ? 'border-brand-primary bg-amber-50' : 'border-slate-100 bg-slate-50/30 hover:border-amber-200 hover:bg-white text-slate-300'">
                       <div class="flex items-center gap-5">
                         <div
-                          class="w-16 h-16 rounded-[2rem] bg-indigo-600 text-white flex items-center justify-center shadow-2xl shadow-indigo-200 p-4">
+                          class="w-16 h-16 rounded-[2rem] bg-brand-primary text-white flex items-center justify-center shadow-2xl shadow-amber-200 p-4">
                           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                               d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -363,7 +363,7 @@
                         </div>
                         <div class="text-left">
                           <div class="text-lg font-black text-slate-800 tracking-tighter">建立首個分身</div>
-                          <div class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">偵測到全新型態使用者
+                          <div class="text-[10px] text-brand-primary font-bold uppercase tracking-widest">偵測到全新型態使用者
                           </div>
                         </div>
                       </div>
@@ -377,7 +377,7 @@
               <button @click="closeModal"
                 class="flex-1 h-16 bg-slate-100 text-slate-400 font-black rounded-2xl uppercase tracking-widest text-xs hover:bg-slate-200 transition-all">放棄歸戶</button>
               <button @click="confirmLink" :disabled="linking"
-                class="flex-[2] h-16 bg-indigo-600 text-white font-black rounded-2xl uppercase tracking-widest text-xs shadow-xl shadow-indigo-100 hover:bg-indigo-700 disabled:opacity-30 transition-all">
+                class="flex-[2] h-16 bg-brand-primary text-white font-black rounded-2xl uppercase tracking-widest text-xs shadow-xl shadow-amber-200 hover:bg-brand-primary/95 disabled:opacity-30 transition-all">
                 {{ linking ? '歸戶對齊中...' : '確認完成核對歸戶' }}
               </button>
             </div>
@@ -716,7 +716,8 @@ onMounted(async () => {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(99, 102, 241, 0.1);
+  background-color: var(--brand-primary);
+  opacity: 0.1;
   border-radius: 20px;
 }
 

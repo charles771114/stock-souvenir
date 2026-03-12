@@ -1,92 +1,99 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-surface-50">
     <Navbar />
 
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-4xl mx-auto px-6 sm:px-8 py-12 animate-fade-in-up">
       <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Admin 設定</h1>
-        <p class="text-gray-600">管理系統管理員帳號</p>
+      <div class="mb-12">
+        <h1 class="text-3xl font-black text-slate-800 tracking-tighter mb-2">權限設定 / ADMIN</h1>
+        <p class="text-[11px] font-black text-slate-400 uppercase tracking-widest">管理系統管理員帳號與主權限分配</p>
       </div>
 
       <!-- Add Admin Form -->
-      <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">新增 Admin</h2>
+      <div class="glass-card p-10 mb-10 border border-slate-100 shadow-xl shadow-amber-50">
+        <h2 class="text-sm font-black text-slate-700 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+            <i class="fas fa-plus-circle text-brand-primary"></i> 新增管理者
+        </h2>
         
-        <form @submit.prevent="handleAddAdmin" class="flex gap-4">
+        <form @submit.prevent="handleAddAdmin" class="flex gap-3">
           <div class="flex-1">
             <input
               v-model="newAdminEmail"
               type="email"
-              placeholder="輸入 Email 地址"
+              placeholder="輸入管理者 Email 地址"
               required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-amber-50 focus:border-amber-200 transition-all font-bold text-slate-800"
             />
           </div>
           <button
             type="submit"
             :disabled="loading"
-            class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-8 py-3 bg-brand-primary text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-lg shadow-amber-200 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
           >
-            {{ loading ? '新增中...' : '新增' }}
+            {{ loading ? '處理中...' : '提交新增' }}
           </button>
         </form>
 
-        <p class="mt-3 text-sm text-gray-600">
-          💡 提示：新增後該 email 下次登入會自動成為 admin
+        <p class="mt-4 text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-2">
+          <i class="fas fa-info-circle text-amber-400"></i>
+          提示：新增後該 Email 下次登入將具備管理者權限
         </p>
 
         <!-- Error Message -->
-        <div v-if="error" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p class="text-sm text-red-800">{{ error }}</p>
+        <div v-if="error" class="mt-6 p-4 bg-status-error/5 border border-status-error/10 rounded-2xl flex items-center gap-3">
+          <i class="fas fa-exclamation-circle text-status-error"></i>
+          <p class="text-xs font-bold text-status-error">{{ error }}</p>
         </div>
       </div>
 
       <!-- Admin List -->
-      <div class="bg-white rounded-lg shadow-sm">
-        <div class="px-6 py-4 border-b border-gray-200">
-          <h2 class="text-lg font-semibold text-gray-900">Admin 帳號列表</h2>
+      <div class="glass-card overflow-hidden border border-slate-100 shadow-xl shadow-slate-200/50">
+        <div class="px-8 py-6 border-b border-slate-50 flex items-center justify-between">
+          <h2 class="text-sm font-black text-slate-700 uppercase tracking-[0.2em] flex items-center gap-2">
+            <i class="fas fa-list text-slate-300"></i> 管理者清單
+          </h2>
+          <span class="text-[9px] font-black text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 uppercase tracking-widest">
+            Total: {{ adminEmails.length }}
+          </span>
         </div>
 
-        <div v-if="loading && adminEmails.length === 0" class="p-6 flex justify-center">
-          <LoadingSpinner />
+        <div v-if="loading && adminEmails.length === 0" class="p-12 flex justify-center">
+          <div class="w-8 h-8 border-4 border-slate-100 border-t-brand-primary rounded-full animate-spin"></div>
         </div>
 
-        <div v-else-if="adminEmails.length === 0" class="p-6 text-center text-gray-500">
-          尚無 Admin 帳號
+        <div v-else-if="adminEmails.length === 0" class="p-12 text-center text-slate-400 text-[11px] font-black uppercase tracking-widest">
+          尚無管理者帳號 / NO ADMIN DATA
         </div>
 
-        <div v-else class="divide-y divide-gray-200">
+        <div v-else class="divide-y divide-slate-50">
           <div
             v-for="admin in adminEmails"
             :key="admin.email"
-            class="px-6 py-4 flex items-center justify-between hover:bg-gray-50"
+            class="px-8 py-6 flex items-center justify-between hover:bg-slate-50 transition-colors group"
           >
             <div class="flex-1">
               <div class="flex items-center">
-                <div class="relative flex-shrink-0 h-10 w-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                  <span class="text-indigo-600 font-medium text-sm">
+                <div class="relative flex-shrink-0 h-12 w-12 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100 shadow-inner group-hover:bg-white transition-colors">
+                  <span class="text-brand-primary font-black text-lg">
                     {{ admin.email.charAt(0).toUpperCase() }}
                   </span>
                   <!-- Primary Badge -->
-                  <div v-if="admin.is_primary_admin" class="absolute -top-1 -right-1 bg-yellow-400 rounded-full p-0.5 border-2 border-white" title="主管理員">
-                    <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
+                  <div v-if="admin.is_primary_admin" class="absolute -top-1.5 -right-1.5 bg-brand-secondary rounded-full p-1 border-2 border-white shadow-lg shadow-indigo-400 transform group-hover:scale-110 transition-transform" title="主管理員">
+                    <i class="fas fa-crown text-[8px] text-white"></i>
                   </div>
                 </div>
-                <div class="ml-4">
-                  <div class="text-sm font-medium text-gray-900 flex items-center">
+                <div class="ml-5">
+                  <div class="text-sm font-black text-slate-800 flex items-center tracking-tight">
                     {{ admin.email }}
-                    <span v-if="isCurrentUser(admin.email)" class="ml-2 text-xs text-indigo-600 font-normal bg-indigo-50 px-2 py-0.5 rounded-full">
-                      (您現在的帳號)
+                    <span v-if="isCurrentUser(admin.email)" class="ml-3 text-[9px] font-black text-brand-primary bg-amber-50 px-2.5 py-1 rounded-full border border-amber-100 uppercase tracking-widest">
+                      YOU
                     </span>
-                    <span v-if="admin.is_primary_admin" class="ml-2 text-xs text-amber-600 font-normal bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
+                    <span v-if="admin.is_primary_admin" class="ml-2 text-[9px] font-black text-brand-secondary bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100 uppercase tracking-widest">
                       Primary
                     </span>
                   </div>
-                  <div class="text-xs text-gray-500">
-                    新增於 {{ formatDate(admin.added_at) }}
+                  <div class="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">
+                    Added: {{ formatDate(admin.added_at) }}
                   </div>
                 </div>
               </div>
@@ -97,7 +104,7 @@
               <button
                 v-if="!admin.is_primary_admin"
                 @click="confirmPromote(admin.email)"
-                class="px-3 py-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors border border-transparent hover:border-indigo-100"
+                class="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-brand-primary bg-amber-50 hover:bg-amber-100 rounded-xl transition-all border border-transparent hover:border-amber-100"
               >
                 設為主管理員
               </button>
@@ -106,12 +113,12 @@
               <button
                 v-if="!isCurrentUser(admin.email) && !admin.is_primary_admin"
                 @click="confirmRemove(admin.email)"
-                class="px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                class="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-status-error bg-status-error/5 hover:bg-status-error/10 rounded-xl transition-all border border-transparent hover:border-status-error/10"
               >
                 移除權限
               </button>
-              <span v-else-if="admin.is_primary_admin" class="px-3 py-1.5 text-xs text-gray-400 italic">
-                無法移除
+              <span v-else-if="admin.is_primary_admin" class="px-4 py-2 text-[10px] font-black text-slate-300 italic uppercase tracking-widest">
+                IMMUTABLE
               </span>
             </div>
           </div>
@@ -119,17 +126,19 @@
       </div>
 
       <!-- Warning -->
-      <div class="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <div class="flex">
-          <svg class="w-5 h-5 text-yellow-600 mt-0.5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-          </svg>
-          <div class="text-sm text-yellow-800">
-            <p class="font-medium mb-1">注意事項</p>
-            <ul class="list-disc list-inside space-y-1">
-              <li>您無法移除自己的 admin 權限</li>
-              <li>移除 admin 後，該用戶下次登入時會失去管理員權限</li>
-              <li>請謹慎管理 admin 帳號列表</li>
+      <div class="mt-10 glass-card p-6 border border-status-warning/10 bg-status-warning/5 shadow-xl shadow-status-warning/5 rounded-[2rem]">
+        <div class="flex gap-4">
+          <div class="w-10 h-10 rounded-xl bg-status-warning/10 flex items-center justify-center text-status-warning">
+            <i class="fas fa-shield-alt text-lg"></i>
+          </div>
+          <div class="text-sm text-slate-600">
+            <p class="font-black text-slate-800 uppercase tracking-widest mb-2 flex items-center gap-2">
+                管理員安全指南 / SAFETY
+            </p>
+            <ul class="space-y-2">
+              <li class="flex items-center gap-2 font-bold text-xs"><i class="fas fa-check-circle text-status-warning text-[10px]"></i> 您無法移除自己的管理員權限</li>
+              <li class="flex items-center gap-2 font-bold text-xs"><i class="fas fa-check-circle text-status-warning text-[10px]"></i> 移除後需重新登入才會生效</li>
+              <li class="flex items-center gap-2 font-bold text-xs"><i class="fas fa-check-circle text-status-warning text-[10px]"></i> 主管理員負責全站數據，請謹慎分配</li>
             </ul>
           </div>
         </div>

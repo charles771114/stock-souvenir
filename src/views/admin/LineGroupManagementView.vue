@@ -1,34 +1,36 @@
 <template>
-  <div class="min-h-screen bg-[#fafafa]">
+  <div class="min-h-screen bg-surface-50">
     <Navbar />
-
-    <main class="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+    <main class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <!-- Breadcrumb / Header -->
-      <div class="mb-8 flex items-center justify-between">
+      <div class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6 animate-fade-in">
         <div>
-          <nav class="flex" aria-label="Breadcrumb">
+          <nav class="flex mb-4" aria-label="Breadcrumb">
             <ol class="flex items-center space-x-2">
               <li>
-                <router-link to="/admin/panel" class="text-sm font-medium text-gray-500 hover:text-gray-700">主控台</router-link>
+                <router-link to="/admin/panel" class="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-brand-primary transition-all">主控台</router-link>
               </li>
               <li>
-                <svg class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="h-4 w-4 text-slate-300" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                 </svg>
               </li>
               <li>
-                <span class="text-sm font-medium text-gray-900">LINE 群組管理</span>
+                <span class="text-[10px] font-black text-brand-primary uppercase tracking-widest">LINE 群組管理</span>
               </li>
             </ol>
           </nav>
-          <h1 class="mt-2 text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+          <h1 class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-br from-slate-900 via-brand-primary to-slate-700 tracking-tighter mb-2">
             LINE 群組列表
           </h1>
+          <p class="text-slate-400 font-bold text-sm uppercase tracking-wider">
+            管理已串接的 LINE 通知群組與查詢權限
+          </p>
         </div>
         <div class="flex items-center gap-2">
-            <button @click="fetchGroups" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            <button @click="fetchGroups" class="h-10 px-5 bg-white border border-slate-100 text-brand-primary rounded-xl shadow-sm hover:bg-brand-primary hover:text-white transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                <svg :class="['w-4 h-4', loading ? 'animate-spin' : '']" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
                 重新整理
             </button>
@@ -36,25 +38,24 @@
       </div>
 
       <!-- Data Table -->
-      <div class="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-200">
-        <div v-if="loading" class="p-12 flex justify-center">
-            <svg class="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
+      <div class="glass-card overflow-hidden p-0 animate-fade-in-up">
+        <div v-if="loading" class="p-24 flex flex-col items-center justify-center gap-4">
+            <div class="w-12 h-12 border-4 border-slate-50 border-t-brand-primary rounded-full animate-spin"></div>
+            <p class="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] animate-pulse">正在掃描群組資料...</p>
         </div>
         
-        <div v-else-if="groups.length === 0" class="p-12 text-center text-gray-500">
-            目前沒有已追蹤的 LINE 群組。
-            <p class="text-sm mt-2">請將機器人邀請至群組，並發送任意訊息以啟用追蹤。</p>
+        <div v-else-if="groups.length === 0" class="p-24 text-center">
+            <div class="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-2">未發現數據</div>
+            <p class="text-sm font-bold text-slate-400">目前沒有已追蹤的 LINE 群組。</p>
+            <p class="text-[10px] font-black text-amber-400 uppercase tracking-widest mt-4">請參閱下方說明以啟動連線</p>
         </div>
 
-        <ul v-else role="list" class="divide-y divide-gray-200">
-            <li v-for="group in groups" :key="group.group_id" class="px-4 py-4 sm:px-6 hover:bg-gray-50 transition-colors">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center min-w-0 gap-4">
+        <ul v-else role="list" class="divide-y divide-slate-50">
+            <li v-for="group in groups" :key="group.group_id" class="px-8 py-6 hover:bg-amber-50 transition-all group">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                    <div class="flex items-center min-w-0 gap-5">
                         <!-- Group Icon -->
-                        <div class="flex-shrink-0 h-12 w-12 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
+                        <div class="flex-shrink-0 h-16 w-16 rounded-2xl bg-slate-50 overflow-hidden border border-slate-100 shadow-sm group-hover:border-amber-200 transition-all">
                             <img v-if="group.picture_url" :src="group.picture_url" alt="Group Icon" class="h-full w-full object-cover" />
                             <div v-else class="h-full w-full flex items-center justify-center text-gray-400">
                                 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -65,20 +66,19 @@
                         
                         <!-- Info -->
                         <div class="min-w-0">
-                            <h3 class="text-base font-bold text-gray-900 truncate">
+                            <h3 class="text-xl font-black text-slate-800 tracking-tighter truncate group-hover:text-brand-primary transition-colors">
                                 {{ group.group_name || group.display_name || '未命名群組' }}
                             </h3>
                             <div class="mt-1 flex items-center gap-3">
-                                <div class="flex items-center text-xs text-gray-400 font-mono">
+                                <div class="flex items-center text-[10px] text-slate-400 font-black tracking-widest uppercase">
                                     <span class="truncate block max-w-[120px]">{{ group.group_id }}</span>
-                                    <button @click="copy(group.group_id)" class="ml-1 text-gray-400 hover:text-indigo-600 transition-colors" title="複製 ID">
-                                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    <button @click="copy(group.group_id)" class="ml-1 text-slate-300 hover:text-brand-primary transition-colors" title="複製 ID">
+                                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                         </svg>
                                     </button>
                                 </div>
-                                <span v-if="group.line_bots?.bot_name" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-100 uppercase tracking-tighter">
-                                    <i class="ri-robot-2-line mr-1"></i>
+                                <span v-if="group.line_bots?.bot_name" class="inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black bg-amber-50 text-brand-primary border border-amber-100 uppercase tracking-widest">
                                     {{ group.line_bots.bot_name }}
                                 </span>
                             </div>
@@ -101,8 +101,8 @@
                             <!-- Keyword Status Badge -->
                             <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border"
                                 :class="group.allow_keywords 
-                                    ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                                    : 'bg-gray-50 text-gray-400 border-gray-200'">
+                                    ? 'bg-amber-50 text-brand-primary border-amber-100' 
+                                    : 'bg-slate-50 text-slate-400 border-slate-200'">
                                 <i class="ri-search-eye-line mr-1"></i>
                                 查詢{{ group.allow_keywords ? '中' : '關閉' }}
                             </span>
@@ -118,28 +118,28 @@
                             <!-- Toggle Active (Notification) -->
                             <button 
                                 @click="toggleActive(group)"
-                                class="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-200"
+                                class="h-10 w-10 flex items-center justify-center rounded-xl transition-all duration-300 border border-slate-100 shadow-sm"
                                 :class="group.is_active 
-                                    ? 'bg-green-50 text-green-600 hover:bg-green-100' 
-                                    : 'bg-gray-50 text-gray-400 hover:bg-gray-100'"
+                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-600 hover:text-white' 
+                                    : 'bg-slate-50 text-slate-400 hover:bg-slate-200'"
                                 :title="group.is_active ? '關閉廣播通知' : '開啟廣播通知'"
                             >
-                                <i :class="group.is_active ? 'ri-broadcast-line' : 'ri-broadcast-line'" class="text-lg"></i>
+                                <i :class="group.is_active ? 'ri-broadcast-line' : 'ri-broadcast-line'" class="text-xl"></i>
                             </button>
 
                             <!-- Toggle Keywords -->
                             <button 
                                 @click="toggleKeywords(group)"
-                                class="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-200"
+                                class="h-10 w-10 flex items-center justify-center rounded-xl transition-all duration-300 border border-slate-100 shadow-sm"
                                 :class="group.allow_keywords 
-                                    ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' 
-                                    : 'bg-gray-50 text-gray-400 hover:bg-gray-100'"
+                                    ? 'bg-amber-50 text-brand-primary border-amber-100 hover:bg-brand-primary hover:text-white' 
+                                    : 'bg-slate-50 text-slate-400 hover:bg-slate-200'"
                                 :title="group.allow_keywords ? '關閉關鍵字查詢' : '開啟關鍵字查詢'"
                             >
-                                <i class="ri-search-2-line text-lg"></i>
+                                <i class="ri-search-2-line text-xl"></i>
                             </button>
                             
-                            <div class="w-[1px] h-4 bg-gray-200 mx-1"></div>
+                            <div class="w-[1px] h-4 bg-slate-100 mx-1"></div>
 
                             <!-- Remove Button -->
                             <button 
@@ -157,58 +157,64 @@
       </div>
       
       <!-- Improved Help Section -->
-      <div class="mt-12 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="px-6 py-8 sm:px-10">
-          <div class="flex items-center gap-3 mb-6">
-            <div class="p-2 bg-indigo-50 rounded-lg">
-              <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <div class="mt-20 glass-card p-0 animate-fade-in-up delay-100">
+        <div class="px-8 py-10 sm:px-12">
+          <div class="flex items-center gap-4 mb-10">
+            <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center border border-amber-100">
+              <svg class="h-6 w-6 text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 class="text-lg font-bold text-gray-900">如何加入並啟用群組通知</h3>
-          </div>
-          
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="flex flex-col gap-3">
-              <div class="flex items-center gap-2">
-                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold">1</span>
-                <span class="font-semibold text-gray-800">搜尋機器人</span>
-              </div>
-              <p class="text-sm text-gray-500 leading-relaxed">
-                在 LINE 中搜尋您的 Bot 並將其加入好友。
-              </p>
-            </div>
-            
-            <div class="flex flex-col gap-3">
-              <div class="flex items-center gap-2">
-                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold">2</span>
-                <span class="font-semibold text-gray-800">邀請至群組</span>
-              </div>
-              <p class="text-sm text-gray-500 leading-relaxed">
-                將 Bot 邀請進入目標群組，並在群組隨意發送一則訊息。
-              </p>
-            </div>
-            
-            <div class="flex flex-col gap-3">
-              <div class="flex items-center gap-2">
-                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold">3</span>
-                <span class="font-semibold text-gray-800">完成啟用</span>
-              </div>
-              <p class="text-sm text-gray-500 leading-relaxed">
-                重新整理此頁面，群組將自動出現在清單中。
-              </p>
+            <div>
+              <h3 class="text-xl font-black text-slate-800 tracking-tighter">連線啟用指南</h3>
+              <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Connect & Broadcast Workflow</p>
             </div>
           </div>
           
-          <div class="mt-8 pt-6 border-t border-gray-50 flex items-center justify-between">
-            <p class="text-xs text-gray-400">
-              提示：若要停止特定群組通知，只需在清單中點擊「停用」即可。
-            </p>
-            <div class="flex items-center gap-2 text-indigo-600">
-              <span class="text-xs font-semibold">運作狀態正常</span>
-              <span class="flex h-2 w-2 relative">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div class="flex flex-col gap-4 relative">
+              <div class="flex items-center gap-3">
+                <span class="flex items-center justify-center w-8 h-8 rounded-xl bg-brand-primary text-white text-xs font-black shadow-lg shadow-amber-200">01</span>
+                <span class="font-black text-slate-700 tracking-tight uppercase text-sm">搜尋關鍵字</span>
+              </div>
+              <p class="text-xs text-slate-400 font-bold leading-relaxed border-l-2 border-slate-50 pl-4 py-1">
+                在 LINE App 中搜尋您的 Bot 名稱，並將其正式加入好友。
+              </p>
+            </div>
+            
+            <div class="flex flex-col gap-4">
+              <div class="flex items-center gap-3">
+                <span class="flex items-center justify-center w-8 h-8 rounded-xl bg-brand-primary text-white text-xs font-black shadow-lg shadow-amber-200">02</span>
+                <span class="font-black text-slate-700 tracking-tight uppercase text-sm">串接至群組</span>
+              </div>
+              <p class="text-xs text-slate-400 font-bold leading-relaxed border-l-2 border-slate-50 pl-4 py-1">
+                將 Bot 邀請進入目標群組，並在群組隨意發送一則訊息觸發 Hook。
+              </p>
+            </div>
+            
+            <div class="flex flex-col gap-4">
+              <div class="flex items-center gap-3">
+                <span class="flex items-center justify-center w-8 h-8 rounded-xl bg-brand-primary text-white text-xs font-black shadow-lg shadow-amber-200">03</span>
+                <span class="font-black text-slate-700 tracking-tight uppercase text-sm">數據熱重載</span>
+              </div>
+              <p class="text-xs text-slate-400 font-bold leading-relaxed border-l-2 border-slate-50 pl-4 py-1">
+                點擊上方「重新整理」按鈕，群組將即刻同步至管理介面中。
+              </p>
+            </div>
+          </div>
+          
+          <div class="mt-12 pt-8 border-t border-slate-50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            <div class="flex flex-col">
+              <p class="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-1">系統穩定性建議</p>
+              <p class="text-xs font-bold text-slate-400">
+                若群組未出現，請檢查 Webhook 網址是否已正確配置於 LINE Developers 平台。
+              </p>
+            </div>
+            <div class="flex items-center gap-3 px-5 py-3 bg-amber-50 rounded-2xl border border-amber-100 self-end sm:self-auto">
+              <span class="text-[10px] font-black text-brand-primary uppercase tracking-widest whitespace-nowrap">Node 運作狀態正常</span>
+              <span class="flex h-2.5 w-2.5 relative">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
               </span>
             </div>
           </div>
@@ -320,3 +326,48 @@ onMounted(() => {
     fetchGroups()
 })
 </script>
+
+<style scoped>
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 2.25rem;
+  box-shadow: 0 10px 40px -10px rgba(31, 38, 135, 0.05);
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out forwards;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+</style>

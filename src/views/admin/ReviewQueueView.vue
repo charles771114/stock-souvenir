@@ -1,80 +1,113 @@
 <template>
-  <div class="p-6">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">待審核紀念品</h1>
-      <button @click="fetchQueue" class="text-indigo-600 hover:text-indigo-900">重新整理</button>
-    </div>
-
-    <!-- Stats -->
-    <div class="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4" v-if="queue.length > 0">
-      <div class="flex">
-        <div class="flex-shrink-0">
-          <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-            fill="currentColor">
-            <path fill-rule="evenodd"
-              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-              clip-rule="evenodd" />
-          </svg>
-        </div>
-        <div class="ml-3">
-          <p class="text-sm text-yellow-700">
-            共有 {{ queue.length }} 筆紀念品尚未分類。請手動指定分類。
+  <div class="min-h-screen bg-surface-50">
+    <Navbar />
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+        <div>
+          <h1
+            class="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-br from-slate-900 via-brand-primary to-slate-700 tracking-tighter mb-2">
+            待審核紀念品
+          </h1>
+          <p class="text-slate-400 font-bold text-sm uppercase tracking-wider">
+            手動核對自動匹配結果，並完善分類精確度
           </p>
         </div>
+        <button @click="fetchQueue"
+          class="h-12 px-8 bg-white border border-slate-100 text-brand-primary rounded-2xl shadow-sm hover:bg-amber-50 transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2 leading-none">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          重新同步數據
+        </button>
       </div>
-    </div>
 
-    <div v-if="loading" class="text-center py-12">
-      <p class="text-gray-500">載入中...</p>
-    </div>
+      <!-- Stats -->
+      <div class="mb-10 p-6 rounded-[2rem] bg-amber-50 border border-amber-100 animate-fade-in-up" v-if="queue.length > 0">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-brand-primary">
+            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm font-black text-brand-primary uppercase tracking-widest leading-none mb-1">
+              需要人工審核通知
+            </p>
+            <p class="text-xs font-bold text-slate-500">
+              目前偵測到 {{ queue.length }} 筆紀念品尚未分類。請手動指定正確分類以維持系統大數據精確。
+            </p>
+          </div>
+        </div>
+      </div>
 
-    <div v-else-if="queue.length === 0" class="text-center py-12 bg-white rounded-lg shadow">
-      <svg class="mx-auto h-12 w-12 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <h3 class="mt-2 text-sm font-medium text-gray-900">皆已分類完成</h3>
-      <p class="mt-1 text-sm text-gray-500">目前沒有需要審核的項目。</p>
-    </div>
+      <div v-if="loading" class="py-24 flex flex-col items-center gap-6">
+        <div class="w-16 h-16 border-8 border-amber-100 border-t-brand-primary rounded-full animate-spin"></div>
+        <p class="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em] animate-pulse">正在精準同步大數據...</p>
+      </div>
 
-    <!-- Queue Table -->
-    <div v-else class="bg-white shadow rounded-lg overflow-hidden">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">代號 / 公司</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">紀念品名稱</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">指定分類</th>
-            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="item in queue" :key="item.id">
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              <div class="font-medium">{{ item.code }}</div>
-              <div class="text-gray-500">{{ item.name }}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.souvenir_item }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              <select @change="e => assignCategory(item, (e.target as HTMLSelectElement).value)"
-                class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                <option value="">選擇分類...</option>
-                <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-                  {{ cat.name }}
-                </option>
-              </select>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <!-- Future: Add quick keyword add -->
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      <div v-else-if="queue.length === 0" class="glass-card py-24 text-center border-emerald-100/30">
+        <div
+          class="w-24 h-24 bg-emerald-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 border border-emerald-100 text-emerald-500 shadow-xl shadow-emerald-50">
+          <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 class="text-3xl font-black text-slate-800 mb-2 tracking-tighter">審核任務清掃完畢</h3>
+        <p class="text-[10px] font-bold text-emerald-500 uppercase tracking-[0.2em]">目前沒有需要審核的項目，您非常勤奮！</p>
+      </div>
+
+      <!-- Queue Table -->
+      <div v-else class="glass-card overflow-hidden p-0 animate-fade-in-up delay-100">
+        <div class="overflow-x-auto">
+          <table class="w-full border-separate border-spacing-0">
+            <thead>
+              <tr class="bg-amber-50 border-b border-amber-100">
+                <th
+                  class="px-8 py-5 text-left text-[10px] font-black text-brand-primary/60 uppercase tracking-widest leading-none">
+                  代號 / 來源公司
+                </th>
+                <th
+                  class="px-8 py-5 text-left text-[10px] font-black text-brand-primary/60 uppercase tracking-widest leading-none">
+                  紀念品來源名稱
+                </th>
+                <th
+                  class="px-8 py-5 text-left text-[10px] font-black text-brand-primary/60 uppercase tracking-widest leading-none">
+                  手動對齊分類標籤
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+              <tr v-for="item in queue" :key="item.id" class="group hover:bg-amber-50 transition-all">
+                <td class="px-8 py-6">
+                  <div class="font-black text-slate-800 tracking-tighter text-lg">{{ item.code }}</div>
+                  <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ item.name }}</div>
+                </td>
+                <td class="px-8 py-6">
+                  <div class="status-badge status-badge-neutral !px-4 !py-2 !rounded-xl !text-sm border-none">
+                    {{ item.souvenir_item }}
+                  </div>
+                </td>
+                <td class="px-8 py-6 max-w-xs">
+                  <select @change="e => assignCategory(item, (e.target as HTMLSelectElement).value)"
+                    class="block w-full h-12 pl-4 pr-10 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase tracking-widest text-slate-600 focus:border-amber-200 focus:ring-4 focus:ring-amber-50 outline-none transition-all appearance-none cursor-pointer">
+                    <option value="">選擇正確分類...</option>
+                    <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+                      {{ cat.name }}
+                    </option>
+                  </select>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import Navbar from '@/components/Navbar.vue'
 import { useCategories } from '@/composables/useCategories'
 import { useToast } from '@/composables/useToast'
 import { supabase } from '@/lib/supabase'
@@ -127,3 +160,48 @@ const assignCategory = async (item: any, categoryIdStr: string) => {
   }
 }
 </script>
+
+<style scoped>
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 2.25rem;
+  box-shadow: 0 10px 40px -10px rgba(31, 38, 135, 0.05);
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out forwards;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+</style>

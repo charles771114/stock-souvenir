@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50 flex flex-col">
+  <div class="min-h-screen bg-surface-50 flex flex-col">
     <Navbar />
 
     <!-- Pull to Refresh Indicator -->
@@ -10,279 +10,282 @@
         opacity: pullDistance > 20 ? 1 : 0
       }">
       <div
-        class="bg-white/90 backdrop-blur-md rounded-full p-3 shadow-2xl border border-indigo-100 flex items-center justify-center">
-        <div class="w-8 h-8 rounded-full border-4 border-indigo-100 border-t-indigo-600 transition-none"
+        class="bg-white/90 backdrop-blur-xl rounded-full p-4 shadow-2xl border border-white/60 flex items-center justify-center">
+        <div class="w-10 h-10 rounded-full border-4 border-slate-100 border-t-brand-primary transition-none"
           :class="{ 'animate-spin': isRefreshing }"
           :style="{ transform: isRefreshing ? 'none' : `rotate(${pullDistance * 3}deg)` }"></div>
         <div v-if="!isRefreshing"
-          class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-indigo-400 uppercase tracking-widest whitespace-nowrap">
+          class="absolute -bottom-8 left-1/2 -translate-x-1/2 text-base font-black text-slate-500 uppercase tracking-widest whitespace-nowrap">
           下拉重整</div>
         <div v-else
-          class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-indigo-600 uppercase tracking-widest whitespace-nowrap animate-pulse">
+          class="absolute -bottom-8 left-1/2 -translate-x-1/2 text-base font-black text-brand-primary uppercase tracking-widest whitespace-nowrap animate-pulse">
           更新中...</div>
       </div>
     </div>
 
     <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full animate-fade-in-up">
-      <!-- Header -->
-      <div class="mb-12">
-        <h1
-          class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 tracking-tighter">
-          年度購股計畫
-        </h1>
-        <p class="text-slate-400 mt-1 font-bold text-xs sm:text-sm uppercase tracking-wider">
-          追蹤喜愛的紀念品，規劃您的購股入袋清單
-        </p>
-      </div>
-
-      <!-- Filter Bar -->
-      <div class="glass-card p-6 mb-8 flex flex-wrap items-center justify-between gap-6 animate-fade-in-up delay-100">
-        <div class="flex items-center gap-4">
-          <span class="text-xs font-black text-slate-400 uppercase tracking-widest">選擇年度</span>
-          <div class="flex bg-slate-100 p-1 rounded-xl">
-            <button v-for="y in ['2026', '2025', '2024']" :key="y" @click="selectedYear = y"
-              class="px-5 py-2 rounded-lg text-xs font-black transition-all"
-              :class="selectedYear === y ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'">
-              {{ y }}
-            </button>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-6">
-          <p
-            class="text-[10px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100">
-            {{ selectedYear }} 年度計畫總計: {{ filteredCollections.length }}
+      <!-- Header & Year Switcher -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 stagger-item-1">
+        <div>
+          <h1 class="text-4xl font-black text-slate-800 tracking-tight">
+            我的購股計畫
+          </h1>
+          <p class="text-base font-black text-slate-400 uppercase tracking-widest mt-2">
+            優先追蹤待買清單，紀錄您的入袋成就
           </p>
-          <button @click="showStats = !showStats"
-            class="text-[10px] font-black text-slate-400 hover:text-indigo-500 transition-colors uppercase tracking-widest flex items-center gap-1.5 px-2 py-1 hover:bg-slate-100 rounded-lg">
-            {{ showStats ? '收起統計' : '展開統計' }}
-            <i class="fas" :class="showStats ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+        </div>
+        
+        <div class="flex items-center gap-2 p-1.5 bg-slate-100/50 rounded-2xl border border-slate-200/30 backdrop-blur-sm self-start md:self-auto shadow-sm">
+          <button v-for="y in ['2026', '2025']" :key="y" @click="selectedYear = y"
+            class="px-6 py-2.5 rounded-xl text-base font-black transition-all uppercase tracking-widest shadow-sm shadow-transparent"
+            :class="selectedYear === y ? 'bg-white text-brand-primary shadow-slate-200/50' : 'text-slate-500 hover:text-brand-primary hover:bg-white/50'">
+            {{ y }}
           </button>
         </div>
       </div>
 
-
-
-      <!-- Loading State -->
-      <div v-if="loading" class="py-20 flex flex-col items-center gap-4">
-        <div class="w-12 h-12 border-4 border-indigo-100 border-t-indigo-500 rounded-full animate-spin"></div>
-        <p class="text-xs font-black text-indigo-300 uppercase tracking-widest">Loading Collections...</p>
-      </div>
-
       <!-- Content Sections -->
-      <div v-if="!loading && hasFilteredItems">
-        <!-- 1. 領取計畫 (collected) -->
-        <div v-if="aggregatedPlanned.length > 0" class="mb-10">
-          <div class="flex items-center gap-3 mb-4 px-2">
-            <div class="w-1 h-6 bg-indigo-500 rounded-full"></div>
-            <h2 class="text-lg font-black text-slate-700 tracking-tight">待買進標的</h2>
-            <span
-              class="text-[10px] font-black bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-lg border border-indigo-100">
-              {{ aggregatedPlanned.length }} 筆
-            </span>
+      <div v-if="!loading && hasFilteredItems" class="space-y-16">
+        <!-- 1. 領取計畫 (The Priority Section) -->
+        <div v-if="aggregatedPlanned.length > 0" class="stagger-item-3">
+          <div class="flex items-center justify-between mb-8 px-2">
+            <div class="flex items-center gap-4">
+              <div class="w-2 h-8 bg-brand-primary rounded-full shadow-glow"></div>
+              <h2 class="text-2xl font-black text-slate-800 tracking-tight">優先待買清單</h2>
+            </div>
+            <div v-if="aggregatedPlanned.filter(i => getUrgencyLevel(i.gift?.last_buy_date) === 'urgent').length > 0" 
+                 class="flex items-center gap-3 px-5 py-2 bg-rose-50 border border-rose-100 rounded-2xl animate-pulse">
+               <i class="ri-error-warning-fill text-rose-500 text-xl"></i>
+               <span class="text-base font-black text-rose-600 uppercase tracking-widest">
+                 {{ aggregatedPlanned.filter(i => getUrgencyLevel(i.gift?.last_buy_date) === 'urgent').length }} 筆急需處理
+               </span>
+            </div>
           </div>
 
-          <div v-if="isCurrentYear" class="space-y-4">
-          <div v-if="isCurrentYear" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div v-if="isCurrentYear" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
              <div v-for="item in aggregatedPlanned" :key="item.id" 
-                  class="glass-card p-4 border border-slate-100/50 hover:border-indigo-100 hover:shadow-lg transition-all group relative overflow-hidden">
+                  class="glass-card p-6 border border-slate-100 hover:border-brand-primary/30 hover:translate-y-[-4px] hover:shadow-2xl transition-all group relative">
                 
-                <!-- Urgency Indicator Strip -->
-                <div v-if="item.gift?.last_buy_date" 
-                     class="absolute left-0 top-0 bottom-0 w-1 transition-colors"
-                     :class="confirmedIds.has(item.souvenir_id) ? 'bg-emerald-500' : getUrgencyColor(getUrgencyLevel(item.gift?.last_buy_date)).split(' ')[2].replace('border-', 'bg-')">
-                </div>
-
-                <div class="flex flex-col gap-3 pl-2">
-                    <!-- Top Row: Code & Name -->
-                    <div class="flex justify-between items-start gap-2">
-                        <div class="flex items-center gap-2 min-w-0">
-                            <span class="px-2 py-1 rounded-lg bg-slate-100 text-slate-600 font-mono text-xs font-black tracking-tight shrink-0 border border-slate-200 group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:border-indigo-100 transition-colors">
-                                {{ item.gift?.code }}
-                            </span>
-                            <h3 class="text-base font-black text-slate-800 truncate tracking-tight group-hover:text-indigo-600 transition-colors">
-                                {{ item.gift?.name }}
-                            </h3>
+                <div class="flex gap-6">
+                    <!-- Left: Code & Urgency -->
+                    <div class="flex flex-col items-center gap-3">
+                        <div class="px-4 py-3 rounded-2xl bg-white text-slate-700 font-mono text-base font-black tracking-tighter border border-slate-100 transition-all group-hover:bg-brand-primary/5 group-hover:text-brand-primary group-hover:border-brand-primary/20 shadow-sm">
+                            {{ item.gift?.code }}
                         </div>
-                        
-                        <!-- Actions -->
-                         <div class="flex items-center gap-2">
-                             <button @click="addToInventory(item.souvenir_id)" 
+                        <div v-if="item.gift?.last_buy_date" 
+                             class="flex flex-col items-center justify-center w-20 h-20 rounded-2xl border-2 shadow-sm transition-transform group-hover:scale-105"
+                             :class="getUrgencyColor(getUrgencyLevel(item.gift?.last_buy_date))">
+                             <span class="text-xs font-black uppercase tracking-widest opacity-60">剩餘</span>
+                             <span class="text-2xl font-black leading-none my-1">{{ Math.max(0, getDaysRemaining(item.gift?.last_buy_date)) }}</span>
+                             <span class="text-sm font-black">天</span>
+                        </div>
+                    </div>
+
+                    <!-- Right: Info & Actions -->
+                    <div class="flex-grow flex flex-col justify-between min-w-0">
+                        <div class="flex justify-between items-start gap-4">
+                            <div class="min-w-0">
+                                <h3 class="text-xl font-black text-slate-800 truncate tracking-tight group-hover:text-brand-primary transition-colors">
+                                    {{ item.gift?.name }}
+                                </h3>
+                                <p class="text-base font-bold text-slate-500 mt-1.5 truncate">
+                                    {{ item.gift?.souvenir_item || '尚未公布名稱' }}
+                                </p>
+                            </div>
+                            <button @click="addToInventory(item.souvenir_id)" 
                                     :disabled="addingToInventory === item.souvenir_id || confirmedIds.has(item.souvenir_id)"
+                                    class="flex items-center gap-2 px-6 py-4 rounded-2xl transition-all cursor-pointer group disabled:cursor-not-allowed shrink-0 min-h-[56px] border shadow-sm"
                                     :class="[
-                                      'flex items-center gap-1.5 px-3 py-1.5 rounded-lg shadow-md transition-all cursor-pointer group disabled:cursor-not-allowed',
                                       confirmedIds.has(item.souvenir_id) 
-                                        ? 'bg-emerald-500 text-white shadow-emerald-200 animate-bounce-subtle' 
-                                        : 'bg-indigo-600 text-white shadow-indigo-200 hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-300'
+                                        ? 'bg-emerald-50/50 text-emerald-400 border-emerald-100 shadow-none animate-none' 
+                                        : 'bg-orange-50/80 text-brand-primary border-orange-100 hover:bg-white hover:shadow-md hover:scale-[1.02] active:scale-95'
                                     ]">
-                                    <svg v-if="addingToInventory === item.souvenir_id" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    <svg v-else-if="confirmedIds.has(item.souvenir_id)" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    <svg v-else class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    <span class="text-xs font-black tracking-wide">
-                                      {{ confirmedIds.has(item.souvenir_id) ? '已入袋' : '確認入袋' }}
+                                    <i v-if="addingToInventory === item.souvenir_id" class="ri-loader-4-line animate-spin text-xl"></i>
+                                    <i v-else-if="confirmedIds.has(item.souvenir_id)" class="ri-checkbox-circle-fill text-xl"></i>
+                                    <i v-else class="ri-add-line text-2xl"></i>
+                                    <span class="text-base font-black tracking-widest uppercase">
+                                      {{ confirmedIds.has(item.souvenir_id) ? '已入庫存' : '加入庫存' }}
                                     </span>
-                             </button>
-                        </div>
-                    </div>
-
-                    <!-- Middle: Souvenir Item -->
-                    <div class="text-sm font-bold text-slate-500 pl-1">
-                        {{ item.gift?.souvenir_item || '尚未公布' }}
-                    </div>
-
-                    <!-- Bottom: Last Buy Date & Portfolio -->
-                    <div class="flex items-center justify-between mt-1 pl-1">
-                         <div class="flex items-center gap-2">
-                            <span v-if="item.gift?.last_buy_date" 
-                                  :class="['text-[10px] font-black px-2 py-0.5 rounded-md border uppercase tracking-wider flex items-center gap-1.5 shadow-sm', getUrgencyColor(getUrgencyLevel(item.gift?.last_buy_date))]">
-                                <i class="far fa-clock"></i>
-                               最後買進: {{ item.gift?.last_buy_date }}
-                                <span class="bg-white/40 px-1.5 rounded ml-1 font-mono">
-                                    {{ getDaysRemaining(item.gift?.last_buy_date) }}天後
-                                </span>
-                            </span>
-                            <span v-if="getUrgencyLevel(item.gift?.last_buy_date) === 'urgent'" 
-                                  class="animate-pulse text-[9px] font-black text-rose-600 uppercase tracking-widest">
-                                  Immediate Action
-                            </span>
-                         </div>
-                         
-                         <div class="flex items-center gap-2">
-                            <span v-if="isCombinedView" class="text-[9px] font-bold text-slate-300 uppercase tracking-widest px-1.5 py-0.5 border border-slate-100 rounded">
-                                {{ getPortfolioName(item.portfolio_id) }}
-                            </span>
-                            <button @click="handleRemove(item.id)" :disabled="removing === item.id"
-                                    class="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all group disabled:opacity-50"
-                                    title="移除計畫">
-                                    <i v-if="removing === item.id" class="fas fa-spinner fa-spin text-xs"></i>
-                                    <i v-else class="fas fa-trash-alt text-[10px]"></i>
                             </button>
-                         </div>
+                        </div>
+
+                        <div class="flex items-center justify-between mt-6">
+                            <div class="flex items-center gap-4">
+                                <span v-if="isCombinedView" class="text-sm font-black text-slate-400 uppercase tracking-widest px-3 py-1 bg-slate-50 rounded-lg border border-slate-100">
+                                    {{ getPortfolioName(item.portfolio_id) }}
+                                </span>
+                                <span v-if="item.gift?.last_buy_date" class="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                                  <i class="ri-calendar-event-line"></i>最後買進: {{ item.gift?.last_buy_date }}
+                                </span>
+                            </div>
+                            <button @click="handleRemove(item.id)" :disabled="removing === item.id"
+                                    class="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all group disabled:opacity-50">
+                                    <i v-if="removing === item.id" class="ri-loader-4-line animate-spin text-xl"></i>
+                                    <i v-else class="ri-delete-bin-line text-xl"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
              </div>
           </div>
+          <div v-else class="text-center py-12 glass-card bg-slate-50/30 border-dashed border-slate-200">
+              <p class="text-slate-400 text-sm font-bold uppercase tracking-widest">非當年度資料僅供查詢</p>
           </div>
-          
-          <!-- Card View for Other Years (Keep as is or simplify? Let's keep simple aggregated view for now as requested) -->
-           <div v-else class="text-center py-8 text-slate-400 text-xs font-bold">
-               非當年度資料僅供查詢
-           </div>
+        </div>
+        
+        <!-- 2. 等待公布 (Owned Stock but Souvenir TBD) -->
+        <div v-if="aggregatedWaiting.length > 0" class="stagger-item-3 animate-fade-in">
+          <div class="flex items-center gap-4 mb-8 px-2">
+            <div class="w-2 h-8 bg-slate-300 rounded-full"></div>
+            <h2 class="text-2xl font-black text-slate-500 tracking-tight">持股待公布項目</h2>
+          </div>
+
+          <div v-if="isCurrentYear" class="space-y-4">
+              <div v-for="group in aggregatedWaiting" :key="group.souvenir_item" 
+                   class="glass-card overflow-hidden bg-slate-50/50 border-dashed border-slate-200 group/waiting">
+                  
+                  <div class="px-8 py-6 flex items-center justify-between cursor-pointer"
+                       @click="toggleDetails('wait_' + group.souvenir_item)">
+                      <div class="flex items-center gap-6">
+                           <div class="w-14 h-14 rounded-2xl bg-white text-slate-300 flex items-center justify-center border border-slate-100 shadow-sm">
+                              <i class="ri-eye-line text-2xl"></i>
+                           </div>
+                           <div>
+                               <h3 class="text-lg font-black text-slate-400">{{ group.souvenir_item }}</h3>
+                               <p class="text-base font-bold text-slate-500 mt-1 uppercase tracking-widest">
+                                  {{ group.companies.length }} 家持股正等待今年度資訊
+                                </p>
+                           </div>
+                      </div>
+                      <div class="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 transition-transform bg-white border border-slate-100 shadow-sm"
+                           :class="{ 'rotate-180': isExpanded('wait_' + group.souvenir_item) }">
+                          <i class="ri-arrow-down-s-line text-2xl"></i>
+                      </div>
+                  </div>
+
+                  <div v-if="isExpanded('wait_' + group.souvenir_item)" class="bg-white/40 border-t border-slate-100 px-6 py-4 space-y-3">
+                      <div v-for="item in group.companies" :key="item.id" 
+                           class="flex items-center justify-between gap-4 p-4 bg-white/60 rounded-2xl border border-slate-100 shadow-sm">
+                          <div class="flex items-center gap-5 min-w-0">
+                              <span class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 font-mono text-base font-black tracking-tighter border border-slate-100">
+                                  {{ item.gift?.code }}
+                              </span>
+                              <div class="min-w-0">
+                                  <span class="text-base font-black text-slate-700 truncate">{{ item.gift?.name }}</span>
+                                  <div class="flex items-center gap-2 mt-1">
+                                      <div class="w-2 h-2 rounded-full bg-slate-300 animate-pulse"></div>
+                                      <span class="text-sm font-black text-slate-400 uppercase tracking-widest">等待公布</span>
+                                  </div>
+                              </div>
+                          </div>
+                          <button @click="handleRemove(item.id)" :disabled="removing === item.id"
+                                  class="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-rose-500 transition-colors bg-white rounded-xl shadow-sm border border-slate-100">
+                                  <i v-if="removing === item.id" class="ri-loader-4-line animate-spin text-xl"></i>
+                                  <i v-else class="ri-delete-bin-line text-xl"></i>
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+          <div v-else class="text-center py-12 glass-card bg-slate-50/30 border-dashed border-slate-200">
+             <p class="text-slate-400 text-sm font-bold uppercase tracking-widest">非當年度資料僅供查詢</p>
+          </div>
         </div>
 
-        <!-- 2. 在庫項目 (holding) -->
-        <div v-if="aggregatedInventory.length > 0" class="mb-10">
-          <div class="flex items-center gap-3 mb-4 px-2">
-            <div class="w-1 h-6 bg-emerald-500 rounded-full"></div>
-            <h2 class="text-lg font-black text-slate-700 tracking-tight">已入袋持股</h2>
-            <span
-              class="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-lg border border-emerald-100">
-              {{ groupedCollections.inventory.length }}
-            </span>
+        <!-- 3. 已達成清單 (Achieved Achievement) -->
+        <div v-if="aggregatedInventory.length > 0" class="stagger-item-4 pb-20">
+          <div class="flex items-center gap-4 mb-8 px-2">
+            <div class="w-2 h-8 bg-emerald-500 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.4)]"></div>
+            <h2 class="text-2xl font-black text-slate-800 tracking-tight">已達成入袋清單</h2>
           </div>
 
           <div v-if="isCurrentYear" class="space-y-4">
                <div v-for="group in aggregatedInventory" :key="group.souvenir_item" 
-                    class="glass-card overflow-hidden transition-all hover:shadow-lg border border-emerald-100/50 hover:border-emerald-200">
+                    class="glass-card overflow-hidden transition-all hover:bg-white/80 border border-slate-100/50 group">
                   
-                  <!-- Group Header -->
-                  <div class="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-emerald-50/20 transition-colors"
+                  <div class="px-8 py-6 flex items-center justify-between cursor-pointer"
                        @click="toggleDetails('inv_' + group.souvenir_item)">
-                      <div class="flex items-center gap-4">
-                           <div>
-                               <h3 class="text-sm font-black text-slate-800">{{ group.souvenir_item }}</h3>
-                               <p class="text-[10px] font-bold text-slate-400 mt-0.5">
-                                  共 {{ group.companies.length }} 家公司
-                               </p>
+                      <div class="flex items-center gap-6">
+                           <div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner border border-emerald-100/50">
+                              <i class="ri-medal-fill text-2xl"></i>
                            </div>
-                           <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-100">
-                              <span class="text-xs font-black">{{ group.companies.length }}</span>
+                           <div>
+                               <h3 class="text-lg font-black text-slate-800">{{ group.souvenir_item }}</h3>
+                               <p class="text-base font-black text-slate-600 mt-1 uppercase tracking-widest">
+                                  達成率: {{ group.companies.length }} 家已解鎖
+                                </p>
                            </div>
                       </div>
-                      <div class="w-8 h-8 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-300 transition-transform duration-300"
-                           :class="{ 'rotate-180': isExpanded('inv_' + group.souvenir_item) }">
-                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                          </svg>
+                      <div class="flex items-center gap-5">
+                          <div class="px-4 py-2 rounded-xl bg-emerald-100/50 text-emerald-700 text-base font-black uppercase tracking-widest border border-emerald-100">
+                             x{{ group.companies.length }}
+                          </div>
+                          <div class="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-400 transition-transform duration-500 shadow-sm"
+                               :class="{ 'rotate-180': isExpanded('inv_' + group.souvenir_item) }">
+                              <i class="ri-arrow-down-s-line text-2xl"></i>
+                          </div>
                       </div>
                   </div>
 
-                  <!-- Expanded Details -->
-                  <div v-if="isExpanded('inv_' + group.souvenir_item)" class="bg-emerald-50/10 border-t border-emerald-100/50 px-6 py-4 space-y-3 animate-fade-in">
+                  <!-- Achievement Details -->
+                  <div v-if="isExpanded('inv_' + group.souvenir_item)" class="bg-slate-50/30 border-t border-slate-100/50 px-6 py-5 space-y-3 animate-fade-in">
                       <div v-for="item in group.companies" :key="item.id" 
-                           class="bg-white border border-emerald-100/50 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm hover:border-emerald-200 transition-all">
+                           class="bg-white/80 backdrop-blur-md border border-slate-100 rounded-[2rem] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-5 shadow-sm hover:border-emerald-200 hover:shadow-md transition-all group/item">
                           
-                          <!-- Info -->
-                          <div class="flex items-center gap-3 min-w-0">
-                              <span class="px-2 py-1 rounded-md bg-emerald-50 text-emerald-600 font-mono text-[10px] font-black tracking-tight shrink-0 border border-emerald-100">
+                          <div class="flex items-center gap-5 min-w-0">
+                              <span class="px-3 py-2 rounded-xl bg-slate-50 text-slate-600 font-mono text-base font-black tracking-tighter border border-slate-100 group-hover/item:text-emerald-600 group-hover/item:border-emerald-100 transition-all shadow-sm">
                                   {{ item.gift?.code }}
                               </span>
                               <div class="min-w-0">
-                                  <div class="flex items-center gap-2">
-                                      <span class="text-xs font-black text-slate-800 truncate">{{ item.gift?.name }}</span>
-                                      <span v-if="isCombinedView" class="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200">
+                                  <div class="flex items-center gap-3">
+                                      <span class="text-lg font-black text-slate-800 truncate">{{ item.gift?.name }}</span>
+                                      <span v-if="isCombinedView" class="text-xs px-2.5 py-1 rounded-lg bg-slate-100 text-slate-500 font-black uppercase tracking-widest border border-slate-200">
                                           {{ getPortfolioName(item.portfolio_id) }}
                                       </span>
                                   </div>
-                                  <div class="flex items-center gap-2 mt-1">
-                                      <div class="flex items-center gap-1">
-                                          <svg class="w-3 h-3 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                          </svg>
-                                          <span class="text-[10px] font-black text-emerald-500">已持有</span>
-                                      </div>
+                                  <div class="flex items-center gap-2 mt-1.5">
+                                      <i class="ri-checkbox-circle-fill text-emerald-500 text-base"></i>
+                                      <span class="text-sm font-black text-emerald-600 uppercase tracking-widest">領取成就已達成</span>
                                   </div>
                               </div>
                           </div>
-
-                          <!-- Actions -->
                           <div class="flex items-center justify-end gap-3 shrink-0">
                                <button @click="handleUndoInventory(item.souvenir_id)"
-                                      class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-500 rounded-lg border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 transition-all cursor-pointer group"
-                                      title="撤銷入庫，移回計畫">
-                                      <i class="fas fa-undo text-[10px]"></i>
-                                      <span class="text-[10px] font-black tracking-wide">移回計畫</span>
+                                      class="flex items-center gap-3 px-6 py-3 bg-slate-100 text-slate-600 rounded-2xl border border-slate-200 hover:bg-brand-primary hover:text-white hover:border-brand-primary transition-all cursor-pointer group/undo shadow-sm">
+                                      <i class="ri-history-line text-lg"></i>
+                                      <span class="text-base font-black tracking-widest uppercase">移回計畫</span>
                                </button>
                                <button @click="handleRemove(item.id)" :disabled="removing === item.id"
-                                      class="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all border border-transparent hover:border-rose-100">
-                                      <i v-if="removing === item.id" class="fas fa-spinner fa-spin text-xs"></i>
-                                      <i v-else class="fas fa-trash-alt text-xs"></i>
+                                      class="w-12 h-12 flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl transition-all border border-transparent hover:border-rose-100 shadow-sm bg-white">
+                                      <i v-if="removing === item.id" class="ri-loader-4-line animate-spin text-xl"></i>
+                                      <i v-else class="ri-delete-bin-line text-xl"></i>
                                </button>
                           </div>
                       </div>
                   </div>
                </div>
-            </div>
-             <div v-else class="text-center py-8 text-slate-400 text-xs font-bold">
-               非當年度資料僅供查詢
-           </div>
+          </div>
+          <div v-else class="text-center py-12 glass-card bg-slate-50/30 border-dashed border-slate-200">
+             <p class="text-slate-400 text-sm font-bold uppercase tracking-widest">非當年度資料僅供查詢</p>
+          </div>
         </div>
       </div>
 
       <!-- Empty State -->
       <div v-else-if="!loading"
-        class="py-32 flex flex-col items-center justify-center text-center px-8 bg-white rounded-[3rem] border border-dashed border-slate-200">
+        class="py-32 flex flex-col items-center justify-center text-center px-8 bg-white/50 backdrop-blur-xl rounded-[3rem] border border-dashed border-slate-200 stagger-item-1">
         <div
-          class="w-24 h-24 bg-slate-50 rounded-[2.5rem] flex items-center justify-center mb-8 border border-slate-100 shadow-inner">
-          <svg class="w-10 h-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-          </svg>
+          class="w-32 h-32 bg-slate-50 rounded-[3rem] flex items-center justify-center mb-10 border border-slate-100 shadow-inner">
+          <i class="ri-heart-3-line text-6xl text-slate-200"></i>
         </div>
-        <h4 class="text-xl font-bold text-slate-900 mb-2">
-          {{ selectedYear }} 年度尚無待買標的
+        <h4 class="text-2xl font-black text-slate-900 mb-4">
+          {{ selectedYear }} 年度尚無領取計畫
         </h4>
-        <p class="text-sm text-slate-400 max-w-xs mb-8">您可以前往「紀念品目錄」挑選感興趣的紀念品加入清單。</p>
+        <p class="text-base font-bold text-slate-400 max-w-sm mb-12">您可以前往目錄挑選感興趣的紀念品加入計畫。</p>
         <router-link to="/gifts"
-          class="px-8 py-3 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all">
-          前往領取目錄
+          class="px-10 py-5 bg-brand-primary text-white rounded-3xl font-black text-base uppercase tracking-widest shadow-2xl shadow-brand-primary/20 hover:bg-slate-900 transition-all flex items-center gap-3">
+          <i class="ri-compass-3-line text-2xl"></i>
+          前往紀念品目錄
         </router-link>
       </div>
     </main>
@@ -311,15 +314,14 @@ const { user } = useAuth()
 const { pullDistance, isRefreshing } = usePullRefresh(async () => {
   await fetchMyCollections(selectedYear.value)
 })
-const { addToCollection, moveToPlanned } = useCollection()
+const { addToCollection, removeFromInventoryCompletely, removeFromCollection } = useCollection()
 
 const {
   myCollections,
   loading,
   fetchMyCollections,
   fetchUserInventoryIds,
-  fetchPreviousYearSouvenirs,
-  removeFromCollection
+  fetchPreviousYearSouvenirs
 } = useGifts()
 
 const selectedYear = ref(new Date().getFullYear().toString())
@@ -375,9 +377,9 @@ const getUrgencyLevel = (dateString) => {
 // 🆕 取得緊急程度的顏色樣式
 const getUrgencyColor = (level) => {
   switch (level) {
-    case 'urgent': return 'text-red-500 bg-red-50 border-red-200'
-    case 'warning': return 'text-amber-500 bg-amber-50 border-amber-200'
-    case 'normal': return 'text-emerald-500 bg-emerald-50 border-emerald-200'
+    case 'urgent': return 'text-status-error bg-status-error/5 border-status-error/20'
+    case 'warning': return 'text-status-warning bg-status-warning/5 border-status-warning/20'
+    case 'normal': return 'text-status-success bg-status-success/5 border-status-success/20'
     default: return 'text-slate-400 bg-slate-50 border-slate-200'
   }
 }
@@ -445,14 +447,24 @@ const groupedCollections = computed(() => {
     const isCollected = item.status === 'collected'
     const isInInventory = inventoryIds.value.has(item.gift?.code)
     const isRecentlyConfirmed = confirmedIds.value.has(item.souvenir_id)
-    
     return isCollected && (!isInInventory || isRecentlyConfirmed)
   })
-  // 在庫項目：狀態為 holding，或是雖然是 collected 但在庫存中已存在
-  const inventory = filteredCollections.value.filter(item =>
-    item.status === 'holding' || (item.status === 'collected' && inventoryIds.value.has(item.gift?.code))
-  )
-  return { planned, inventory }
+
+  // 已持有項目 (包括待公布與已達成)
+  const ownedItems = filteredCollections.value.filter(item => {
+    const isInInventory = inventoryIds.value.has(item.gift?.code)
+    const isRecentlyConfirmed = confirmedIds.value.has(item.souvenir_id)
+    // 剛確認入袋的項目還在計畫清單暫留，不計入持有清單
+    return (item.status === 'holding' || isInInventory) && !isRecentlyConfirmed
+  })
+
+  // 待公布：已持有股票但紀念品名稱為預填/尚未公布
+  const waiting = ownedItems.filter(item => isPlaceholder(item.gift?.souvenir_item))
+  
+  // 已達成：已持有股票且紀念品名稱已公布
+  const achieved = ownedItems.filter(item => !isPlaceholder(item.gift?.souvenir_item))
+
+  return { planned, waiting, achieved }
 })
 
 // 🆕 聚合邏輯: 待買標的 (改為扁平列表)
@@ -485,10 +497,29 @@ const aggregatedPlanned = computed(() => {
   return items
 })
 
+// 🆕 聚合邏輯: 待公布
+const aggregatedWaiting = computed(() => {
+  const map = new Map()
+  groupedCollections.value.waiting.forEach(item => {
+    const name = item.gift?.souvenir_item || '尚未公布'
+    if (!map.has(name)) {
+      map.set(name, {
+        souvenir_item: name,
+        companies: [],
+        count: 0
+      })
+    }
+    const group = map.get(name)
+    group.companies.push(item)
+    group.count++
+  })
+  return Array.from(map.values()).sort((a, b) => b.count - a.count)
+})
+
 // 🆕 聚合邏輯: 已入袋
 const aggregatedInventory = computed(() => {
   const map = new Map()
-  groupedCollections.value.inventory.forEach(item => {
+  groupedCollections.value.achieved.forEach(item => {
     const name = item.gift?.souvenir_item || '未知物品'
     if (!map.has(name)) {
       map.set(name, {
@@ -572,7 +603,7 @@ const addToInventory = async (souvenirId) => {
       // 🆕 體感優化：不立即移除，先顯示成功狀態
       confirmedIds.value.add(souvenirId)
       
-      showToast('已確認入袋！', 'success', 5000, {
+      showToast('已成功加入庫存！', 'success', 5000, {
         label: '撤銷',
         onClick: () => handleUndoInventory(souvenirId, true)
       })
@@ -595,16 +626,16 @@ const addToInventory = async (souvenirId) => {
   }
 }
 
-// 🆕 撤銷入庫
+// 🆕 移除庫存
 const handleUndoInventory = async (souvenirId, skipConfirm = false) => {
-  if (skipConfirm || await confirm('確定要撤銷入庫，將此項目移回「待買進標的」嗎？', '撤銷入庫')) {
+  if (skipConfirm || await confirm('確定要從庫存移除嗎？此操作將同時取消追蹤。', '移除庫存')) {
     try {
-      // 如果是從 Toast 點擊的，先移除確認狀態讓它能立刻顯示在計畫中
+      // 如果是從 Toast 點擊的，先移除確認狀態
       confirmedIds.value.delete(souvenirId)
       
-      const { success, error } = await moveToPlanned(souvenirId)
+      const { success, error } = await removeFromInventoryCompletely(souvenirId)
       if (success) {
-        showToast('已移回計畫', 'success')
+        showToast('已從庫存移除', 'success')
         await loadData()
       } else {
         showToast(error || '操作失敗', 'error')
@@ -659,15 +690,24 @@ watch(currentPortfolioId, () => {
 
 <style scoped>
 .glass-card {
-  @apply bg-white/70 backdrop-blur-xl border border-white/40 rounded-2xl sm:rounded-[1.5rem] shadow-sm;
+  @apply bg-white/60 backdrop-blur-2xl border border-white/50 shadow-xl transition-all duration-500;
+  border-radius: 2.25rem;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out forwards;
 }
 
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(30px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -675,30 +715,6 @@ watch(currentPortfolioId, () => {
 }
 
 .animate-fade-in-up {
-  animation: fade-in-up 0.5s ease-out forwards;
-}
-
-.expand-enter-active,
-.expand-leave-active {
-  transition: all 0.3s ease;
-  overflow: hidden;
-}
-
-.expand-enter-from,
-.expand-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-  max-height: 0;
-}
-
-.expand-enter-to,
-.expand-leave-from {
-  opacity: 1;
-  transform: translateY(0);
-  max-height: 500px;
-}
-
-.delay-100 {
-  animation-delay: 0.1s;
+  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 </style>

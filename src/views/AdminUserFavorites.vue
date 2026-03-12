@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-[#fafafa]">
+  <div class="min-h-screen bg-surface-50">
     <Navbar />
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in">
@@ -8,9 +8,9 @@
         <div>
           <div class="flex items-center gap-2 mb-4">
             <router-link to="/admin/panel"
-              class="group flex items-center gap-2 text-slate-400 hover:text-indigo-600 transition-all font-bold text-xs uppercase tracking-widest leading-none">
+              class="group flex items-center gap-2 text-slate-400 hover:text-brand-primary transition-all font-black text-[10px] uppercase tracking-[0.2em] leading-none">
               <div
-                class="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-indigo-50 group-hover:border-indigo-100 shadow-sm transition-all">
+                class="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-amber-50 group-hover:border-amber-100 shadow-sm transition-all">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7" />
                 </svg>
@@ -19,7 +19,7 @@
             </router-link>
           </div>
           <h1
-            class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 tracking-tighter mb-2">
+            class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-br from-slate-900 via-brand-primary to-slate-700 tracking-tighter mb-2">
             已入袋持股統計
           </h1>
           <p class="text-slate-400 font-bold text-xs sm:text-sm uppercase tracking-wider">
@@ -28,7 +28,7 @@
         </div>
 
         <button @click="exportCSV"
-          class="h-12 px-8 bg-white border border-slate-100 text-indigo-600 rounded-2xl shadow-sm hover:bg-indigo-50 transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2 leading-none">
+          class="h-12 px-8 bg-white border border-slate-100 text-brand-primary rounded-2xl shadow-sm hover:bg-amber-50 transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2 leading-none">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
               d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -43,9 +43,9 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div class="relative">
             <span
-              class="absolute left-5 top-1/2 -translate-y-1/2 text-[10px] font-black text-indigo-400 uppercase tracking-widest pointer-events-none">使用者:</span>
+              class="absolute left-5 top-1/2 -translate-y-1/2 text-[10px] font-black text-brand-primary uppercase tracking-widest pointer-events-none">使用者:</span>
             <select v-model="selectedUser"
-              class="w-full h-14 pl-16 pr-6 bg-white border border-slate-100 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-600 focus:border-indigo-200 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none appearance-none cursor-pointer">
+              class="w-full h-14 pl-16 pr-6 bg-white border border-slate-100 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-600 focus:border-amber-200 focus:ring-4 focus:ring-amber-50 transition-all outline-none appearance-none cursor-pointer">
               <option value="">所有使用者</option>
               <option v-for="user in users" :key="user.id" :value="user.email">
                 {{ user.full_name || user.email }}
@@ -55,9 +55,9 @@
 
           <div class="relative">
             <span
-              class="absolute left-5 top-1/2 -translate-y-1/2 text-[10px] font-black text-indigo-400 uppercase tracking-widest pointer-events-none">年度:</span>
+              class="absolute left-5 top-1/2 -translate-y-1/2 text-[10px] font-black text-brand-primary uppercase tracking-widest pointer-events-none">年度:</span>
             <select v-model="selectedYear"
-              class="w-full h-14 pl-16 pr-6 bg-white border border-slate-100 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-600 focus:border-indigo-200 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none appearance-none cursor-pointer">
+              class="w-full h-14 pl-16 pr-6 bg-white border border-slate-100 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-600 focus:border-amber-200 focus:ring-4 focus:ring-amber-50 transition-all outline-none appearance-none cursor-pointer">
               <option value="">所有年度</option>
               <option value="2026">2026</option>
               <option value="2025">2025</option>
@@ -69,8 +69,8 @@
         <!-- Content Area -->
         <div class="">
           <div v-if="loading" class="py-24 flex flex-col items-center gap-6 glass-card">
-            <div class="w-16 h-16 border-8 border-indigo-50 border-t-indigo-600 rounded-full animate-spin"></div>
-            <p class="text-sm font-black text-indigo-300 uppercase tracking-[0.2em] animate-pulse">正在篩選數據...</p>
+            <div class="w-16 h-16 border-8 border-amber-50 border-t-brand-primary rounded-full animate-spin"></div>
+            <p class="text-sm font-black text-amber-400 uppercase tracking-[0.2em] animate-pulse">正在篩選數據...</p>
           </div>
 
           <div v-else-if="aggregatedData.length === 0" class="py-24 text-center glass-card">
@@ -87,7 +87,7 @@
           <div v-else class="space-y-6">
             <!-- User Card Loop -->
              <div v-for="userGroup in aggregatedData" :key="userGroup.user_id" 
-                  class="glass-card overflow-hidden transition-all hover:shadow-lg hover:border-indigo-100">
+                  class="glass-card overflow-hidden transition-all hover:shadow-lg hover:border-amber-200">
                 <!-- User Header -->
                 <div class="p-6 sm:p-8 bg-slate-50/50 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div class="flex items-center gap-4">
@@ -95,7 +95,7 @@
                             <div class="text-base font-black text-slate-800 leading-tight mb-1">
                                 {{ userGroup.full_name || '匿名用戶' }}
                             </div>
-                            <div class="text-[11px] font-bold text-indigo-400 uppercase tracking-wider font-mono">
+                            <div class="text-[11px] font-bold text-brand-primary/60 uppercase tracking-wider font-mono">
                                 {{ userGroup.email }}
                             </div>
                         </div>
@@ -108,7 +108,7 @@
                          <div class="w-px h-8 bg-slate-100"></div>
                          <div class="text-right">
                              <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">總數量</span>
-                             <span class="text-lg font-black text-indigo-600">{{ userGroup.totalCount }}</span>
+                             <span class="text-lg font-black text-brand-primary">{{ userGroup.totalCount }}</span>
                          </div>
                     </div>
                 </div>
@@ -117,22 +117,22 @@
                 <div class="divide-y divide-slate-50">
                     <div v-for="item in userGroup.items" :key="item.souvenir_item" class="group">
                         <!-- Item Summary Row -->
-                         <div class="px-6 sm:px-8 py-4 flex items-center justify-between hover:bg-indigo-50/30 transition-colors cursor-pointer"
+                         <div class="px-6 sm:px-8 py-4 flex items-center justify-between hover:bg-amber-50 transition-colors cursor-pointer"
                               @click="toggleDetails(userGroup.user_id, item.souvenir_item)">
                             <div class="flex items-center gap-4">
-                                <div class="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-300 group-hover:text-indigo-400 group-hover:border-indigo-200 transition-all">
+                                <div class="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-300 group-hover:text-brand-primary group-hover:border-amber-200 transition-all">
                                     <svg class="w-4 h-4 transition-transform duration-300" 
                                          :class="{ 'rotate-180': isExpanded(userGroup.user_id, item.souvenir_item) }"
                                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                     </svg>
                                 </div>
-                                <span class="text-sm font-black text-slate-700 group-hover:text-indigo-700 transition-colors">
+                                <span class="text-sm font-black text-slate-700 group-hover:text-brand-primary transition-colors">
                                     {{ item.souvenir_item }}
                                 </span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-black group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                                <span class="px-3 py-1 bg-slate-50 text-slate-600 rounded-lg text-xs font-black group-hover:bg-amber-100 group-hover:text-brand-primary transition-colors">
                                     {{ item.count }} 個
                                 </span>
                             </div>
@@ -142,7 +142,7 @@
                          <div v-if="isExpanded(userGroup.user_id, item.souvenir_item)" class="bg-slate-50 border-y border-slate-100/50 px-6 sm:px-8 py-4 animate-fade-in shadow-inner">
                              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                  <div v-for="comp in item.companies" :key="comp.id" 
-                                      class="bg-white border border-slate-100 rounded-xl p-3 flex items-center gap-3 shadow-sm hover:border-indigo-200 transition-all">
+                                      class="bg-white border border-slate-100 rounded-xl p-3 flex items-center gap-3 shadow-sm hover:border-amber-200 transition-all">
                                      <span class="px-2 py-1 rounded-md bg-slate-100 text-slate-600 font-mono text-[10px] font-black tracking-tight shrink-0 border border-slate-200">
                                          {{ comp.stock_code }}
                                      </span>
@@ -471,7 +471,8 @@ onMounted(async () => {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(99, 102, 241, 0.1);
+  background-color: var(--brand-primary);
+  opacity: 0.1;
   border-radius: 20px;
 }
 

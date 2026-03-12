@@ -1,62 +1,173 @@
 <template>
-  <div class="flex flex-col sm:flex-row gap-2">
-    <!-- Plan/Favorite Button -->
-    <button
-      @click.stop="$emit('toggle')"
-      class="relative inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 border shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 min-w-[80px]"
-      :class="[
-        isActive 
-          ? 'bg-pink-50 text-pink-600 border-pink-200 hover:bg-pink-100 focus:ring-pink-200' 
-          : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 focus:ring-indigo-200'
-      ]"
-      :title="isActive ? '從清單移除' : '加入清單'"
+  <div class="inline-flex flex-col sm:flex-row gap-3 relative min-h-[48px]">
+    <transition-group
+      name="btn-fade"
+      tag="div"
+      class="flex flex-col sm:flex-row gap-3 w-full"
     >
-      <svg 
-        v-if="isActive"
-        class="w-3.5 h-3.5 flex-shrink-0" 
-        fill="currentColor" 
-        viewBox="0 0 24 24"
+      <!-- Plan/Tracking Button -->
+      <button
+        v-if="!isInInventory && !isConfirming"
+        key="track-btn"
+        @click.stop="$emit('toggle')"
+        :disabled="disabled || loading || inventoryLoading"
+        class="favorite-btn track-btn flex-1"
+        :class="[
+          isActive ? 'active' : 'inactive',
+          (disabled || loading || inventoryLoading) ? 'opacity-50 cursor-not-allowed' : ''
+        ]"
+        :title="isActive ? '取消追蹤' : '加入追蹤清單'"
       >
-        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-      </svg>
-      <svg 
-        v-else
-        class="w-3.5 h-3.5 flex-shrink-0" 
-        fill="none" 
-        stroke="currentColor" 
-        stroke-width="2.5" 
-        viewBox="0 0 24 24"
-      >
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-      </svg>
-      <span>{{ isActive ? '已收藏' : '加入清單' }}</span>
-    </button>
+        <i v-if="loading" class="ri-loader-4-line animate-spin text-xl"></i>
+        <i v-else :class="[isActive ? 'ri-eye-fill' : 'ri-eye-line', 'text-xl']"></i>
+        <span>{{ isActive ? '追蹤中' : '追蹤' }}</span>
+      </button>
 
-    <!-- Direct Add to Inventory Button -->
-    <button
-      @click.stop="$emit('toggle-inventory')"
-      class="relative inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 border shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 min-w-[80px] bg-white text-emerald-600 border-emerald-200 hover:border-emerald-400 hover:bg-emerald-50 focus:ring-emerald-200"
-      title="直接加入目前持有庫存"
-    >
-      <svg 
-        class="w-3.5 h-3.5 flex-shrink-0" 
-        fill="none" 
-        stroke="currentColor" 
-        stroke-width="2.5" 
-        viewBox="0 0 24 24"
+      <!-- Direct Add to Inventory Button -->
+      <button
+        key="inventory-btn"
+        @click.stop="handleInventoryClick"
+        :disabled="disabled || loading || inventoryLoading"
+        class="favorite-btn inventory-btn group/inv flex-1"
+        :class="[
+          isConfirming ? 'confirming animate-pulse' : isInInventory ? 'in-inventory' : 'out-inventory',
+          (disabled || loading || inventoryLoading) ? 'opacity-50 cursor-not-allowed' : ''
+        ]"
+        :title="isConfirming ? '點擊確認移除' : isInInventory ? '從庫存移除' : '直接加入目前持有庫存'"
       >
-        <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-      </svg>
-      <span>加入庫存</span>
-    </button>
+        <i v-if="inventoryLoading" class="ri-loader-4-line animate-spin text-xl"></i>
+        <template v-else>
+          <!-- Confirmation Icon -->
+          <i v-if="isConfirming" class="ri-error-warning-fill text-xl"></i>
+          
+          <!-- In Inventory State Icons -->
+          <i v-else-if="isInInventory" class="ri-checkbox-circle-fill text-xl group-hover/inv:hidden"></i>
+          <i v-else-if="isInInventory" class="ri-delete-bin-line text-xl hidden group-hover/inv:inline-block"></i>
+          
+          <!-- Default State Icon -->
+          <i v-else class="ri-add-line text-xl"></i>
+        </template>
+        
+        <span>
+          <template v-if="isConfirming">確定移除？</template>
+          <template v-else-if="isInInventory">
+            <span class="group-hover/inv:hidden">在庫存中</span>
+            <span class="hidden group-hover/inv:inline">移除庫存</span>
+          </template>
+          <template v-else>加入庫存</template>
+        </span>
+      </button>
+    </transition-group>
   </div>
 </template>
 
 <script setup>
-defineProps({
+import { ref, onBeforeUnmount } from 'vue'
+
+const props = defineProps({
   gift: Object,
-  isActive: Boolean
+  isActive: Boolean,
+  disabled: Boolean,
+  loading: Boolean,
+  inventoryLoading: Boolean,
+  isInInventory: Boolean
 })
 
-defineEmits(['toggle', 'toggle-inventory'])
+const emit = defineEmits(['toggle', 'toggle-inventory'])
+
+const isConfirming = ref(false)
+let confirmTimer = null
+
+const handleInventoryClick = () => {
+  if (props.disabled || props.loading || props.inventoryLoading) return
+
+  if (props.isInInventory) {
+    if (isConfirming.value) {
+      // Second click: Execute removal
+      emit('toggle-inventory')
+      clearConfirm()
+    } else {
+      // First click: Enter confirming state
+      isConfirming.value = true
+      confirmTimer = setTimeout(() => {
+        isConfirming.value = false
+      }, 3000) // Reset after 3 seconds
+    }
+  } else {
+    // Normal add to inventory
+    emit('toggle-inventory')
+  }
+}
+
+const clearConfirm = () => {
+  isConfirming.value = false
+  if (confirmTimer) {
+    clearTimeout(confirmTimer)
+    confirmTimer = null
+  }
+}
+
+onBeforeUnmount(() => {
+  clearConfirm()
+})
 </script>
+
+<style scoped>
+.favorite-btn {
+  @apply relative inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl text-base font-black uppercase tracking-widest transition-all duration-500 border border-transparent shadow-sm min-h-[56px];
+}
+
+/* Track Button States */
+.track-btn.active {
+  background-color: var(--brand-secondary);
+  @apply text-white shadow-lg shadow-indigo-100 hover:scale-[1.02] active:scale-95;
+}
+
+.track-btn.inactive {
+  @apply bg-slate-50 text-slate-400 border-slate-100 hover:border-amber-200 hover:text-brand-primary hover:bg-white hover:shadow-md;
+}
+
+/* Inventory Button States */
+.inventory-btn.confirming {
+  background-color: var(--status-error);
+  @apply text-white shadow-lg shadow-rose-200 animate-pulse;
+}
+
+.inventory-btn.in-inventory {
+  background-color: var(--status-success);
+  @apply text-white shadow-lg shadow-emerald-200 hover:scale-[1.02] active:scale-95;
+}
+
+.inventory-btn.in-inventory:hover {
+  background-color: var(--status-error);
+  @apply shadow-rose-300;
+}
+
+.inventory-btn.out-inventory {
+  @apply bg-amber-50 text-brand-primary border-amber-100 hover:border-amber-300 hover:bg-amber-100 hover:shadow-md;
+}
+
+.btn-fade-enter-active,
+.btn-fade-leave-active {
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-fade-enter-from,
+.btn-fade-leave-to {
+  opacity: 0;
+  transform: scale(0.9) translateY(10px);
+}
+
+.btn-fade-move {
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.animate-pulse {
+  animation: pulse 1s infinite cubic-bezier(0.16, 1, 0.3, 1);
+}
+</style>

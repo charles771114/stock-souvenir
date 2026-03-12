@@ -361,9 +361,10 @@ export function useGifts() {
       const finalData = deduplicateCollections(combinedData)
       myCollections.value = finalData
 
-      if (requestYear && requestYear !== currentYear && finalData.length > 0) {
+      if (requestYear && requestYear !== currentYear) {
         const cacheKey = `collections:${userId}:${currentPortId}:${requestYear}`
         const metadata = { year: requestYear }
+        // 修正：即使 finalData 是空的也應該寫入快取，代表該年度無收藏
         cache.set(cacheKey, finalData, metadata)
       }
 
@@ -408,110 +409,7 @@ export function useGifts() {
     }
   }
 
-  const addToCollection = async (giftId, status = 'collected', portfolioId = null) => {
-    loading.value = true
-    error.value = null
-
-    try {
-      if (!user.value) throw new Error('未登入')
-
-      const targetId = portfolioId || currentPortfolioId.value
-      if (isCombinedView.value || !targetId) {
-        throw new Error('請先選擇一個特定的帳戶，不能在歸戶模式下新增')
-      }
-
-      // 1. 如果是持股狀態，確保 user_inventory 也有點紀錄
-      if (status === 'holding') {
-        const { data: souvenir } = await supabase
-          .from('souvenirs')
-          .select('code, name')
-          .eq('id', giftId)
-          .single()
-
-        if (souvenir) {
-          await supabase.from('user_inventory').upsert({
-            user_id: user.value.id,
-            portfolio_id: targetId,
-            stock_code: souvenir.code,
-            stock_name: souvenir.name,
-            updated_at: new Date().toISOString()
-          }, { onConflict: 'portfolio_id,stock_code' })
-        }
-      }
-
-      // 2. 更新 collections
-      const { data, error: insertError } = await supabase
-        .from('user_collections')
-        .upsert({
-          user_id: user.value.id,
-          portfolio_id: targetId,
-          souvenir_id: giftId,
-          status
-        }, { onConflict: 'portfolio_id,souvenir_id' })
-        .select()
-        .single()
-
-      if (insertError) throw insertError
-
-      // 清除相關快取
-      const userId = user.value.id
-      const currentPortId = currentPortfolioId.value
-      const cacheKeyPattern = `collections:${userId}:${currentPortId}:`
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i)
-        if (key && key.includes(cacheKeyPattern)) {
-          localStorage.removeItem(key)
-        }
-      }
-
-      await fetchMyCollections()
-      await fetchAllUserCollections()
-
-      return { data, error: null }
-    } catch (e) {
-      console.error('加入收藏失敗:', e)
-      error.value = e.message
-      return { data: null, error: e }
-    } finally {
-      loading.value = false
-    }
-  }
-
-  const removeFromCollection = async (collectionId) => {
-    loading.value = true
-    error.value = null
-
-    try {
-      const { error: deleteError } = await supabase
-        .from('user_collections')
-        .delete()
-        .eq('id', collectionId)
-
-      if (deleteError) throw deleteError
-
-      if (user.value) {
-        const userId = user.value.id
-        const currentPortId = isCombinedView.value ? 'combined' : currentPortfolioId.value
-        const cacheKeyPattern = `collections:${userId}:${currentPortId}:`
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i)
-          if (key && key.includes(cacheKeyPattern)) {
-            localStorage.removeItem(key)
-          }
-        }
-      }
-      await fetchMyCollections()
-      await fetchAllUserCollections()
-
-      return { error: null }
-    } catch (e) {
-      console.error('移除收藏失敗:', e)
-      error.value = e.message
-      return { error: e }
-    } finally {
-      loading.value = false
-    }
-  }
+  // Mutation logic moved to useCollection.js
 
   const updateCollectionNote = async (collectionId, note) => {
     loading.value = true
@@ -672,11 +570,7 @@ export function useGifts() {
 
   const enrichWithPreviousYear = (currentGifts, previousYearMap) => {
     return currentGifts.map(gift => {
-      const needsReference = !gift.souvenir_item ||
-        gift.souvenir_item === '尚未公布' ||
-        gift.souvenir_item.trim() === ''
-
-      if (needsReference && previousYearMap.has(gift.code)) {
+      if (previousYearMap.has(gift.code)) {
         return {
           ...gift,
           previousYearSouvenir: previousYearMap.get(gift.code)
@@ -715,11 +609,6 @@ export function useGifts() {
     fetchAllUserCollections,
     fetchUserInventoryIds,
     fetchPreviousYearSouvenirs,
-    enrichWithPreviousYear,
-    addToCollection,
-    removeFromCollection,
-    updateCollectionNote,
-    updateCollectionDate,
     reassignCollectionPortfolio,
     isInCollection,
     getCollection,

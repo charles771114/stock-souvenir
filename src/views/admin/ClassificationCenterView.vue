@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen bg-[#fafafa] flex flex-col overflow-hidden">
+  <div class="h-screen bg-surface-50 flex flex-col overflow-hidden">
     <!-- Navbar -->
     <Navbar class="flex-none z-20 shadow-sm" />
 
@@ -13,7 +13,7 @@
       ]">
         <div class="flex-1 flex flex-col min-h-0 bg-white lg:bg-transparent p-4 sm:p-6 lg:pl-0">
           <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xs font-black text-indigo-900/40 uppercase tracking-[0.2em] flex items-center gap-2">
+            <h2 class="text-xs font-black text-amber-400 uppercase tracking-[0.2em] flex items-center gap-2">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                   d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -21,7 +21,7 @@
               分類規則
             </h2>
             <button @click="openCategoryModal()"
-              class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200 hover:scale-110 transition-all">
+              class="w-8 h-8 rounded-xl bg-brand-primary text-white flex items-center justify-center shadow-lg shadow-amber-200 hover:scale-110 transition-all">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
               </svg>
@@ -31,21 +31,21 @@
           <!-- Category List -->
           <div class="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
             <div v-for="cat in categories" :key="cat.id"
-              class="glass-card-mini p-4 hover:border-indigo-200 transition-all group relative cursor-pointer active:scale-95"
+              class="glass-card-mini p-4 hover:border-amber-200 transition-all group relative cursor-pointer active:scale-95"
               @click="openCategoryModal(cat)">
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center space-x-2">
                   <div :class="`w-2.5 h-2.5 rounded-full ${getColorClass(cat.color)} shadow-sm`"></div>
                   <span class="font-black text-slate-700 text-sm tracking-tight">{{ cat.name }}</span>
                 </div>
-                <div
-                  class="text-[10px] font-black text-slate-300 uppercase tracking-widest group-hover:text-indigo-400">
-                  編輯</div>
+                <div class="text-[10px] font-black text-slate-300 uppercase tracking-widest group-hover:text-brand-primary">
+                  編輯
+                </div>
               </div>
 
               <div class="flex flex-wrap gap-1">
                 <span v-for="k in (cat.keywords || []).slice(0, 4)" :key="k"
-                  class="text-[10px] font-bold bg-slate-50 text-slate-400 px-2 py-0.5 rounded-lg border border-slate-100">
+                  class="status-badge status-badge-neutral !px-1.5 !py-0.5 !rounded-lg border-none">
                   {{ k }}
                 </span>
                 <span v-if="cat.keywords?.length > 4" class="text-[10px] font-bold text-slate-300 px-1">+{{
@@ -57,16 +57,16 @@
       </div>
 
       <!-- Main Area: Review Queue -->
-      <div class="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10 bg-[#fafafa]">
+      <div class="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10 bg-surface-50">
         <!-- Page Header (Within Main) -->
         <div
           class="px-6 sm:px-10 py-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 animate-fade-in-up">
           <div>
             <div class="flex items-center gap-2 mb-4">
               <router-link to="/admin/panel"
-                class="group flex items-center gap-2 text-slate-400 hover:text-indigo-600 transition-all font-bold text-xs uppercase tracking-widest leading-none">
+                class="group flex items-center gap-2 text-slate-400 hover:text-brand-primary transition-all font-black text-[10px] uppercase tracking-[0.2em] leading-none">
                 <div
-                  class="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-indigo-50 group-hover:border-indigo-100 shadow-sm transition-all">
+                  class="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-amber-50 group-hover:border-amber-100 shadow-sm transition-all">
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7" />
                   </svg>
@@ -82,16 +82,16 @@
               </button>
             </div>
             <h1
-              class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 tracking-tighter mb-2">
-              分類中心
-            </h1>
+            class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-br from-slate-900 via-brand-primary to-slate-700 tracking-tighter mb-2">
+            分類中心
+          </h1>
             <p class="text-slate-400 font-bold text-xs sm:text-sm uppercase tracking-wider">
               核對並為待分類的紀念品標籤進行歸類
             </p>
           </div>
 
           <button @click="fetchQueue" :disabled="loading"
-            class="h-12 px-6 bg-white border border-slate-100 text-indigo-600 rounded-2xl shadow-sm hover:bg-indigo-50 transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2 leading-none">
+            class="h-12 px-6 bg-white border border-slate-100 text-brand-primary rounded-2xl shadow-sm hover:bg-amber-50 transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2 leading-none">
             <svg :class="['w-4 h-4 transition-transform duration-700', loading ? 'animate-spin' : '']" fill="none"
               viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
@@ -99,13 +99,22 @@
             </svg>
             同步更新佇列
           </button>
+
+          <button @click="autoClassify" :disabled="loading || autoClassifying || groupedQueue.length === 0"
+            class="h-12 px-6 bg-brand-primary text-white rounded-2xl shadow-lg shadow-amber-200 hover:bg-amber-600 transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2 leading-none disabled:opacity-50 disabled:shadow-none">
+            <svg :class="['w-4 h-4', autoClassifying ? 'animate-spin' : '']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            {{ autoClassifying ? '自動分類中...' : '智能自動分類' }}
+          </button>
         </div>
 
         <!-- Queue List Content -->
         <div class="flex-1 overflow-y-auto px-6 sm:px-10 pb-10 space-y-4 sm:space-y-6">
           <div v-if="loading && rawQueue.length === 0" class="flex flex-col items-center justify-center py-24 gap-6">
-            <div class="w-16 h-16 border-8 border-indigo-50 border-t-indigo-600 rounded-full animate-spin"></div>
-            <p class="text-sm font-black text-indigo-300 uppercase tracking-[0.2em] animate-pulse">正在掃描資料庫...</p>
+            <div class="w-16 h-16 border-8 border-slate-50 border-t-brand-primary rounded-full animate-spin"></div>
+            <p class="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em] animate-pulse">正在掃描資料庫...</p>
           </div>
 
           <div v-else-if="groupedQueue.length === 0"
@@ -121,13 +130,13 @@
           </div>
 
           <div v-else v-for="(group, idx) in groupedQueue" :key="group.name"
-            class="glass-card p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 group hover:border-indigo-200 transition-all animate-fade-in-up"
+            class="glass-card p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 group hover:border-amber-200 transition-all animate-fade-in-up"
             :style="`animation-delay: ${idx * 0.05}s`">
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-3 mb-2">
                 <h3 class="text-xl sm:text-2xl font-black text-slate-800 truncate tracking-tight">{{ group.name }}</h3>
                 <span
-                  class="px-2.5 py-1 rounded-xl bg-slate-100 text-slate-500 text-[10px] font-black tracking-widest group-hover:bg-indigo-600 group-hover:text-white transition-all whitespace-nowrap">
+                  class="status-badge status-badge-primary group-hover:bg-brand-primary group-hover:text-white whitespace-nowrap">
                   出現次數: {{ group.count }}
                 </span>
               </div>
@@ -135,7 +144,7 @@
                 <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">參考來源:</span>
                 <div class="flex flex-wrap gap-2">
                   <span v-for="example in group.examples" :key="example"
-                    class="px-2 py-0.5 rounded-lg bg-slate-50 border border-slate-100 text-[10px] font-bold text-slate-400 shadow-sm">
+                    class="status-badge status-badge-neutral !px-2 !py-0.5 !rounded-lg">
                     {{ example }}
                   </span>
                 </div>
@@ -145,7 +154,7 @@
             <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
               <div class="relative flex-1 sm:flex-none min-w-[160px]">
                 <select @change="e => assignCategory(group.name, (e.target as HTMLSelectElement).value)"
-                  class="w-full pl-5 pr-12 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-600 focus:bg-white focus:border-indigo-200 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none cursor-pointer appearance-none">
+                  class="w-full pl-5 pr-12 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-600 focus:bg-white focus:border-amber-200 focus:ring-4 focus:ring-amber-50 transition-all outline-none cursor-pointer appearance-none">
                   <option value="">快速指定分類...</option>
                   <option v-for="cat in categories" :key="cat.id" :value="cat.id">
                     {{ cat.name }}
@@ -159,7 +168,7 @@
               </div>
 
               <button @click="openRuleModal(group.name)"
-                class="w-full sm:w-auto h-12 px-5 bg-white border border-indigo-100 text-indigo-600 rounded-2xl text-[10px] font-black uppercase tracking-[0.1em] hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
+                class="w-full sm:w-auto h-12 px-5 bg-white border border-amber-100 text-brand-primary rounded-2xl text-[10px] font-black uppercase tracking-[0.1em] hover:bg-brand-primary hover:text-white transition-all shadow-sm">
                 + 新增規則
               </button>
             </div>
@@ -177,7 +186,7 @@
           <div class="p-8 sm:p-10">
             <div class="flex items-center justify-between mb-8">
               <div>
-                <span class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1 block">Rule
+                <span class="text-[10px] font-black text-brand-primary uppercase tracking-widest mb-1 block">Rule
                   規則引擎</span>
                 <h2 class="text-3xl font-black text-slate-800 tracking-tighter">{{ isEditing ? '編輯分類規則' : '新增分類' }}</h2>
               </div>
@@ -194,7 +203,7 @@
               <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">分類名稱</label>
                 <input v-model="form.name" type="text" placeholder="例如：生活用品、電器、股東大會..."
-                  class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:bg-white focus:border-indigo-200 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none" />
+                  class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-black focus:bg-white focus:border-amber-200 focus:ring-4 focus:ring-amber-50 transition-all outline-none" />
               </div>
 
               <!-- Color -->
@@ -205,7 +214,7 @@
                     :class="[
                       'h-8 rounded-xl transition-all shadow-sm',
                       bgClass,
-                      form.color === colorName ? 'ring-2 ring-offset-2 ring-indigo-500 scale-110 shadow-lg' : 'hover:scale-105 opacity-60'
+                      form.color === colorName ? 'ring-2 ring-offset-2 ring-brand-primary scale-110 shadow-lg' : 'hover:scale-105 opacity-60'
                     ]"></button>
                 </div>
               </div>
@@ -218,19 +227,19 @@
                 </label>
                 <div class="flex gap-2">
                   <input v-model="keywordInput" @keydown.enter.prevent="addKeyword" type="text" placeholder="輸入關鍵字..."
-                    class="flex-1 px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:bg-white focus:border-indigo-200 outline-none transition-all">
+                    class="flex-1 px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:bg-white focus:border-amber-200 focus:ring-4 focus:ring-amber-50 outline-none transition-all">
                   <button @click="addKeyword"
-                    class="px-5 py-3 bg-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">
+                    class="px-5 py-3 bg-brand-primary text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-amber-200 hover:bg-amber-600 transition-all">
                     新增
                   </button>
                 </div>
                 <div
                   class="flex flex-wrap gap-2 min-h-[100px] p-4 bg-slate-50/50 rounded-[1.5rem] border border-slate-100 border-dashed">
                   <div v-for="(k, idx) in form.keywords" :key="idx"
-                    class="inline-flex items-center px-4 py-2 rounded-xl bg-white text-slate-700 text-xs font-black border border-slate-100 shadow-sm transition-all animate-bounce-in">
+                    class="status-badge status-badge-primary !px-4 !py-2 !rounded-xl border-amber-100 overflow-hidden relative">
                     {{ k }}
                     <button @click="removeKeyword(idx)"
-                      class="ml-2 w-4 h-4 rounded-full bg-slate-100 text-slate-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center text-[8px] font-bold">×</button>
+                      class="ml-2 w-4 h-4 rounded-full bg-amber-100 text-brand-primary hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center text-[8px] font-bold">×</button>
                   </div>
                   <div v-if="form.keywords.length === 0"
                     class="flex-1 flex items-center justify-center text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">
@@ -252,7 +261,7 @@
                     取消
                   </button>
                   <button @click="save" :disabled="saving"
-                    class="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-200 hover:bg-indigo-700 transition-all disabled:opacity-50">
+                    class="flex-[2] py-4 bg-brand-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-amber-200 hover:bg-amber-600 transition-all disabled:opacity-50">
                     {{ saving ? '儲存中...' : (isEditing ? '更新分類規則' : '建立分類規則') }}
                   </button>
                 </div>
@@ -282,13 +291,13 @@ const { clearGiftsCache } = useGifts()
 // Color Map
 const colorMap: Record<string, string> = {
   gray: 'bg-slate-200',
-  red: 'bg-rose-400',
-  yellow: 'bg-amber-400',
-  green: 'bg-emerald-400',
-  blue: 'bg-sky-400',
-  indigo: 'bg-indigo-500',
-  purple: 'bg-violet-500',
-  pink: 'bg-pink-500',
+  red: 'bg-rose-500',
+  yellow: 'bg-brand-secondary',
+  green: 'bg-emerald-500',
+  blue: 'bg-brand-primary',
+  indigo: 'bg-indigo-600',
+  purple: 'bg-violet-600',
+  pink: 'bg-pink-600',
 }
 
 const getColorClass = (colorName: string) => {
@@ -306,6 +315,7 @@ const saving = ref(false)
 const editingId = ref<number | null>(null)
 const keywordInput = ref('')
 const isSidebarOpen = ref(false)
+const autoClassifying = ref(false)
 
 const form = ref<{
   name: string
@@ -383,6 +393,51 @@ const assignCategory = async (souvenirName: string, categoryIdStr: string) => {
   }
 }
 
+const autoClassify = async () => {
+  if (groupedQueue.value.length === 0) return
+  
+  const ok = await openConfirm(`確定要對目前佇列中 ${groupedQueue.value.length} 組項目執行自動分類嗎？`)
+  if (!ok) return
+
+  autoClassifying.value = true
+  let successCount = 0
+
+  // 1. Prepare rules and static snapshot of current queue
+  const rules = categories.value.map(cat => ({
+    id: cat.id,
+    name: cat.name,
+    keywords: cat.keywords || []
+  }))
+  
+  const groupsToProcess = [...groupedQueue.value]
+
+  // 2. Process each group from the static snapshot
+  for (const group of groupsToProcess) {
+    let matchedId = null
+    const name = group.name.toLowerCase()
+
+    for (const rule of rules) {
+      if (rule.keywords.some(k => name.includes(k.toLowerCase()))) {
+        matchedId = rule.id
+        break
+      }
+    }
+
+    if (matchedId) {
+      // Simulate selection
+      await assignCategory(group.name, matchedId.toString())
+      successCount++
+    }
+  }
+
+  autoClassifying.value = false
+  if (successCount > 0) {
+    showToast(`自動分類完成，共歸類 ${successCount} 組項目`, 'success')
+  } else {
+    showToast('未找到匹配的分類規則', 'info')
+  }
+}
+
 const openCategoryModal = (cat?: Category) => {
   if (cat) {
     editingId.value = cat.id
@@ -404,9 +459,9 @@ const openCategoryModal = (cat?: Category) => {
 
 const openRuleModal = (souvenirName: string) => {
   editingId.value = null
-  form.value = {
+    form.value = {
     name: souvenirName,
-    color: 'indigo',
+    color: 'brand-primary',
     keywords: [souvenirName]
   }
   showModal.value = true
@@ -486,7 +541,8 @@ const handleDelete = async (id: number) => {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(99, 102, 241, 0.1);
+  background-color: var(--brand-primary);
+  opacity: 0.1;
   border-radius: 20px;
 }
 

@@ -1,14 +1,14 @@
 <template>
-  <div class="min-h-screen bg-gray-50 relative overflow-hidden">
+  <div class="min-h-screen bg-surface-50 relative overflow-hidden">
     <!-- Animated Background Mesh -->
     <div class="absolute inset-0 z-0 pointer-events-none opacity-40">
-      <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-200 rounded-full blur-[100px] animate-blob">
+      <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-amber-100 rounded-full blur-[100px] animate-blob">
       </div>
       <div
-        class="absolute top-[20%] right-[-10%] w-[40%] h-[40%] bg-purple-200 rounded-full blur-[100px] animate-blob animation-delay-2000">
+        class="absolute top-[20%] right-[-10%] w-[40%] h-[40%] bg-amber-50 rounded-full blur-[100px] animate-blob animation-delay-2000">
       </div>
       <div
-        class="absolute bottom-[-10%] left-[20%] w-[40%] h-[40%] bg-pink-100 rounded-full blur-[100px] animate-blob animation-delay-4000">
+        class="absolute bottom-[-10%] left-[20%] w-[40%] h-[40%] bg-slate-200/50 rounded-full blur-[100px] animate-blob animation-delay-4000">
       </div>
     </div>
 
@@ -16,29 +16,32 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-10">
       <!-- Breadcrumb / Header -->
-      <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between">
-        <div>
-          <nav class="flex mb-2" aria-label="Breadcrumb">
+      <div class="header-content animate-fade-in">
+          <nav class="flex mb-4" aria-label="Breadcrumb">
             <ol class="flex items-center space-x-2">
               <li>
                 <router-link to="/admin/panel"
-                  class="text-gray-500 hover:text-indigo-600 transition-colors text-sm font-medium">
+                  class="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-brand-primary transition-all">
                   主控台
                 </router-link>
               </li>
               <li>
-                <span class="text-gray-300">/</span>
+                <svg class="h-4 w-4 text-slate-300" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd"
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                    clip-rule="evenodd" />
+                </svg>
               </li>
               <li>
-                <span class="text-indigo-600 font-medium text-sm">資料匯入</span>
+                <span class="text-[10px] font-black text-brand-primary uppercase tracking-widest">資料匯入</span>
               </li>
             </ol>
           </nav>
           <h1
-            class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 tracking-tight">
+            class="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-br from-slate-900 via-brand-primary to-slate-700 tracking-tighter mb-2">
             匯入歷史資料
           </h1>
-          <p class="text-lg text-gray-500 font-light mt-1">從數據中發現洞察</p>
+          <p class="text-slate-400 font-bold text-sm uppercase tracking-wider">從外部數據中同步紀念品與庫存資訊</p>
         </div>
 
         <!-- Action Button (Optional, maybe specific to import) -->
@@ -59,8 +62,7 @@
       -->
       <AdminImportPanel />
     </div>
-  </div>
-</template>
+  </template>
 
 <script setup>
 import AdminImportPanel from '@/components/AdminImportPanel.vue';
@@ -68,26 +70,24 @@ import Navbar from '@/components/Navbar.vue';
 </script>
 
 <style scoped>
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 @keyframes blob {
-  0% {
-    transform: translate(0px, 0px) scale(1);
-  }
-
-  33% {
-    transform: translate(30px, -50px) scale(1.1);
-  }
-
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
-  }
-
-  100% {
-    transform: translate(0px, 0px) scale(1);
-  }
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
 }
 
 .animate-blob {
-  animation: blob 7s infinite;
+  animation: blob 10s infinite alternate;
 }
 
 .animation-delay-2000 {

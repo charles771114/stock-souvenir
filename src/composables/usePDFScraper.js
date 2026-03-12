@@ -24,9 +24,24 @@ export function usePDFScraper() {
       pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker
 
       const arrayBuffer = await file.arrayBuffer()
+      
+      // Basic validation: Check if file is small or missing PDF header
+      if (arrayBuffer.byteLength < 10) {
+        throw new Error('檔案大小異常，請確認檔案是否正確')
+      }
+      
+      const uint8 = new Uint8Array(arrayBuffer.slice(0, 5))
+      const header = String.fromCharCode(...uint8)
+      if (header !== '%PDF-') {
+        throw new Error('檔案格式並非有效的 PDF 格式')
+      }
+
       const loadingTask = pdfjsLib.getDocument({
         data: arrayBuffer,
-        password: password
+        password: password,
+        // Add CMaps for better support of Taiwanese characters/fonts
+        cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.530/cmaps/',
+        cMapPacked: true,
       })
 
       const pdf = await loadingTask.promise

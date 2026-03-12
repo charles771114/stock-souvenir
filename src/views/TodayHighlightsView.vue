@@ -1,20 +1,20 @@
 <template>
-  <div class="min-h-screen bg-[#fafafa] pb-20">
+  <div class="min-h-screen bg-surface-50 pb-20">
     <!-- Header -->
-    <div class="bg-white sticky top-0 z-30 shadow-sm border-b border-gray-100">
+    <div class="bg-white/80 backdrop-blur-xl sticky top-0 z-30 shadow-sm border-b border-slate-100">
       <div class="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
         
         <!-- Back Button (Left) -->
-        <button @click="goBack" class="w-10 h-10 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors">
-          <i class="ri-arrow-left-s-line text-2xl"></i>
+        <button @click="goBack" class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-50 transition-colors">
+          <i class="ri-arrow-left-line text-2xl"></i>
         </button>
 
         <!-- Title (Center) -->
-        <div class="flex items-center gap-2 justify-center flex-1">
-          <div class="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm">
-            <i class="ri-calendar-event-line text-lg"></i>
+        <div class="flex items-center gap-3 justify-center flex-1">
+          <div class="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-brand-primary shadow-inner">
+            <i class="ri-calendar-event-line text-2xl font-normal"></i>
           </div>
-          <h1 class="text-lg font-black text-gray-900 tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-pink-500">
+          <h1 class="text-xl font-black text-slate-800 tracking-tight">
             今日股東會重點
           </h1>
         </div>
@@ -23,42 +23,44 @@
         <div class="w-10"></div>
       </div>
       <!-- Sub-header Meta -->
-      <div class="max-w-3xl mx-auto px-4 py-2 border-t border-gray-50 flex justify-between items-center bg-gray-50/50">
-        <p class="text-xs text-gray-500 font-medium">更新時間：{{ formattedDate }}</p>
-        <button @click="goToCatalog" class="text-xs font-bold text-indigo-600 flex items-center gap-1 hover:text-indigo-800 transition-colors">
-          查看完整庫存 <i class="ri-arrow-right-line"></i>
+      <div class="max-w-3xl mx-auto px-4 py-3 border-t border-slate-50 flex justify-between items-center bg-slate-50/50">
+        <p class="text-xs text-slate-400 font-black uppercase tracking-[0.2em]">更新時間：{{ formattedDate }}</p>
+        <button @click="goToCatalog" class="text-xs font-black text-brand-primary flex items-center gap-1.5 hover:text-brand-primary/80 transition-colors uppercase tracking-[0.2em]">
+          查看完整目錄 <i class="ri-arrow-right-s-line text-sm"></i>
         </button>
       </div>
     </div>
 
     <!-- Main Content -->
-    <main class="max-w-3xl mx-auto px-4 py-6 space-y-8">
+    <main class="max-w-3xl mx-auto px-4 py-8 space-y-10">
       
       <!-- Loading State -->
-      <div v-if="loading" class="flex flex-col items-center justify-center py-20">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-        <p class="text-gray-500 font-medium text-sm">正在為您整理最新資料...</p>
+      <div v-if="loading" class="flex flex-col items-center justify-center py-32">
+        <div class="w-12 h-12 border-4 border-slate-100 border-t-brand-primary rounded-full animate-spin mb-6"></div>
+        <p class="text-slate-400 font-black text-xs uppercase tracking-widest">正在載入最新情報...</p>
       </div>
 
       <!-- Error State -->
-      <div v-else-if="error" class="bg-red-50 border border-red-100 rounded-3xl p-6 text-center">
-        <i class="ri-error-warning-line text-4xl text-red-400 mb-2"></i>
-        <h3 class="text-red-800 font-bold mb-1">發生錯誤</h3>
-        <p class="text-sm text-red-600">{{ error }}</p>
-        <button @click="loadData" class="mt-4 px-4 py-2 bg-red-100 text-red-700 rounded-xl text-sm font-bold hover:bg-red-200 transition-colors">
-          重新整理
+      <div v-else-if="error" class="glass-card p-10 text-center border-status-error/20">
+        <div class="w-16 h-16 bg-status-error/5 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-status-error">
+          <i class="fas fa-exclamation-triangle text-2xl"></i>
+        </div>
+        <h3 class="text-slate-800 font-extrabold mb-2">發生執行錯誤</h3>
+        <p class="text-sm text-slate-500 mb-8">{{ error }}</p>
+        <button @click="loadData" class="px-8 py-3 bg-status-error text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-status-error/90 transition-colors shadow-xl shadow-status-error/20">
+          重新載入
         </button>
       </div>
 
       <!-- Empty State -->
-      <div v-else-if="!hasAnyGroups" class="bg-white border border-gray-100 shadow-sm rounded-3xl p-10 text-center">
-        <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
-          <i class="ri-check-double-line text-3xl text-gray-300"></i>
+      <div v-else-if="!hasAnyGroups" class="glass-card p-12 text-center stagger-item-1">
+        <div class="w-20 h-20 bg-slate-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 border border-slate-100">
+          <i class="fas fa-check-circle text-3xl text-status-success/40"></i>
         </div>
-        <h3 class="text-gray-900 font-bold text-lg mb-2">今日尚無特別關注事項</h3>
-        <p class="text-sm text-gray-500 mb-6">太棒了！目前沒有即將截止的股東會，也沒有最新的紀念品情報。</p>
-        <button @click="goToCatalog" class="px-6 py-3 bg-indigo-600 text-white font-bold rounded-2xl shadow-md hover:bg-indigo-700 transition-colors">
-          前往紀念品目錄探索
+        <h3 class="text-slate-800 font-extrabold text-xl mb-3 tracking-tight">今日尚無特別關注事項</h3>
+        <p class="text-sm text-slate-400 max-w-xs mx-auto mb-10 leading-relaxed font-bold">目前沒有即將截止的股東會，也沒有最新的紀念品情報。</p>
+        <button @click="goToCatalog" class="px-10 py-4 bg-brand-primary text-white font-black rounded-2xl shadow-xl shadow-amber-200 hover:bg-amber-600 transition-colors uppercase tracking-widest text-xs">
+          前往領取目錄探索
         </button>
       </div>
 
@@ -66,47 +68,51 @@
       <template v-else>
         
         <!-- ⏰ Section 1: 截止期限提醒 (Deadline Timeline) -->
-        <div v-if="Object.keys(deadlineGroups).length > 0" class="space-y-6">
+        <div v-if="Object.keys(deadlineGroups).length > 0" class="space-y-8">
           <div v-for="(group, days) in deadlineGroups" :key="days" class="animate-fade-in-up">
-            <h2 class="flex items-center gap-2 text-sm font-black uppercase tracking-widest mb-4" 
+            <h2 class="flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em] mb-4" 
                 :class="getDaysRemainingClass(parseInt(days)).replace('bg-', 'text-').split(' ')[0]">
-               <i :class="parseInt(days) === 0 ? 'ri-alarm-warning-fill' : 'ri-calendar-todo-line'" class="text-lg"></i>
+               <i :class="parseInt(days) === 0 ? 'fas fa-fire' : 'fas fa-hourglass-half'" class="text-sm"></i>
                {{ getLabelForGroup(parseInt(days)) }}
             </h2>
             
-            <div class="grid gap-3">
+            <div class="grid gap-4">
               <div v-for="item in group" :key="item.id" 
-                   class="bg-white rounded-2xl p-4 border border-gray-100 shadow-md relative overflow-hidden cursor-pointer hover:border-indigo-200 transition-colors"
+                   class="glass-card p-6 border border-slate-100 group relative overflow-hidden cursor-pointer hover:border-amber-200 transition-all shadow-sm hover:shadow-xl hover:shadow-amber-50 active:scale-[0.98]"
                    @click="viewDetails(item.id)">
                  <!-- Status Bar -->
-                 <div class="absolute left-0 top-0 bottom-0 w-1" :class="getDaysRemainingClass(parseInt(days)).split(' ')[1]"></div>
+                 <div class="absolute left-0 top-0 bottom-0 w-1.5 transition-colors" :class="getDaysRemainingClass(parseInt(days)).split(' ')[1]"></div>
                 
-                <div class="flex justify-between items-start mb-2 pl-2">
-                  <div class="flex items-center gap-2">
-                    <span class="px-2 py-0.5 bg-gray-50 text-gray-600 font-black text-[10px] rounded border border-gray-200">
+                <div class="flex justify-between items-start mb-4 pl-2">
+                  <div class="flex items-center gap-3">
+                    <span class="px-2.5 py-1 bg-slate-50 text-slate-400 font-mono text-[10px] font-black rounded-lg border border-slate-100 group-hover:bg-amber-50 group-hover:text-brand-primary group-hover:border-amber-100 transition-colors uppercase tracking-wider">
                       {{ item.code }}
                     </span>
-                    <h3 class="font-bold text-gray-900 leading-tight">
+                    <h3 class="text-lg font-black text-slate-800 leading-tight tracking-tight group-hover:text-brand-primary transition-colors">
                       {{ item.name }}
-                      <span v-if="item.category_name === '超商商品卡'" class="ml-1 text-[10px] bg-amber-100 text-amber-700 font-bold px-1.5 py-0.5 rounded-sm">商品卡</span>
+                      <span v-if="item.category_name === '超商商品卡'" class="ml-2 text-[9px] bg-brand-secondary text-white font-black px-2 py-0.5 rounded-full shadow-lg shadow-indigo-200 uppercase tracking-widest">商品卡</span>
                     </h3>
                   </div>
                 </div>
                 
-                 <div class="mt-2 pl-2 flex items-center justify-between">
-                  <div class="flex items-start gap-2">
-                    <i class="ri-gift-line text-gray-400 mt-0.5"></i>
+                 <div class="mt-4 pl-2 flex items-center justify-between">
+                  <div class="flex items-start gap-4">
+                    <i class="fas fa-gift text-slate-300 mt-1 transition-colors group-hover:text-amber-400 text-sm"></i>
                     <div>
-                      <div class="font-bold text-gray-800 text-sm">
-                        {{ item.souvenir_item || '尚未公布' }}
+                      <div class="font-black tracking-tight leading-snug"
+                        :class="isPlaceholder(item.souvenir_item) ? 'text-slate-400 text-sm italic' : 'text-slate-700 text-base'">
+                        <span v-if="isPlaceholder(item.souvenir_item)">
+                          {{ item.previousYearSouvenir ? `(去) ${item.previousYearSouvenir}` : '尚未公布' }}
+                        </span>
+                        <span v-else>{{ item.souvenir_item }}</span>
                       </div>
-                       <div class="text-[10px] text-gray-400 mt-0.5" v-if="item.previousYearSouvenir">
-                          去年: {{ item.previousYearSouvenir }}
+                        <div class="text-sm text-slate-500 mt-2 font-bold flex items-center gap-1.5" v-if="item.previousYearSouvenir">
+                          <span class="text-slate-400 font-black">去年：</span> {{ item.previousYearSouvenir }}
                        </div>
                     </div>
                   </div>
-                  <div class="text-gray-300">
-                    <i class="ri-arrow-right-s-line text-xl"></i>
+                  <div class="text-slate-200 group-hover:text-brand-primary group-hover:translate-x-1 transition-all">
+                    <i class="fas fa-chevron-right text-sm"></i>
                   </div>
                 </div>
               </div>
@@ -118,47 +124,54 @@
 
         <!-- 🌟 Section 2: 最近資料更新 (Recently Updated) -->
         <div v-if="recentlyUpdatedItems.length > 0" class="animate-fade-in-up">
-          <h2 class="flex items-center gap-2 text-sm font-black text-indigo-600 uppercase tracking-widest mb-4">
-            <i class="ri-sparkling-fill text-lg"></i> 📢 資料更新提醒
+          <h2 class="flex items-center gap-3 text-xs font-black text-brand-primary uppercase tracking-[0.2em] mb-4">
+            <i class="fas fa-bullhorn text-sm"></i> 資料更新提醒
           </h2>
-          <div class="grid gap-3 mb-8">
+          <div class="grid gap-4 mb-8">
             <div v-for="item in recentlyUpdatedItems" :key="item.id" 
-                 class="bg-indigo-50/50 rounded-2xl p-4 border border-indigo-100 shadow-sm relative overflow-hidden cursor-pointer hover:border-indigo-300 transition-colors"
+                 class="glass-card p-5 border border-amber-100 shadow-sm relative overflow-hidden cursor-pointer hover:border-amber-300 transition-all hover:shadow-md group"
                  @click="viewDetails(item.id)">
-              <div class="absolute right-0 top-0 w-24 h-24 bg-indigo-200 opacity-20 rounded-bl-full -mr-4 -mt-4 pointer-events-none"></div>
+              <div class="absolute right-0 top-0 w-24 h-24 bg-amber-50 rounded-bl-[4rem] -mr-4 -mt-4 pointer-events-none transition-transform group-hover:scale-110"></div>
               
-              <div class="flex justify-between items-start mb-2 relative z-10">
-                <div class="flex items-center gap-2">
-                  <span class="px-2 py-0.5 bg-white text-indigo-600 font-black text-[10px] rounded-md shadow-sm border border-indigo-100">
+              <div class="flex justify-between items-start mb-4 relative z-10 pl-2">
+                <div class="flex items-center gap-2.5">
+                  <span class="px-2 py-1 bg-white text-brand-primary font-mono text-[10px] font-black rounded-lg shadow-sm border border-amber-100">
                     {{ item.code }}
                   </span>
-                  <h3 class="font-bold text-gray-900 leading-tight">
+                  <h3 class="font-extrabold text-slate-800 leading-tight tracking-tight group-hover:text-brand-primary transition-colors">
                     {{ item.name }}
                   </h3>
                 </div>
                 <div class="text-right">
-                  <div class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
-                    最後買進日 {{ formatDate(item.last_buy_date) }}
+                  <div class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                    最後買進日
+                  </div>
+                  <div class="text-[10px] font-black text-slate-600 mt-1">
+                    {{ formatDate(item.last_buy_date) }}
                   </div>
                 </div>
               </div>
               
-              <div class="mt-3 bg-white/80 rounded-xl p-3 border border-indigo-100/50 relative z-10 flex">
+              <div class="mt-4 bg-white/50 backdrop-blur-sm rounded-xl p-4 border border-slate-100 relative z-10 flex group-hover:border-amber-100 transition-colors">
                 <div class="flex-1">
-                  <div class="flex items-start gap-2">
-                    <i class="ri-history-line text-indigo-500 mt-0.5"></i>
+                  <div class="flex items-start gap-3">
+                    <i class="fas fa-sync-alt text-amber-400 mt-1 transition-transform group-hover:rotate-180 duration-500"></i>
                     <div>
-                      <div class="font-bold text-gray-800 text-sm">
-                        {{ item.souvenir_item || '尚未公布' }}
+                      <div class="font-black tracking-tight"
+                        :class="isPlaceholder(item.souvenir_item) ? 'text-slate-400 text-sm italic' : 'text-slate-700 text-sm'">
+                        <span v-if="isPlaceholder(item.souvenir_item)">
+                          {{ item.previousYearSouvenir ? `(去) ${item.previousYearSouvenir}` : '尚未公布' }}
+                        </span>
+                        <span v-else>{{ item.souvenir_item }}</span>
                       </div>
-                      <div class="text-[10px] text-gray-400 mt-0.5" v-if="item.previousYearSouvenir">
-                        去年: {{ item.previousYearSouvenir }}
+                      <div class="text-sm text-slate-500 mt-2 font-bold flex items-center gap-1.5" v-if="item.previousYearSouvenir">
+                        <span class="text-slate-400 font-black">去年：</span> {{ item.previousYearSouvenir }}
                       </div>
                     </div>
                   </div>
                 </div>
-                <div class="flex items-center justify-center pl-2 text-gray-300">
-                  <i class="ri-arrow-right-s-line text-xl"></i>
+                <div class="flex items-center justify-center pl-4 text-slate-200 group-hover:text-brand-primary group-hover:translate-x-1 transition-all">
+                  <i class="fas fa-chevron-right text-xs"></i>
                 </div>
               </div>
             </div>
@@ -273,6 +286,12 @@ const hasAnyGroups = computed(() => {
 })
 
 // Helpers
+const isPlaceholder = (val) => {
+  if (!val) return true
+  const p = ['尚未公布', '尚未公告', '尚未提供', 'NA', 'N/A', '-']
+  return p.includes(val.trim())
+}
+
 const formatDate = (dateString) => {
   if (!dateString) return ''
   return dayjs(dateString).format('YYYY-MM-DD')
@@ -285,10 +304,10 @@ const getLabelForGroup = (days) => {
 }
 
 const getDaysRemainingClass = (days) => {
-  if (days === 0) return 'text-red-600 bg-red-500' // Using space-split for bar color
-  if (days < 0) return 'text-gray-400 bg-gray-300'
-  if (days === 1) return 'text-orange-600 bg-orange-400'
-  return 'text-indigo-600 bg-indigo-400'
+  if (days === 0) return 'text-status-error bg-status-error' 
+  if (days < 0) return 'text-slate-400 bg-slate-300'
+  if (days === 1) return 'text-status-warning bg-status-warning'
+  return 'text-brand-primary bg-brand-primary'
 }
 
 onMounted(async () => {

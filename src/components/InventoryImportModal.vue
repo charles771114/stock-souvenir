@@ -185,7 +185,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 
-const { addToCollection } = useCollection()
+const { addToCollection, addToInventory } = useCollection()
 const { searchStock } = useStockAPI()
 const { showToast } = useToast()
 const { portfolios, currentPortfolioId, isCombinedView } = usePortfolio()
@@ -289,9 +289,12 @@ const autoAddStock = async (stock) => {
       souvenirId = newSouvenir.id
     }
 
-    // 加入庫存
-    const { success, error } = await addToCollection(souvenirId, 'holding', targetPortfolioId.value)
+    // 加入庫存 (寫入 user_inventory)
+    const { success, error } = await addToInventory(stock.code, stock.name, targetPortfolioId.value)
     if (!success) throw new Error(error)
+
+    // 同步加入收藏 (status = 'holding')
+    await addToCollection(souvenirId, 'holding', targetPortfolioId.value)
 
     showToast(`已自動新增「${stock.name} (${stock.code})」到庫存`, 'success')
     emit('close', true)
@@ -358,10 +361,12 @@ const handleSubmit = async () => {
       }
     }
 
-    // 加入庫存（status = 'holding'）
-    const { success, error } = await addToCollection(souvenirId, 'holding', targetPortfolioId.value)
-
+    // 加入庫存 (寫入 user_inventory)
+    const { success, error } = await addToInventory(selectedItem.value.code, selectedItem.value.name, targetPortfolioId.value)
     if (!success) throw new Error(error)
+
+    // 同步加入收藏 (status = 'holding')
+    await addToCollection(souvenirId, 'holding', targetPortfolioId.value)
 
     showToast('已加入庫存', 'success')
     emit('close', true) // true means data updated, please refresh

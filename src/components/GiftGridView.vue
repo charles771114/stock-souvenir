@@ -10,6 +10,8 @@
           :gift="item" 
           :isExpired="isExpired"
           :disabled="disabled"
+          :processing-ids="processingIds"
+          :inventory-processing-ids="inventoryProcessingIds"
           @toggle-collection="$emit('toggle-collection', item)"
           @toggle-inventory="$emit('toggle-inventory', item)"
         />
@@ -33,6 +35,14 @@ defineProps({
   disabled: {
     type: Boolean,
     default: false
+  },
+  processingIds: {
+    type: Object, // Set
+    default: () => new Set()
+  },
+  inventoryProcessingIds: {
+    type: Object, // Set
+    default: () => new Set()
   }
 })
 

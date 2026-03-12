@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-[#fafafa]">
+  <div class="min-h-screen bg-surface-50">
     <Navbar />
 
     <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in">
@@ -8,9 +8,9 @@
         <div>
           <div class="flex items-center gap-2 mb-4">
             <router-link to="/admin/souvenirs"
-              class="group flex items-center gap-2 text-slate-400 hover:text-cyan-600 transition-all font-bold text-xs uppercase tracking-widest leading-none">
+              class="group flex items-center gap-2 text-slate-400 hover:text-brand-primary transition-all font-black text-[10px] uppercase tracking-[0.2em] leading-none">
               <div
-                class="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-cyan-50 group-hover:border-cyan-100 shadow-sm transition-all">
+                class="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-amber-50 group-hover:border-amber-100 shadow-sm transition-all">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7" />
                 </svg>
@@ -19,7 +19,7 @@
             </router-link>
           </div>
           <h1
-            class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500 tracking-tighter mb-2">
+            class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-br from-slate-900 via-brand-primary to-slate-700 tracking-tighter mb-2">
             紀念品批量匯入
           </h1>
           <p class="text-slate-400 font-bold text-xs sm:text-sm uppercase tracking-wider">
@@ -29,7 +29,7 @@
 
         <div v-if="mappedData.length > 0" class="flex items-center gap-3">
           <button @click="handleUpload" :disabled="uploading"
-            class="h-12 px-8 bg-cyan-600 text-white rounded-2xl shadow-xl shadow-cyan-100 hover:shadow-2xl hover:bg-cyan-700 transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2">
+            class="h-12 px-8 bg-brand-primary text-white rounded-2xl shadow-xl shadow-amber-200 hover:shadow-2xl hover:bg-amber-600 transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2">
             <svg v-if="uploading" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor"
@@ -51,16 +51,16 @@
                 class="flex items-center gap-4 group">
                 <div :class="[
                   'w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs transition-all',
-                  idx === 0 && !file ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-100' :
-                    idx === 1 && file ? 'bg-blue-600 text-white shadow-lg' :
+                  idx === 0 && !file ? 'bg-brand-primary text-white shadow-lg shadow-2xl' :
+                    idx === 1 && file ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/10' :
                       'bg-slate-50 text-slate-200'
                 ]">
                   {{ idx + 1 }}
                 </div>
                 <span :class="[
                   'text-[10px] font-black uppercase tracking-widest transition-colors',
-                  idx === 0 && !file ? 'text-cyan-600' :
-                    idx === 1 && file ? 'text-blue-600' :
+                  idx === 0 && !file ? 'text-brand-primary' :
+                    idx === 1 && file ? 'text-slate-900' :
                       'text-slate-300'
                 ]">{{ step }}</span>
               </div>
@@ -68,9 +68,9 @@
           </div>
 
           <!-- Year Selector -->
-          <div class="glass-card p-6 bg-indigo-50/20 border-indigo-100/30">
+          <div class="glass-card p-6 border-amber-100">
             <h2
-              class="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2 leading-none">
+              class="text-[10px] font-black text-brand-primary uppercase tracking-[0.2em] mb-4 flex items-center gap-2 leading-none">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                 <path stroke-linecap="round" stroke-linejoin="round"
                   d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -80,7 +80,7 @@
             <div class="space-y-3">
               <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">選擇目標年份</label>
               <select v-model="selectedYear"
-                class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
+                class="w-full px-4 py-3 rounded-xl border border-slate-100 bg-white text-sm font-black text-slate-700 focus:outline-none focus:ring-4 focus:ring-amber-50 focus:border-amber-200 transition-all">
                 <option v-for="year in availableYears" :key="year" :value="year">
                   {{ year }} 年度
                 </option>
@@ -91,9 +91,9 @@
             </div>
           </div>
 
-          <div class="glass-card p-6 bg-cyan-50/20 border-cyan-100/30">
+          <div class="glass-card p-6 border-amber-100">
             <h2
-              class="text-[10px] font-black text-cyan-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2 leading-none">
+              class="text-[10px] font-black text-brand-primary uppercase tracking-[0.2em] mb-4 flex items-center gap-2 leading-none">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                 <path stroke-linecap="round" stroke-linejoin="round"
                   d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -103,12 +103,12 @@
             <ul class="space-y-3">
               <li v-for="req in ['必須包含公司代碼 (ID)', '必須包含股東會日期', '建議包含紀念品內容名稱']" :key="req"
                 class="flex items-start gap-2 text-[10px] font-bold text-slate-500 leading-relaxed uppercase tracking-wider">
-                <span class="text-cyan-500">•</span>
+                <span class="text-brand-primary">•</span>
                 {{ req }}
               </li>
             </ul>
             <router-link to="/admin/souvenirs"
-              class="mt-6 block p-4 bg-white border border-slate-100 rounded-2xl text-[10px] font-black text-cyan-600 tracking-widest uppercase hover:bg-slate-50 transition-all text-center shadow-sm">
+              class="mt-6 block p-4 bg-white border border-slate-100 rounded-2xl text-[10px] font-black text-brand-primary tracking-widest uppercase hover:bg-slate-50 transition-all text-center shadow-sm">
               返回主清單 →
             </router-link>
           </div>
@@ -129,8 +129,8 @@
 
               <div v-if="!file" class="py-16 flex flex-col items-center">
                 <div
-                  class="w-20 h-20 rounded-[2.2rem] bg-cyan-50 text-cyan-500 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-cyan-100 transition-all duration-500 shadow-xl shadow-cyan-50">
-                  <svg class="h-10 w-10 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                  class="w-20 h-20 rounded-[2.2rem] bg-amber-50 text-brand-primary flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-amber-100 transition-all duration-500 shadow-xl shadow-amber-50">
+                  <svg class="h-10 w-10 text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"
                     stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round"
                       d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -193,7 +193,7 @@
                   </thead>
                   <tbody class="divide-y divide-slate-50">
                     <tr v-for="(item, idx) in previewRows" :key="idx"
-                      class="hover:bg-cyan-50/20 transition-all transition-duration-300"
+                      class="hover:bg-amber-50 transition-all transition-duration-300"
                       :class="{ 'opacity-50 grayscale': !item.isValid }">
                       <td class="px-8 py-5">
                         <div class="flex items-center gap-2">
@@ -352,15 +352,15 @@ const handleUpload = async () => {
 }
 
 .upload-zone:hover {
-  border-color: #06b6d4;
-  background: rgba(236, 254, 255, 0.5);
+  border-color: var(--brand-primary);
+  background: rgba(255, 255, 255, 0.8);
   transform: translateY(-4px);
-  box-shadow: 0 20px 40px -20px rgba(6, 182, 212, 0.2);
+  box-shadow: 0 20px 40px -20px rgba(15, 23, 42, 0.1);
 }
 
 .upload-zone.drag-active {
-  border-color: #06b6d4;
-  background: rgba(236, 254, 255, 0.2);
+  border-color: var(--brand-primary);
+  background: rgba(255, 255, 255, 0.2);
   scale: 1.02;
 }
 

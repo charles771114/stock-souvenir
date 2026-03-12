@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-[#fafafa]">
+  <div class="min-h-screen bg-surface-50">
     <Navbar />
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in">
@@ -8,9 +8,9 @@
         <div>
           <div class="flex items-center gap-2 mb-4">
             <router-link to="/admin/panel"
-              class="group flex items-center gap-2 text-slate-400 hover:text-indigo-600 transition-all font-bold text-xs uppercase tracking-widest leading-none">
+              class="group flex items-center gap-2 text-slate-400 hover:text-brand-primary transition-all font-black text-[10px] uppercase tracking-[0.2em] leading-none">
               <div
-                class="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-indigo-50 group-hover:border-indigo-100 shadow-sm transition-all">
+                class="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-amber-50 group-hover:border-amber-100 shadow-sm transition-all">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7" />
                 </svg>
@@ -19,7 +19,7 @@
             </router-link>
           </div>
           <h1
-            class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 tracking-tighter mb-2">
+            class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-br from-slate-900 via-brand-primary to-slate-700 tracking-tighter mb-2">
             主動庫存維護
           </h1>
           <p class="text-slate-400 font-bold text-xs sm:text-sm uppercase tracking-wider">
@@ -33,7 +33,7 @@
         <div class="flex bg-slate-100/50 p-1.5 rounded-[1.5rem] w-full sm:w-auto self-start">
           <button @click="searchMode = 'user'" :class="[
             'px-6 py-3 rounded-[1.25rem] text-xs font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2',
-            searchMode === 'user' ? 'bg-white text-indigo-600 shadow-xl shadow-indigo-500/10' : 'text-slate-400 hover:text-slate-600'
+            searchMode === 'user' ? 'bg-white text-brand-primary shadow-xl shadow-2xl' : 'text-slate-400 hover:text-slate-600'
           ]">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
@@ -43,7 +43,7 @@
           </button>
           <button @click="searchMode = 'souvenir'" :class="[
             'px-6 py-3 rounded-[1.25rem] text-xs font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2',
-            searchMode === 'souvenir' ? 'bg-white text-indigo-600 shadow-xl shadow-indigo-500/10' : 'text-slate-400 hover:text-slate-600'
+            searchMode === 'souvenir' ? 'bg-white text-brand-primary shadow-xl shadow-2xl' : 'text-slate-400 hover:text-slate-600'
           ]">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
@@ -57,14 +57,14 @@
         <div v-if="searchMode === 'user'" class="flex-1 relative animate-fade-in">
           <div class="relative group">
             <div class="absolute inset-y-0 left-5 flex items-center pointer-events-none">
-              <svg class="w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none"
+              <svg class="w-4 h-4 text-slate-400 group-focus-within:text-brand-primary transition-colors" fill="none"
                 viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                   d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
             <input v-model="userSearch" @input="handleUserSearch" type="text" placeholder="搜尋使用者電子郵件或名稱..."
-              class="w-full h-full min-h-[56px] pl-14 pr-6 py-3 bg-white border border-slate-100 rounded-[1.5rem] text-sm font-bold placeholder:text-slate-300 shadow-sm focus:border-indigo-200 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none" />
+              class="w-full h-full min-h-[56px] pl-14 pr-6 py-3 bg-white border border-slate-100 rounded-[1.5rem] text-sm font-black placeholder:text-slate-300 shadow-sm focus:border-amber-200 focus:ring-4 focus:ring-amber-50 transition-all outline-none" />
 
             <!-- User Search Results Dropdown -->
             <div v-if="userResults.length > 0"
@@ -72,7 +72,7 @@
               <div v-for="user in userResults" :key="user.id" @click="selectUser(user)"
                 class="p-4 hover:bg-slate-50 cursor-pointer transition-colors flex items-center gap-4 group/item">
                 <div
-                  class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black group-hover/item:bg-indigo-600 group-hover/item:text-white transition-all">
+                  class="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center font-black group-hover/item:bg-brand-primary group-hover/item:text-white transition-all shadow-inner">
                   {{ user.full_name?.charAt(0) || user.email?.charAt(0) }}
                 </div>
                 <div class="min-w-0">
@@ -89,14 +89,14 @@
         <div v-if="searchMode === 'souvenir'" class="flex-1 relative animate-fade-in">
           <div class="relative group">
             <div class="absolute inset-y-0 left-5 flex items-center pointer-events-none">
-              <svg class="w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none"
+              <svg class="w-4 h-4 text-slate-400 group-focus-within:text-brand-primary transition-colors" fill="none"
                 viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                   d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
             <input v-model="souvenirSearch" @input="handleSouvenirSearch" type="text" placeholder="搜尋紀念品代碼或名稱..."
-              class="w-full h-full min-h-[56px] pl-14 pr-6 py-3 bg-white border border-slate-100 rounded-[1.5rem] text-sm font-bold placeholder:text-slate-300 shadow-sm focus:border-indigo-200 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none" />
+              class="w-full h-full min-h-[56px] pl-14 pr-6 py-3 bg-white border border-slate-100 rounded-[1.5rem] text-sm font-black placeholder:text-slate-300 shadow-sm focus:border-amber-200 focus:ring-4 focus:ring-amber-50 transition-all outline-none" />
 
             <!-- Souvenir Search Results Dropdown -->
             <div v-if="souvenirResults.length > 0"
@@ -104,7 +104,7 @@
               <div v-for="s in souvenirResults" :key="s.id" @click="selectSouvenir(s)"
                 class="p-4 hover:bg-slate-50 cursor-pointer transition-colors flex items-center gap-4 group/item">
                 <div
-                  class="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center font-black text-xs group-hover/item:bg-indigo-600 group-hover/item:text-white transition-all">
+                  class="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center font-black text-xs group-hover/item:bg-brand-primary group-hover/item:text-white transition-all">
                   {{ s.code }}
                 </div>
                 <div class="min-w-0">
@@ -125,7 +125,7 @@
           class="glass-card mb-8 p-6 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-8 bg-gradient-to-br from-white via-white to-slate-50">
           <div class="flex items-center gap-6">
             <div v-if="selectedUser"
-              class="w-20 h-20 rounded-[1.75rem] bg-indigo-600 text-white flex items-center justify-center font-black text-3xl shadow-xl shadow-indigo-100">
+              class="w-20 h-20 rounded-[1.75rem] bg-brand-primary text-white flex items-center justify-center font-black text-3xl shadow-xl shadow-amber-200">
               {{ selectedUser.full_name?.charAt(0) || selectedUser.email?.charAt(0) }}
             </div>
             <div v-if="selectedSouvenir"
@@ -133,7 +133,7 @@
               {{ selectedSouvenir.code }}
             </div>
             <div>
-              <span class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-1 block">目前檢查對象</span>
+              <span class="text-[10px] font-black text-brand-primary uppercase tracking-[0.2em] mb-1 block">目前檢查對象</span>
               <h2 class="text-3xl font-black text-slate-800 tracking-tighter">{{ selectedUser?.full_name ||
                 selectedUser?.email || selectedSouvenir?.name }}</h2>
               <div class="flex items-center gap-2 mt-2">
@@ -160,8 +160,8 @@
 
         <!-- Inventory List -->
         <div v-if="loadingInventory" class="py-24 flex flex-col items-center gap-6">
-          <div class="w-16 h-16 border-8 border-indigo-50 border-t-indigo-600 rounded-full animate-spin"></div>
-          <p class="text-sm font-black text-indigo-300 uppercase tracking-[0.2em] animate-pulse">正在取得紀錄...</p>
+          <div class="w-16 h-16 border-8 border-slate-50 border-t-brand-primary rounded-full animate-spin"></div>
+          <p class="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em] animate-pulse">正在取得紀錄...</p>
         </div>
 
         <div v-else-if="inventory.length === 0" class="glass-card py-24 text-center">
@@ -178,18 +178,18 @@
 
         <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up delay-200">
           <div v-for="(item, idx) in inventory" :key="item.id"
-            class="glass-card p-6 flex flex-col group hover:border-rose-200 transition-all active:scale-[0.98]">
+            class="glass-card p-6 flex flex-col group hover:border-amber-200 transition-all active:scale-[0.98]">
 
             <!-- User Info (in Souvenir Mode) -->
-            <div v-if="searchMode === 'souvenir'" class="flex items-center gap-3 mb-6 p-4 rounded-2xl bg-indigo-50/50">
+            <div v-if="searchMode === 'souvenir'" class="flex items-center gap-3 mb-6 p-4 rounded-2xl bg-slate-50/50">
               <div
-                class="h-10 w-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm">
+                class="h-10 w-10 rounded-xl bg-brand-primary text-white flex items-center justify-center font-black text-sm shadow-sm ring-2 ring-white">
                 {{ item.profile?.full_name?.charAt(0) || item.profile?.email?.charAt(0) }}
               </div>
               <div class="min-w-0">
-                <div class="text-xs font-black text-indigo-900 truncate leading-none mb-1">{{ item.profile?.full_name ||
+                <div class="text-xs font-black text-slate-800 truncate leading-none mb-1">{{ item.profile?.full_name ||
                   'Anonymous' }}</div>
-                <div class="text-[10px] text-indigo-400 font-bold truncate leading-none">{{ item.profile?.email }}</div>
+                <div class="text-[10px] text-brand-primary/60 font-black truncate leading-none uppercase tracking-widest">{{ item.profile?.email }}</div>
               </div>
             </div>
 
@@ -233,13 +233,13 @@
       <!-- Welcome State (Empty search) -->
       <div v-else class="flex flex-col items-center justify-center py-32 animate-fade-in-up">
         <div
-          class="w-24 h-24 bg-indigo-50 rounded-[2.5rem] flex items-center justify-center mb-10 rotate-3 shadow-2xl shadow-indigo-100">
-          <svg v-if="searchMode === 'user'" class="h-10 w-10 text-indigo-600" fill="none" viewBox="0 0 24 24"
+          class="w-24 h-24 bg-slate-50 rounded-[2.5rem] flex items-center justify-center mb-10 rotate-3 shadow-2xl shadow-slate-200 border border-slate-100">
+          <svg v-if="searchMode === 'user'" class="h-10 w-10 text-brand-primary" fill="none" viewBox="0 0 24 24"
             stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
               d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
-          <svg v-else class="h-10 w-10 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg v-else class="h-10 w-10 text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
               d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
@@ -510,12 +510,12 @@ const resetSouvenirSearch = () => {
 
 <style scoped>
 .glass-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 2.25rem;
-  box-shadow: 0 10px 40px -10px rgba(31, 38, 135, 0.05);
+  box-shadow: 0 20px 50px -15px rgba(15, 23, 42, 0.04);
 }
 
 @keyframes fade-in-up {

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-[#fafafa]">
+  <div class="min-h-screen bg-surface-50">
     <Navbar />
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
@@ -8,9 +8,9 @@
         <div>
           <div class="flex items-center gap-2 mb-4">
             <router-link to="/admin/panel"
-              class="group flex items-center gap-2 text-slate-400 hover:text-indigo-600 transition-all font-bold text-xs uppercase tracking-widest leading-none">
+              class="group flex items-center gap-2 text-slate-400 hover:text-brand-primary transition-all font-black text-[10px] uppercase tracking-[0.2em] leading-none">
               <div
-                class="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-indigo-50 group-hover:border-indigo-100 shadow-sm transition-all">
+                class="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:bg-amber-50 group-hover:border-amber-100 shadow-sm transition-all">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7" />
                 </svg>
@@ -19,7 +19,7 @@
             </router-link>
           </div>
           <h1
-            class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 tracking-tighter mb-2">
+            class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-br from-slate-900 via-brand-primary to-slate-700 tracking-tighter mb-2">
             爬蟲管理中心
           </h1>
           <p class="text-slate-400 font-bold text-xs sm:text-sm uppercase tracking-wider">
@@ -31,31 +31,31 @@
       <!-- Scraper Sources Grid -->
       <div class="mb-12">
         <div class="flex items-center gap-3 mb-6 px-2">
-          <h2 class="text-[10px] font-black text-indigo-900/40 uppercase tracking-[0.2em] flex items-center gap-2">
+          <h2 class="text-[10px] font-black text-amber-400 uppercase tracking-[0.2em] flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
             使用中來源
           </h2>
-          <div class="h-px flex-1 bg-indigo-50/50"></div>
+          <div class="h-px flex-1 bg-amber-100"></div>
           <span
-            class="text-[10px] font-black text-indigo-400 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-full">總計:
+            class="text-[10px] font-black text-brand-primary uppercase tracking-widest bg-amber-50 px-3 py-1 rounded-full">總計:
             1</span>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up delay-100">
            <!-- Gooddie Scraper Card (Hardcoded) -->
-          <div class="glass-card p-6 flex flex-col group hover:border-indigo-200 transition-all active:scale-[0.98]">
+          <div class="glass-card p-6 flex flex-col group hover:border-amber-200 transition-all active:scale-[0.98]">
             <div class="flex items-start justify-between mb-6">
               <div class="flex items-center gap-4">
                 <div
-                  class="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-2xl shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500">
+                  class="w-14 h-14 rounded-2xl bg-amber-50 text-brand-primary flex items-center justify-center font-black text-2xl shadow-sm group-hover:bg-brand-primary group-hover:text-white transition-all duration-500">
                   G
                 </div>
                 <div>
                   <h3 class="text-lg font-black text-slate-800 tracking-tight">股代 (Gooddie)</h3>
                   <div
-                    class="text-[10px] text-indigo-400 font-bold bg-indigo-50/50 px-2 py-0.5 rounded-lg inline-block w-fit truncate max-w-[150px]"
+                    class="text-[10px] text-brand-primary font-black bg-amber-50 px-2 py-0.5 rounded-lg inline-block w-fit truncate max-w-[150px]"
                     title="https://www.gooddie.tw">
                     https://www.gooddie.tw
                   </div>
@@ -71,16 +71,16 @@
               <div
                 class="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
                 <span>最後更新時間</span>
-                <span class="text-slate-600 font-mono">{{ lastRunTime }}</span>
+                <span class="text-slate-600 font-black font-mono tracking-tighter">{{ lastRunTime }}</span>
               </div>
               <div class="h-1 bg-slate-50 rounded-full overflow-hidden">
-                <div class="h-full bg-indigo-600 rounded-full w-full opacity-20"></div>
+                <div class="h-full bg-brand-primary rounded-full w-full opacity-20"></div>
               </div>
             </div>
 
             <div class="grid grid-cols-2 gap-2 mt-auto">
               <button @click="handleTriggerScraper" :disabled="running"
-                class="flex flex-col items-center justify-center p-3 rounded-2xl bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all disabled:opacity-50">
+                class="flex flex-col items-center justify-center p-3 rounded-2xl bg-amber-50 text-brand-primary hover:bg-brand-primary hover:text-white transition-all disabled:opacity-50">
                 <svg class="w-5 h-5" :class="{ 'animate-spin': running }" fill="none"
                   viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
@@ -90,11 +90,11 @@
               </button>
               
               <!-- Real-time Status Indicator -->
-              <div v-if="running && currentStatus" 
-                class="col-span-2 mt-4 p-3 rounded-2xl bg-indigo-50/50 border border-indigo-100 animate-pulse">
+              <div v-if="running && currentStatus"
+                class="col-span-2 mt-4 p-3 rounded-2xl bg-amber-50 border border-amber-100 animate-pulse">
                 <div class="flex items-center gap-2 mb-1">
-                  <div class="w-1.5 h-1.5 bg-indigo-600 rounded-full"></div>
-                  <span class="text-[10px] font-black text-indigo-600 uppercase tracking-widest">目前進度</span>
+                  <div class="w-1.5 h-1.5 bg-brand-primary rounded-full"></div>
+                  <span class="text-[10px] font-black text-brand-primary uppercase tracking-widest">目前進度</span>
                 </div>
                 <p class="text-[11px] font-bold text-slate-600 leading-snug">{{ currentStatus }}</p>
               </div>
@@ -106,16 +106,16 @@
       <!-- Scraper Logs -->
       <div>
         <div class="flex items-center gap-3 mb-6 px-2">
-          <h2 class="text-[10px] font-black text-indigo-900/40 uppercase tracking-[0.2em] flex items-center gap-2">
+          <h2 class="text-[10px] font-black text-amber-400 uppercase tracking-[0.2em] flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             執行紀錄
           </h2>
-          <div class="h-px flex-1 bg-indigo-50/50"></div>
+          <div class="h-px flex-1 bg-amber-50"></div>
           <button @click="fetchLogs"
-            class="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline hover:scale-105 transition-all">重新整理日誌</button>
+            class="text-[10px] font-black text-brand-primary uppercase tracking-widest hover:underline hover:scale-105 transition-all">重新整理日誌</button>
         </div>
 
         <div class="glass-card overflow-hidden animate-fade-in-up delay-200 p-0">
@@ -210,10 +210,10 @@ const handleTriggerScraper = async () => {
         confirmButtonText: '立即執行',
         cancelButtonText: '暫時不要',
         reverseButtons: true,
-        confirmButtonColor: '#4f46e5',
+        confirmButtonColor: 'var(--brand-primary)',
         customClass: {
-            popup: 'rounded-[2rem] border-none shadow-2xl',
-            confirmButton: 'rounded-xl font-black px-6 py-3',
+            popup: 'rounded-[2rem] border-none shadow-2xl glass-card-swal',
+            confirmButton: 'rounded-xl font-black px-6 py-3 bg-brand-primary',
             cancelButton: 'rounded-xl font-black px-6 py-3'
         }
     })
@@ -303,5 +303,13 @@ onMounted(() => {
 
 .delay-200 {
   animation-delay: 0.2s;
+}
+
+:deep(.glass-card-swal) {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
 }
 </style>
