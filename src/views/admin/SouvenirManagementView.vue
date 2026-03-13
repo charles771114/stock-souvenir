@@ -148,8 +148,6 @@
                   <td class="px-6 py-5">
                     <div class="text-sm font-black text-slate-800 group-hover:text-brand-primary transition-colors">{{
                       item.name }}</div>
-                    <div class="text-[9px] font-bold text-slate-300 uppercase tracking-widest leading-none mt-1">Master
-                      Record</div>
                   </td>
                   <td class="px-6 py-5">
                     <div v-if="item.souvenir_item" class="text-xs font-bold text-slate-600">{{ item.souvenir_item }}
@@ -183,17 +181,16 @@
                     </div>
                   </td>
                   <td class="px-8 py-5 text-right pr-10">
-                    <div
-                      class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all scale-95 group-hover:scale-100">
+                    <div class="flex items-center justify-end gap-2">
                       <button @click="openEditModal(item)"
-                        class="h-10 w-10 flex items-center justify-center rounded-xl bg-amber-50 text-brand-primary hover:bg-brand-primary hover:text-white transition-all">
+                        class="h-10 w-10 flex items-center justify-center rounded-xl bg-amber-400 text-white hover:bg-amber-500 hover:shadow-lg transition-all shadow-sm">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                           <path stroke-linecap="round" stroke-linejoin="round"
                             d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
                       </button>
                       <button @click="confirmDelete(item)"
-                        class="h-10 w-10 flex items-center justify-center rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-600 hover:text-white transition-all">
+                        class="h-10 w-10 flex items-center justify-center rounded-xl bg-rose-500 text-white hover:bg-rose-600 hover:shadow-lg transition-all shadow-sm">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                           <path stroke-linecap="round" stroke-linejoin="round"
                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -220,13 +217,13 @@
                 </div>
                 <div class="flex gap-2">
                   <button @click="openEditModal(item)"
-                    class="h-10 w-10 rounded-xl bg-slate-50 text-brand-primary flex items-center justify-center transition-all"><svg
+                    class="h-10 w-10 rounded-xl bg-amber-400 text-white flex items-center justify-center transition-all shadow-sm hover:bg-amber-500"><svg
                       class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                       <path stroke-linecap="round" stroke-linejoin="round"
                         d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                     </svg></button>
                   <button @click="confirmDelete(item)"
-                    class="h-10 w-10 rounded-xl bg-slate-50 text-rose-500 flex items-center justify-center transition-all"><svg
+                    class="h-10 w-10 rounded-xl bg-rose-500 text-white flex items-center justify-center transition-all shadow-sm hover:bg-rose-600"><svg
                       class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                       <path stroke-linecap="round" stroke-linejoin="round"
                         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -235,12 +232,12 @@
               </div>
 
               <div class="p-4 rounded-xl bg-slate-50 mb-4 border border-slate-100">
-                <span class="text-[8px] font-black text-slate-300 uppercase tracking-widest block mb-1">Item
+                <span class="text-[8px] font-black text-slate-300 uppercase tracking-widest block mb-1">
                   紀念品內容描述</span>
                 <div v-if="item.souvenir_item" class="text-sm font-bold text-slate-700 leading-tight">{{
                   item.souvenir_item }}</div>
-                <div v-else class="text-[10px] font-black text-amber-500/60 uppercase tracking-widest italic">Pending
-                  verification</div>
+                <div v-else class="text-[10px] font-black text-amber-500/60 uppercase tracking-widest italic">
+                  待補資料</div>
               </div>
 
               <div class="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">

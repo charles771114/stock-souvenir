@@ -91,69 +91,91 @@
                 <!-- User Header -->
                 <div class="p-6 sm:p-8 bg-slate-50/50 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary font-black uppercase shadow-sm">
+                            {{ (userGroup.full_name || userGroup.email || '?').charAt(0) }}
+                        </div>
                         <div>
                             <div class="text-base font-black text-slate-800 leading-tight mb-1">
                                 {{ userGroup.full_name || '匿名用戶' }}
                             </div>
-                            <div class="text-[11px] font-bold text-brand-primary/60 uppercase tracking-wider font-mono">
+                            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                                 {{ userGroup.email }}
                             </div>
                         </div>
                     </div>
                     <div class="flex items-center gap-4 bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm">
                          <div class="text-right">
-                            <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">持有品項</span>
-                            <span class="text-lg font-black text-slate-800">{{ userGroup.items.length }}</span>
-                         </div>
-                         <div class="w-px h-8 bg-slate-100"></div>
-                         <div class="text-right">
-                             <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">總數量</span>
+                             <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">總兌換次數</span>
                              <span class="text-lg font-black text-brand-primary">{{ userGroup.totalCount }}</span>
                          </div>
                     </div>
                 </div>
 
-                <!-- Items List -->
+                <!-- Categories List -->
                 <div class="divide-y divide-slate-50">
-                    <div v-for="item in userGroup.items" :key="item.souvenir_item" class="group">
-                        <!-- Item Summary Row -->
+                    <div v-for="catGroup in userGroup.categories" :key="catGroup.category_id" class="group">
+                        <!-- Category Summary Row -->
                          <div class="px-6 sm:px-8 py-4 flex items-center justify-between hover:bg-amber-50 transition-colors cursor-pointer"
-                              @click="toggleDetails(userGroup.user_id, item.souvenir_item)">
+                              @click="toggleCategory(userGroup.user_id, catGroup.category_id)">
                             <div class="flex items-center gap-4">
                                 <div class="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-300 group-hover:text-brand-primary group-hover:border-amber-200 transition-all">
                                     <svg class="w-4 h-4 transition-transform duration-300" 
-                                         :class="{ 'rotate-180': isExpanded(userGroup.user_id, item.souvenir_item) }"
+                                         :class="{ 'rotate-180': isCategoryExpanded(userGroup.user_id, catGroup.category_id) }"
                                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                     </svg>
                                 </div>
+                                <div :class="['w-2 h-2 rounded-full shadow-sm', getColorClass(catGroup.category_color)]"></div>
                                 <span class="text-sm font-black text-slate-700 group-hover:text-brand-primary transition-colors">
-                                    {{ item.souvenir_item }}
+                                    {{ catGroup.category_name }}
                                 </span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="px-3 py-1 bg-slate-50 text-slate-600 rounded-lg text-xs font-black group-hover:bg-amber-100 group-hover:text-brand-primary transition-colors">
-                                    {{ item.count }} 個
+                                    {{ catGroup.totalItems }} 種類
                                 </span>
                             </div>
                          </div>
 
-                        <!-- Expandable Details (Company List) -->
-                         <div v-if="isExpanded(userGroup.user_id, item.souvenir_item)" class="bg-slate-50 border-y border-slate-100/50 px-6 sm:px-8 py-4 animate-fade-in shadow-inner">
-                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                 <div v-for="comp in item.companies" :key="comp.id" 
-                                      class="bg-white border border-slate-100 rounded-xl p-3 flex items-center gap-3 shadow-sm hover:border-amber-200 transition-all">
-                                     <span class="px-2 py-1 rounded-md bg-slate-100 text-slate-600 font-mono text-[10px] font-black tracking-tight shrink-0 border border-slate-200">
-                                         {{ comp.stock_code }}
-                                     </span>
-                                     <div class="min-w-0">
-                                         <div class="text-xs font-black text-slate-800 truncate">{{ comp.company_name }}</div>
-                                         <div class="flex items-center gap-2 mt-1">
-                                             <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 uppercase tracking-tighter">
-                                                 {{ comp.portfolio_name }}
-                                             </span>
-                                             <span class="text-[9px] text-slate-300">|</span>
-                                             <span class="text-[9px] font-mono text-slate-400">{{ formatDate(comp.meeting_date) }}</span>
+                        <!-- Expandable Details (Grouped Items under Category) -->
+                         <div v-if="isCategoryExpanded(userGroup.user_id, catGroup.category_id)" class="bg-slate-50 border-y border-slate-100/50 px-6 sm:px-8 py-4 animate-fade-in shadow-inner">
+                             <div class="space-y-3">
+                                 <!-- Grouped Item Row -->
+                                 <div v-for="itemGroup in catGroup.items" :key="itemGroup.souvenir_item" class="bg-white border border-slate-100 rounded-xl overflow-hidden shadow-sm hover:border-amber-200 transition-all">
+                                     <div class="p-3 sm:px-4 sm:py-3 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors"
+                                          @click="toggleItem(userGroup.user_id, catGroup.category_id, itemGroup.souvenir_item)">
+                                         <div class="flex items-center gap-3">
+                                             <div class="w-5 h-5 rounded bg-slate-100 flex items-center justify-center text-slate-400 group-hover:text-brand-primary transition-all">
+                                                 <svg class="w-3 h-3 transition-transform duration-300" 
+                                                      :class="{ 'rotate-180': isItemExpanded(userGroup.user_id, catGroup.category_id, itemGroup.souvenir_item) }"
+                                                      fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                 </svg>
+                                             </div>
+                                             <span class="text-sm font-black text-slate-800">{{ itemGroup.souvenir_item }}</span>
+                                         </div>
+                                         <span class="px-2 py-1 bg-brand-primary/10 text-brand-primary rounded text-[10px] font-black tracking-widest uppercase">
+                                             {{ itemGroup.companies.length }} 筆明細
+                                         </span>
+                                     </div>
+
+                                     <!-- Leaf Details (Companies for this Item) -->
+                                     <div v-if="isItemExpanded(userGroup.user_id, catGroup.category_id, itemGroup.souvenir_item)" class="bg-slate-50/50 border-t border-slate-50 px-4 py-3">
+                                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                                             <div v-for="comp in itemGroup.companies" :key="comp.id" class="bg-white border border-slate-100 rounded-lg p-2 flex items-center justify-between shadow-sm">
+                                                 <div class="flex items-center gap-2 min-w-0">
+                                                     <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-mono text-[9px] font-black tracking-tight shrink-0">
+                                                         {{ comp.stock_code }}
+                                                     </span>
+                                                     <div class="flex flex-col min-w-0">
+                                                         <span class="text-xs font-bold text-slate-700 truncate">{{ comp.company_name }}</span>
+                                                         <span class="text-[10px] text-slate-500 truncate" :title="comp.original_item_name">{{ comp.original_item_name }}</span>
+                                                     </div>
+                                                 </div>
+                                                 <span class="text-[8px] font-black px-1.5 py-0.5 rounded border border-slate-100 text-slate-400 uppercase tracking-tighter shrink-0 ml-2">
+                                                     {{ comp.portfolio_name }}
+                                                 </span>
+                                             </div>
                                          </div>
                                      </div>
                                  </div>
@@ -183,55 +205,144 @@ const loading = ref(false)
 const selectedUser = ref('')
 const selectedYear = ref(new Date().getFullYear().toString())
 
-// 展開狀態管理 (Set 存: "userId_itemName")
-const expandedItems = ref(new Set())
+const categories = ref(new Map())
 
-const isExpanded = (userId, itemName) => {
-    return expandedItems.value.has(`${userId}_${itemName}`)
+// Color Map (from ClassificationCenterView)
+const colorMap = {
+  gray: 'bg-slate-200',
+  red: 'bg-rose-500',
+  yellow: 'bg-brand-secondary',
+  green: 'bg-emerald-500',
+  blue: 'bg-brand-primary',
+  indigo: 'bg-indigo-600',
+  purple: 'bg-violet-600',
+  pink: 'bg-pink-600',
 }
 
-const toggleDetails = (userId, itemName) => {
-    const key = `${userId}_${itemName}`
-    if (expandedItems.value.has(key)) {
-        expandedItems.value.delete(key)
+const getColorClass = (colorName) => {
+  return colorMap[colorName] || colorMap['gray']
+}
+
+// 展開狀態管理
+const expandedCategories = ref(new Set()) // "userId_categoryId"
+const expandedGroupedItems = ref(new Set()) // "userId_categoryId_itemName"
+
+const isCategoryExpanded = (userId, categoryId) => {
+    return expandedCategories.value.has(`${userId}_${categoryId}`)
+}
+
+const toggleCategory = (userId, categoryId) => {
+    const key = `${userId}_${categoryId}`
+    if (expandedCategories.value.has(key)) {
+        expandedCategories.value.delete(key)
     } else {
-        expandedItems.value.add(key)
+        expandedCategories.value.add(key)
     }
 }
 
-// 🆕 第一層聚合: User -> Items -> Companies
+const isItemExpanded = (userId, categoryId, itemName) => {
+    return expandedGroupedItems.value.has(`${userId}_${categoryId}_${itemName}`)
+}
+
+const toggleItem = (userId, categoryId, itemName) => {
+    const key = `${userId}_${categoryId}_${itemName}`
+    if (expandedGroupedItems.value.has(key)) {
+        expandedGroupedItems.value.delete(key)
+    } else {
+        expandedGroupedItems.value.add(key)
+    }
+}
+
+// 輔助函數：將品名正規化，以便合併相似的紀念品
+// 例如「全家便利商店禮物卡50元」和「全家便利商店50元禮券」都會變成「全家 50元商品卡」
+// 統一超商 和 7-11 視為相同
+const normalizeItemName = (originalName) => {
+    if (!originalName) return '未知物品'
+    
+    let n = originalName.toUpperCase()
+    
+    // 擷取金額 (容許 "50元" 或 單純 "50"，但避開股票代號，通常代號在另一欄，這裡只有紀念品名稱)
+    const amountMatch = n.match(/([0-9]+)\s*元/) || n.match(/(?:^|[^0-9])([0-9]{2,4})(?:$|[^0-9])/)
+    let amount = ''
+    if (amountMatch) {
+       amount = amountMatch[1] || ''
+    }
+
+    const is711 = n.includes('7-11') || n.includes('統一超商') || n.includes('統一超')
+    const isFamilyMart = n.includes('全家')
+    const isHiLife = n.includes('萊爾富')
+    const isOK = n.includes('OK') || n.includes('ＯＫ')
+    const isGeneralStore = n.includes('超商') && !is711 && !isFamilyMart && !isHiLife && !isOK
+    
+    // 判斷是否為商品卡/禮物卡/禮券
+    const isCard = n.includes('卡') || n.includes('券') || n.includes('禮物')
+
+    if (is711) return amount ? `7-11 ${amount}元商品卡/券` : '7-11 商品卡/券'
+    if (isFamilyMart) return amount ? `全家 ${amount}元商品卡/券` : '全家 商品卡/券'
+    if (isHiLife) return amount ? `萊爾富 ${amount}元商品卡/券` : '萊爾富 商品卡/券'
+    if (isOK) return amount ? `OK超商 ${amount}元商品卡/券` : 'OK超商 商品卡/券'
+    if (isGeneralStore && isCard) return amount ? `超商 ${amount}元商品卡/券` : '超商 商品卡/券'
+    
+    return originalName
+}
+
+// 🆕 聚合: User -> Category (Tag) -> ItemGroup (by souvenir_item) -> Companies
 const aggregatedData = computed(() => {
     const userMap = new Map()
 
+    const unclassifiedId = -1
+    const unclassifiedCat = { name: '未分類項目', color: 'gray' }
+
     rawFavorites.value.forEach(fav => {
-        // 1. 取得或建立 User Group
+        // 1. User Group
         if (!userMap.has(fav.user_id)) {
             userMap.set(fav.user_id, {
                 user_id: fav.user_id,
                 email: fav.email,
                 full_name: fav.full_name,
-                itemsMap: new Map(), // 用 Item Name 當 Key
+                categoriesMap: new Map(),
                 totalCount: 0
             })
         }
-
+        
         const userGroup = userMap.get(fav.user_id)
         
-        // 2. 取得或建立 Item Group
-        const itemName = fav.souvenir_item
-        if (!userGroup.itemsMap.has(itemName)) {
-            userGroup.itemsMap.set(itemName, {
-                souvenir_item: itemName,
-                count: 0,
-                companies: []
+        // 2. Category Group (inside User)
+        const catId = fav.category_id || unclassifiedId
+        if (!userGroup.categoriesMap.has(catId)) {
+            const catInfo = categories.value.get(catId) || unclassifiedCat
+            userGroup.categoriesMap.set(catId, {
+                category_id: catId,
+                category_name: catInfo.name || '其他/未知分類',
+                category_color: catInfo.color || 'gray',
+                itemsMap: new Map(), // Changed from items array to itemsMap
+                totalItems: 0,
+                count: 0
             })
         }
 
-        const itemGroup = userGroup.itemsMap.get(itemName)
+        const catGroup = userGroup.categoriesMap.get(catId)
+        
+        // 3. Item Group (inside Category, grouping by souvenir_item to combine identical ones)
+        const rawItemName = fav.souvenir_item || '未知物品'
+        const itemName = normalizeItemName(rawItemName)
+        
+        if (!catGroup.itemsMap.has(itemName)) {
+            catGroup.itemsMap.set(itemName, {
+                souvenir_item: itemName,
+                companies: []
+            })
+            catGroup.totalItems++
+        }
+        
+        const itemGroup = catGroup.itemsMap.get(itemName)
 
-        // 3. 加入詳細資料
-        itemGroup.companies.push(fav)
-        itemGroup.count++
+        // 4. Add company detail (保留原始品名供參考，如果在明細裡想看的話可以擴充，但目前統一存入)
+        itemGroup.companies.push({
+            ...fav,
+            original_item_name: rawItemName // store the original name in case we want to show it in UI
+        })
+        catGroup.count++
         userGroup.totalCount++
     })
 
@@ -239,7 +350,14 @@ const aggregatedData = computed(() => {
     return Array.from(userMap.values())
         .map(user => ({
             ...user,
-            items: Array.from(user.itemsMap.values()).sort((a, b) => b.count - a.count)
+            categories: Array.from(user.categoriesMap.values()).map(cat => ({
+                ...cat,
+                items: Array.from(cat.itemsMap.values()).sort((a, b) => {
+                    const nameCompare = a.souvenir_item.localeCompare(b.souvenir_item, 'zh-TW')
+                    if (nameCompare !== 0) return nameCompare
+                    return b.companies.length - a.companies.length
+                })
+            })).sort((a, b) => b.count - a.count)
         }))
         .sort((a, b) => b.totalCount - a.totalCount)
 })
@@ -259,7 +377,7 @@ const fetchFavorites = async () => {
         id, user_id, portfolio_id, souvenir_id, created_at,
         profiles!inner(email, full_name),
         portfolios(name, is_default),
-        souvenirs!inner(code, name, souvenir_item, meeting_date, last_buy_date)
+        souvenirs!inner(code, name, souvenir_item, category_id, meeting_date, last_buy_date)
       `)
       .eq('status', 'holding')  // 只查詢已入袋
       .order('created_at', { ascending: false })
@@ -288,6 +406,7 @@ const fetchFavorites = async () => {
       stock_code: item.souvenirs.code,
       company_name: item.souvenirs.name,
       souvenir_item: item.souvenirs.souvenir_item,
+      category_id: item.souvenirs.category_id,
       meeting_date: item.souvenirs.meeting_date,
       last_buy_date: item.souvenirs.last_buy_date,
       collected_at: item.created_at,
@@ -356,6 +475,7 @@ const fetchFavorites = async () => {
             stock_code: souvenir.code,
             company_name: souvenir.name,
             souvenir_item: souvenir.souvenir_item,
+            category_id: souvenir.category_id,
             meeting_date: souvenir.meeting_date,
             last_buy_date: souvenir.last_buy_date,
             collected_at: inv.created_at,
@@ -411,25 +531,24 @@ const formatDate = (dateString) => {
 }
 
 const exportCSV = () => {
-    // 輸出 CSV 時，可以選擇展開所有詳細資料，或是僅輸出聚合資料
-    // 這裡我們輸出詳細資料，但排序依照 User -> Item
-    const headers = ['用戶', 'Email', '紀念品', '股票代號', '公司名稱', '帳戶']
-    
-    // 為了 export 方便，我們可以從 aggregatedData 反解，或是直接用 rawFavorites 排序
-    // 直接用 rawFavorites 排序最快，但為了符合視覺的聚合感，我們依照聚合後的順序來產出
+    // Export Data by User > Category > Item > Company
+    const headers = ['用戶', 'Email', '標籤分類', '紀念品', '股票代號', '公司名稱', '帳戶']
     
     const rows = []
-    aggregatedData.value.forEach(user => {
-        user.items.forEach(item => {
-            item.companies.forEach(comp => {
-                rows.push([
-                    user.full_name || '匿名用戶',
-                    user.email,
-                    item.souvenir_item,
-                    comp.stock_code,
-                    comp.company_name,
-                    comp.portfolio_name
-                ])
+    aggregatedData.value.forEach(userGroup => {
+        userGroup.categories.forEach(catGroup => {
+            catGroup.items.forEach(itemGroup => {
+                itemGroup.companies.forEach(comp => {
+                    rows.push([
+                        userGroup.full_name || '匿名用戶',
+                        userGroup.email,
+                        catGroup.category_name,
+                        itemGroup.souvenir_item,
+                        comp.stock_code,
+                        comp.company_name,
+                        comp.portfolio_name
+                    ])
+                })
             })
         })
     })
@@ -444,9 +563,17 @@ const exportCSV = () => {
 }
 
 
+const fetchCategories = async () => {
+    const { data } = await supabase.from('souvenir_categories').select('id, name, color')
+    if (data) {
+        categories.value = new Map(data.map(c => [c.id, c]))
+    }
+}
+
 watch([selectedUser, selectedYear], fetchFavorites)
 
 onMounted(async () => {
+  await fetchCategories()
   await fetchUsers()
   await fetchFavorites()
 })

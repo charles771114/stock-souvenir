@@ -283,6 +283,7 @@ import { useDialog } from '@/composables/useDialog'
 import { useToast } from '@/composables/useToast'
 import { supabase } from '@/lib/supabase'
 import { computed, onMounted, ref } from 'vue'
+import { autoClassifyWithAI } from '@/services/aiClassificationService'
 
 const { showToast } = useToast()
 const { confirm: openConfirm } = useDialog()
@@ -375,6 +376,68 @@ const assignCategory = async (souvenirName: string, categoryIdStr: string) => {
   if (!categoryIdStr || !souvenirName) return
   const categoryId = parseInt(categoryIdStr)
 
+  // Auto-add keyword to the category with intelligent simplification
+  const targetCategory = categories.value.find(c => c.id === categoryId)
+  if (targetCategory) {
+    let currentKeywords = [...(targetCategory.keywords || [])]
+    const newItemName = souvenirName.trim()
+    let shouldUpdate = false
+
+    // If perfectly matches an existing keyword, do nothing
+    const exactMatch = currentKeywords.some(k => newItemName.includes(k) || k.includes(newItemName))
+    
+    if (!exactMatch) {
+      // Find overlap with existing keywords
+      let bestMatchKeyword = ''
+      let bestMatchLen = 0
+      let obsoleteKeywordIdx = -1
+
+      for (let i = 0; i < currentKeywords.length; i++) {
+        const kw = currentKeywords[i]
+        // Simple overlapping extraction (Find longest common substring >= 2 chars)
+        let maxSubstr = ''
+        for (let start = 0; start < newItemName.length; start++) {
+          for (let end = start + 2; end <= newItemName.length; end++) {
+            const substr = newItemName.substring(start, end)
+            if (kw.includes(substr) && substr.length > maxSubstr.length) {
+              maxSubstr = substr
+            }
+          }
+        }
+        if (maxSubstr.length > bestMatchLen && maxSubstr.length >= 2) {
+          bestMatchLen = maxSubstr.length
+          bestMatchKeyword = maxSubstr
+          obsoleteKeywordIdx = i
+        }
+      }
+
+      if (bestMatchLen >= 2) {
+        // Replace the old, longer keyword with the newly found concise overlap
+        currentKeywords[obsoleteKeywordIdx] = bestMatchKeyword
+        shouldUpdate = true
+      } else {
+        // No meaningful overlap found, just push the original string
+        currentKeywords.push(newItemName)
+        shouldUpdate = true
+      }
+
+      // De-duplicate any keywords that might now encompass each other
+      currentKeywords = currentKeywords.filter((k1, idx1) => {
+        return !currentKeywords.some((k2, idx2) => idx1 !== idx2 && k1.length > k2.length && k1.includes(k2))
+      })
+      
+      // Ensure unique array
+      currentKeywords = [...new Set(currentKeywords)]
+    }
+
+    if (shouldUpdate) {
+      const { error: updateCatError } = await updateCategory(categoryId, { keywords: currentKeywords })
+      if (updateCatError) {
+        showToast('無法更新分類關鍵字: ' + updateCatError.message, 'warning')
+      }
+    }
+  }
+
   const { error } = await supabase
     .from('souvenirs')
     .update({
@@ -387,7 +450,7 @@ const assignCategory = async (souvenirName: string, categoryIdStr: string) => {
   if (!error) {
     clearGiftsCache() // 清除所有年份快取，因為分類可能跨年份
     rawQueue.value = rawQueue.value.filter(item => item.souvenir_item !== souvenirName)
-    showToast(`「${souvenirName}」已分類`, 'success')
+    showToast(`「${souvenirName}」已分類並自動加入規則`, 'success')
   } else {
     showToast('分類失敗: ' + error.message, 'error')
   }
@@ -396,11 +459,12 @@ const assignCategory = async (souvenirName: string, categoryIdStr: string) => {
 const autoClassify = async () => {
   if (groupedQueue.value.length === 0) return
   
-  const ok = await openConfirm(`確定要對目前佇列中 ${groupedQueue.value.length} 組項目執行自動分類嗎？`)
+  const ok = await openConfirm(`確定要對目前佇列中 ${groupedQueue.value.length} 組項目執行自動分類嗎？（未匹配到的項目將交由 AI 輔助）`)
   if (!ok) return
 
   autoClassifying.value = true
   let successCount = 0
+  let aiSuccessCount = 0
 
   // 1. Prepare rules and static snapshot of current queue
   const rules = categories.value.map(cat => ({
@@ -410,8 +474,9 @@ const autoClassify = async () => {
   }))
   
   const groupsToProcess = [...groupedQueue.value]
+  const unmatchedItems: string[] = []
 
-  // 2. Process each group from the static snapshot
+  // 2. Local Matching (Process each group from the static snapshot)
   for (const group of groupsToProcess) {
     let matchedId = null
     const name = group.name.toLowerCase()
@@ -424,17 +489,68 @@ const autoClassify = async () => {
     }
 
     if (matchedId) {
-      // Simulate selection
+      // Simulate selection for locally matched
       await assignCategory(group.name, matchedId.toString())
       successCount++
+    } else {
+      unmatchedItems.push(group.name)
+    }
+  }
+
+  // 3. AI Fallback for Unmatched Items
+  if (unmatchedItems.length > 0) {
+    try {
+      const simplifiedCategories = rules.map(r => ({ id: r.id, name: r.name }))
+      const aiResults = await autoClassifyWithAI(unmatchedItems, simplifiedCategories)
+
+      for (const result of aiResults) {
+        if (result.recommended_category_id) {
+          // AI matched it to a category
+          const categoryId = result.recommended_category_id
+          const itemName = result.souvenir_item
+          const extractedKeyword = result.extracted_keyword
+
+          // Verify if category exists
+          const targetCategory = categories.value.find(c => c.id === categoryId)
+          if (targetCategory) {
+            // Add the smart keyword cleanly
+            let currentKeywords = [...(targetCategory.keywords || [])]
+            if (extractedKeyword && !currentKeywords.includes(extractedKeyword)) {
+              currentKeywords.push(extractedKeyword)
+              // Ensure unique
+              currentKeywords = [...new Set(currentKeywords)]
+              await updateCategory(categoryId, { keywords: currentKeywords })
+            }
+
+            // Update database
+            const { error: dbError } = await supabase
+              .from('souvenirs')
+              .update({
+                category_id: categoryId,
+                classification_status: 'verified'
+              })
+              .eq('souvenir_item', itemName)
+              .eq('classification_status', 'unclassified')
+
+            if (!dbError) {
+              clearGiftsCache()
+              rawQueue.value = rawQueue.value.filter(item => item.souvenir_item !== itemName)
+              aiSuccessCount++
+            }
+          }
+        }
+      }
+    } catch (e: any) {
+      showToast('AI 分類過程遭遇錯誤: ' + e.message, 'error')
     }
   }
 
   autoClassifying.value = false
-  if (successCount > 0) {
-    showToast(`自動分類完成，共歸類 ${successCount} 組項目`, 'success')
+  
+  if (successCount > 0 || aiSuccessCount > 0) {
+    showToast(`自動分類完成！規則匹配: ${successCount} 組，AI 協助: ${aiSuccessCount} 組`, 'success')
   } else {
-    showToast('未找到匹配的分類規則', 'info')
+    showToast('目前規則與 AI 暫時無法分類剩餘項目', 'info')
   }
 }
 

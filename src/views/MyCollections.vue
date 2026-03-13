@@ -53,7 +53,19 @@
       </div>
 
       <!-- Content Sections -->
-      <div v-if="!loading && hasFilteredItems" class="space-y-16">
+      <div v-if="loading || categoriesLoading" class="space-y-16">
+          <div class="stagger-item-1">
+             <div class="flex items-center gap-4 mb-8">
+                <div class="w-2 h-8 bg-slate-200 rounded-full animate-pulse"></div>
+                <div class="w-48 h-8 bg-slate-200 rounded-lg animate-pulse"></div>
+             </div>
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div v-for="i in 4" :key="i" class="glass-card p-6 h-40 bg-slate-100/50 animate-pulse border border-slate-100"></div>
+             </div>
+          </div>
+      </div>
+      
+      <div v-else-if="!loading && !categoriesLoading && hasFilteredItems" class="space-y-16">
         <!-- 1. 領取計畫 (The Priority Section) -->
         <div v-if="aggregatedPlanned.length > 0" class="stagger-item-3">
           <div class="flex items-center justify-between mb-8 px-2">
@@ -159,57 +171,97 @@
             <h2 class="text-2xl font-black text-slate-800 tracking-tight">已在庫存清單</h2>
           </div>
 
-          <div v-if="isCurrentYear" class="space-y-4">
-               <div v-for="group in aggregatedInventory" :key="group.souvenir_item" 
-                    class="glass-card overflow-hidden transition-all hover:bg-white/80 border border-slate-100/50 group">
+          <div v-if="isCurrentYear" class="space-y-6">
+               <div v-for="catGroup in aggregatedInventory" :key="catGroup.category_id" 
+                    class="glass-card overflow-hidden bg-white/40 border border-slate-100/50">
                   
-                  <div class="px-8 py-6 flex items-center justify-between cursor-pointer"
-                       @click="toggleDetails('inv_' + group.souvenir_item)">
-                      <div class="flex items-center gap-6">
-                           <div>
-                               <h3 class="text-lg font-black text-slate-800">{{ group.souvenir_item }}</h3>
-                               <p class="text-base font-black text-slate-600 mt-1 uppercase tracking-widest">
-                                  {{ group.companies.length }} 家已解鎖
-                                </p>
-                           </div>
+                  <!-- Category Header -->
+                  <div class="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-white/60 transition-colors"
+                       @click="toggleCategory('inv_cat_' + catGroup.category_id)">
+                      <div class="flex items-center gap-4">
+                          <!-- Color Indicator -->
+                          <div class="w-3 h-3 rounded-full shadow-sm"
+                               :class="[
+                                   catGroup.category_color === 'rose' ? 'bg-rose-400 shadow-rose-200' :
+                                   catGroup.category_color === 'amber' ? 'bg-amber-400 shadow-amber-200' :
+                                   catGroup.category_color === 'emerald' ? 'bg-emerald-400 shadow-emerald-200' :
+                                   catGroup.category_color === 'blue' ? 'bg-blue-400 shadow-blue-200' :
+                                   catGroup.category_color === 'indigo' ? 'bg-indigo-400 shadow-indigo-200' :
+                                   catGroup.category_color === 'purple' ? 'bg-purple-400 shadow-purple-200' :
+                                   'bg-slate-400 shadow-slate-200'
+                               ]"></div>
+                          <h3 class="text-xl font-black text-slate-800 tracking-tight">{{ catGroup.category_name }}</h3>
+                          <span class="px-2.5 py-1 rounded bg-slate-100 text-slate-500 text-[10px] font-black tracking-widest uppercase">
+                              共 {{ catGroup.count }} 筆
+                          </span>
                       </div>
-                      <div class="flex items-center gap-5">
-                          <div class="px-4 py-2 rounded-xl bg-emerald-100/50 text-emerald-700 text-base font-black uppercase tracking-widest border border-emerald-100">
-                             x{{ group.companies.length }}
-                          </div>
-                          <div class="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-400 transition-transform duration-500 shadow-sm"
-                               :class="{ 'rotate-180': isExpanded('inv_' + group.souvenir_item) }">
-                              <i class="ri-arrow-down-s-line text-2xl"></i>
-                          </div>
+                      <div class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 transition-transform duration-300"
+                           :class="{ 'rotate-180': isCategoryExpanded('inv_cat_' + catGroup.category_id) }">
+                          <i class="ri-arrow-down-s-line text-xl"></i>
                       </div>
                   </div>
 
-                  <!-- Achievement Details -->
-                  <div v-if="isExpanded('inv_' + group.souvenir_item)" class="bg-slate-50/30 border-t border-slate-100/50 px-6 py-5 space-y-3 animate-fade-in">
-                      <div v-for="item in group.companies" :key="item.id" 
-                           class="bg-white/80 backdrop-blur-md border border-slate-100 rounded-[2rem] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-5 shadow-sm hover:border-emerald-200 hover:shadow-md transition-all group/item">
+                  <!-- Category Content (Item Groups) -->
+                  <div v-if="isCategoryExpanded('inv_cat_' + catGroup.category_id)" 
+                       class="bg-slate-50/50 border-t border-slate-100/50 p-4 space-y-3">
+                       
+                       <div v-for="group in catGroup.items" :key="group.souvenir_item" 
+                            class="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm hover:border-brand-primary/20 transition-all">
                           
-                          <div class="flex items-center gap-5 min-w-0">
-                              <span class="px-3 py-2 rounded-xl bg-slate-50 text-slate-600 font-mono text-base font-black tracking-tighter border border-slate-100 group-hover/item:text-emerald-600 group-hover/item:border-emerald-100 transition-all shadow-sm">
-                                  {{ item.gift?.code }}
-                              </span>
-                              <div class="min-w-0">
-                                  <div class="flex items-center gap-3">
-                                      <span class="text-lg font-black text-slate-800 truncate">{{ item.gift?.name }}</span>
-                                      <span v-if="isCombinedView" class="text-xs px-2.5 py-1 rounded-lg bg-slate-100 text-slate-500 font-black uppercase tracking-widest border border-slate-200">
-                                          {{ getPortfolioName(item.portfolio_id) }}
-                                      </span>
+                          <!-- Item Group Header -->
+                          <div class="px-5 py-4 flex items-center justify-between cursor-pointer hover:bg-slate-50/80 transition-colors"
+                               @click="toggleDetails('inv_item_' + catGroup.category_id + '_' + group.souvenir_item)">
+                              <div class="flex items-center gap-4">
+                                   <!-- Sub-arrow indicator -->
+                                   <div class="w-6 h-6 rounded flex items-center justify-center text-slate-300 transition-transform duration-300"
+                                        :class="{ 'rotate-180 text-brand-primary': isExpanded('inv_item_' + catGroup.category_id + '_' + group.souvenir_item) }">
+                                       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                                       </svg>
+                                   </div>
+                                   <div>
+                                       <h4 class="text-base font-black text-slate-800">{{ group.souvenir_item }}</h4>
+                                   </div>
+                              </div>
+                              <div class="flex items-center gap-3">
+                                  <div class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-black uppercase tracking-widest border border-emerald-100">
+                                     {{ group.companies.length }} 家已解鎖
                                   </div>
                               </div>
                           </div>
-                          <div class="flex items-center justify-end gap-3 shrink-0">
-                               <button @click="handleRemoveInventory(item.souvenir_id, item.id)" :disabled="removing === item.id"
-                                      class="w-12 h-12 flex items-center justify-center text-rose-500 hover:bg-rose-50 rounded-2xl transition-all border border-rose-100 shadow-sm bg-white hover:border-rose-200">
-                                      <i v-if="removing === item.id" class="ri-loader-4-line animate-spin text-xl"></i>
-                                      <i v-else class="ri-delete-bin-line text-xl"></i>
-                               </button>
+
+                          <!-- Company Details (Leaf) -->
+                          <div v-if="isExpanded('inv_item_' + catGroup.category_id + '_' + group.souvenir_item)" 
+                               class="bg-slate-50/30 border-t border-slate-50 px-5 py-4 space-y-2">
+                              <div v-for="item in group.companies" :key="item.id" 
+                                   class="bg-white border text-sm border-slate-100 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm group/item hover:border-emerald-200 transition-all">
+                                  
+                                  <div class="flex items-center gap-4 min-w-0">
+                                      <span class="px-2 py-1.5 rounded-lg bg-slate-50 text-slate-500 font-mono text-xs font-black tracking-tight border border-slate-100 group-hover/item:text-emerald-600 group-hover/item:border-emerald-100 transition-all">
+                                          {{ item.gift?.code }}
+                                      </span>
+                                      <div class="min-w-0">
+                                          <div class="flex flex-col gap-0.5">
+                                              <div class="flex items-center gap-2">
+                                                  <span class="text-sm font-black text-slate-700 truncate">{{ item.gift?.name }}</span>
+                                                  <span v-if="isCombinedView" class="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-500 font-bold uppercase tracking-widest">
+                                                      {{ getPortfolioName(item.portfolio_id) }}
+                                                  </span>
+                                              </div>
+                                              <span class="text-[10px] text-slate-400 font-bold truncate" :title="item.original_item_name">{{ item.original_item_name }}</span>
+                                          </div>
+                                      </div>
+                                  </div>
+                                  <div class="flex items-center justify-end shrink-0">
+                                       <button @click="handleRemoveInventory(item.souvenir_id, item.id)" :disabled="removing === item.id"
+                                              class="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all group disabled:opacity-50">
+                                              <i v-if="removing === item.id" class="ri-loader-4-line animate-spin text-lg"></i>
+                                              <i v-else class="ri-delete-bin-line text-lg"></i>
+                                       </button>
+                                  </div>
+                              </div>
                           </div>
-                      </div>
+                       </div>
                   </div>
                </div>
           </div>
@@ -220,7 +272,7 @@
       </div>
 
       <!-- Empty State -->
-      <div v-else-if="!loading"
+      <div v-else-if="!loading && !categoriesLoading"
         class="py-32 flex flex-col items-center justify-center text-center px-8 bg-white/50 backdrop-blur-xl rounded-[3rem] border border-dashed border-slate-200 stagger-item-1">
         <div
           class="w-32 h-32 bg-slate-50 rounded-[3rem] flex items-center justify-center mb-10 border border-slate-100 shadow-inner">
@@ -247,6 +299,7 @@ import { useAuth } from '@/composables/useAuth'
 import { useCollection } from '@/composables/useCollection'
 import { useDialog } from '@/composables/useDialog'
 import { useGifts } from '@/composables/useGifts'
+import { useCategories } from '@/composables/useCategories'
 import { usePortfolio } from '@/composables/usePortfolio'
 import { usePullRefresh } from '@/composables/usePullRefresh'
 import { useToast } from '@/composables/useToast'
@@ -257,6 +310,7 @@ const { isCombinedView, portfolios, currentPortfolioId } = usePortfolio()
 const { confirm } = useDialog()
 const { showToast } = useToast()
 const { user } = useAuth()
+const { categories, fetchCategories, loading: categoriesLoading } = useCategories() // 🆕 引入分類資料與 loading 狀態
 
 // Pull to Refresh
 const { pullDistance, isRefreshing } = usePullRefresh(async () => {
@@ -459,23 +513,88 @@ const aggregatedWaiting = computed(() => {
   return Array.from(map.values()).sort((a, b) => b.count - a.count)
 })
 
-// 🆕 聚合邏輯: 已入袋 (合併所有持股項)
+// 輔助函數：將品名正規化，以便合併相似的紀念品
+const normalizeItemName = (originalName) => {
+    if (!originalName) return '未知物品'
+    if (originalName.includes('尚未公布') || originalName.includes('尚未公告')) return originalName
+    
+    let n = originalName.toUpperCase()
+    
+    // 擷取金額
+    const amountMatch = n.match(/([0-9]+)\s*元/) || n.match(/(?:^|[^0-9])([0-9]{2,4})(?:$|[^0-9])/)
+    let amount = ''
+    if (amountMatch) {
+       amount = amountMatch[1] || ''
+    }
+
+    const is711 = n.includes('7-11') || n.includes('統一超商') || n.includes('統一超')
+    const isFamilyMart = n.includes('全家')
+    const isHiLife = n.includes('萊爾富')
+    const isOK = n.includes('OK') || n.includes('ＯＫ')
+    const isGeneralStore = n.includes('超商') && !is711 && !isFamilyMart && !isHiLife && !isOK
+    
+    const isCard = n.includes('卡') || n.includes('券') || n.includes('禮物')
+
+    if (is711) return amount ? `7-11 ${amount}元商品卡/券` : '7-11 商品卡/券'
+    if (isFamilyMart) return amount ? `全家 ${amount}元商品卡/券` : '全家 商品卡/券'
+    if (isHiLife) return amount ? `萊爾富 ${amount}元商品卡/券` : '萊爾富 商品卡/券'
+    if (isOK) return amount ? `OK超商 ${amount}元商品卡/券` : 'OK超商 商品卡/券'
+    if (isGeneralStore && isCard) return amount ? `超商 ${amount}元商品卡/券` : '超商 商品卡/券'
+    
+    return originalName
+}
+
+// 🆕 聚合邏輯: 已入袋 (Category -> ItemGroup -> Companies)
 const aggregatedInventory = computed(() => {
-  const map = new Map()
+  const catMap = new Map()
+  
+  const unclassifiedId = -1
+  const unclassifiedCat = { name: '未分類項目', color: 'gray' }
+
   groupedCollections.value.ownedItems.forEach(item => {
-    const name = item.gift?.souvenir_item || '尚未公布'
-    if (!map.has(name)) {
-      map.set(name, {
-        souvenir_item: name,
-        companies: [],
+    // 1. Category Group
+    const catId = item.gift?.category_id || unclassifiedId
+    if (!catMap.has(catId)) {
+      const catInfo = categories.value.find(c => c.id === catId) || unclassifiedCat
+      catMap.set(catId, {
+        category_id: catId,
+        category_name: catInfo.name || '其他/未知分類',
+        category_color: catInfo.color || 'gray',
+        itemsMap: new Map(),
         count: 0
       })
     }
-    const group = map.get(name)
-    group.companies.push(item)
-    group.count++
+    const catGroup = catMap.get(catId)
+
+    // 2. Item Group (inside Category)
+    const rawName = item.gift?.souvenir_item || '尚未公布'
+    const name = normalizeItemName(rawName)
+    
+    if (!catGroup.itemsMap.has(name)) {
+      catGroup.itemsMap.set(name, {
+        souvenir_item: name,
+        companies: []
+      })
+    }
+    const itemGroup = catGroup.itemsMap.get(name)
+    itemGroup.companies.push({
+        ...item,
+        original_item_name: rawName // 紀錄原本名稱供明細顯示
+    })
+    catGroup.count++
   })
-  return Array.from(map.values()).sort((a, b) => b.count - a.count)
+
+  // 轉換 Map 為 Array 並排序
+  return Array.from(catMap.values())
+    .map(cat => ({
+      ...cat,
+      items: Array.from(cat.itemsMap.values()).sort((a, b) => {
+        const nameCompare = a.souvenir_item.localeCompare(b.souvenir_item, 'zh-TW')
+        if (nameCompare !== 0) return nameCompare
+        return b.companies.length - a.companies.length
+      })
+    }))
+    .sort((a, b) => b.count - a.count)
 })
 
 const souvenirCounts = computed(() => {
@@ -649,6 +768,9 @@ const handleRemoveInventory = async (souvenirId, collectionId) => {
 
 const loadData = async () => {
   if (user.value) {
+    if (categories.value.length === 0) {
+        await fetchCategories()
+    }
     await fetchMyCollections(selectedYear.value)
     inventoryIds.value = await fetchUserInventoryIds()
     // Fetch previous year data for hints
