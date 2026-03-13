@@ -1,5 +1,8 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex flex-col">
+  <div class="min-h-screen bg-gray-50 flex flex-col relative">
+    <!-- Global Operating Overlay -->
+    <div v-if="isAnyOperating" class="fixed inset-0 z-[100] cursor-wait bg-black/5 backdrop-blur-[1px]"></div>
+
     <Navbar />
 
     <main class="flex-grow max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
@@ -274,6 +277,9 @@ const previousYearSouvenirs = ref(new Map()) // Track previous year souvenirs fo
 const processingIds = ref(new Set())
 const inventoryProcessingIds = ref(new Set())
 const isFiltering = ref(false)
+
+// Global operation state
+const isAnyOperating = computed(() => processingIds.value.size > 0 || inventoryProcessingIds.value.size > 0)
 
 const sortOptions = [
   { label: '買進日期 ▼', value: 'date_desc' },
@@ -583,16 +589,18 @@ const handleToggleCollection = async (gift) => {
         }
         showToast('已加入追蹤清單', 'success', 1000)
       }
-      // Refresh data
-      await Promise.all([
-        fetchMyCollections(),
-        fetchAllUserCollections(filters.value.year)
-      ])
   } catch (e) {
     console.error(e)
     showToast(e.message, 'error')
   } finally {
+    // Optimistic UI: Remove loading state immediately for snappy feedback
     processingIds.value.delete(gift.id)
+    
+    // Background refresh
+    Promise.all([
+      fetchMyCollections(),
+      fetchAllUserCollections(filters.value.year)
+    ]).catch(err => console.error('Background refresh failed:', err))
   }
 }
 
@@ -627,18 +635,19 @@ const handleToggleInventory = async (gift) => {
         showToast(`「${gift.name}」已直接加入庫存`, 'success', 2000)
       }
     }
-
-    // Refresh data for both add and remove
-    await Promise.all([
-      fetchMyCollections(),
-      fetchAllUserCollections(filters.value.year),
-      fetchUserInventoryIds().then(ids => userInventoryIds.value = ids)
-    ])
   } catch (e) {
     console.error(e)
     showToast(e.message, 'error')
   } finally {
+    // Optimistic UI: Remove loading state immediately for snappy feedback
     inventoryProcessingIds.value.delete(gift.id)
+    
+    // Background refresh
+    Promise.all([
+      fetchMyCollections(),
+      fetchAllUserCollections(filters.value.year),
+      fetchUserInventoryIds().then(ids => userInventoryIds.value = ids)
+    ]).catch(err => console.error('Background refresh failed:', err))
   }
 }
 

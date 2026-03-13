@@ -73,11 +73,11 @@
               <div class="w-2 h-8 bg-brand-primary rounded-full shadow-glow"></div>
               <h2 class="text-2xl font-black text-slate-800 tracking-tight">優先待買清單</h2>
             </div>
-            <div v-if="aggregatedPlanned.filter(i => getUrgencyLevel(i.gift?.last_buy_date) === 'urgent').length > 0" 
+            <div v-if="urgentPlannedItemsCount > 0" 
                  class="flex items-center gap-3 px-5 py-2 bg-rose-50 border border-rose-100 rounded-2xl animate-pulse">
                <i class="ri-error-warning-fill text-rose-500 text-xl"></i>
                <span class="text-base font-black text-rose-600 uppercase tracking-widest">
-                 {{ aggregatedPlanned.filter(i => getUrgencyLevel(i.gift?.last_buy_date) === 'urgent').length }} 筆急需處理
+                 {{ urgentPlannedItemsCount }} 筆急需處理
                </span>
             </div>
           </div>
@@ -334,7 +334,7 @@ const previousYearSouvenirs = ref(new Map())
 const removing = ref(null)
 const addingToInventory = ref(null)  // 追蹤正在新增到庫存的項目
 const confirmedIds = ref(new Set()) // 🆕 追蹤剛確認入袋的項目
-const expandedCategories = ref({})
+const expandedCategories = ref(new Set()) // 🆕 改為 Set，因為預設全部收合/展開用有/無比較適合狀態紀錄
 const expandedItems = ref(new Set()) // 🆕 用於展開單個紀念品項目
 
 const getPortfolioName = (id) => {
@@ -388,14 +388,15 @@ const getUrgencyColor = (level) => {
 }
 
 const toggleCategory = (name) => {
-  if (expandedCategories.value[name] === undefined) {
-    expandedCategories.value[name] = true
+  if (expandedCategories.value.has(name)) {
+    expandedCategories.value.delete(name)
+  } else {
+    expandedCategories.value.add(name)
   }
-  expandedCategories.value[name] = !expandedCategories.value[name]
 }
 
 const isCategoryExpanded = (name) => {
-  return expandedCategories.value[name] !== false
+  return expandedCategories.value.has(name) // 🆕 預設是收合狀態（根據 Set 機制調整）
 }
 
 // 🆕 項目展開控制
@@ -492,6 +493,11 @@ const aggregatedPlanned = computed(() => {
   })
 
   return items
+})
+
+// 🆕 聚合邏輯: 計算緊急且已在優先清單內的數量 (快取效能優化)
+const urgentPlannedItemsCount = computed(() => {
+  return aggregatedPlanned.value.filter(i => getUrgencyLevel(i.gift?.last_buy_date) === 'urgent').length
 })
 
 // 🆕 聚合邏輯: 待公布
@@ -597,64 +603,6 @@ const aggregatedInventory = computed(() => {
     .sort((a, b) => b.count - a.count)
 })
 
-const souvenirCounts = computed(() => {
-  const groups = {} // { mainName: { isCard, subItems: { label: { count, companies: Map<name, inInventory> } } } }
-
-  filteredCollections.value.forEach(item => {
-    let name = item.gift?.souvenir_item || '尚未公布'
-    const companyName = item.gift?.name || '未知公司'
-    const inInventory = inventoryIds.value.has(item.gift?.code)
-
-    const isPending = name.includes('開會55日前再行公告') || name === '尚未公布'
-    const prevSouvenir = previousYearSouvenirs.value.get(item.gift?.code)
-
-    const parsed = name.match(/^(.*?)(\d+.*)$/)
-    const mainName = isPending ? '名稱待公告項目' : (parsed ? parsed[1].trim() : name)
-    const subLabel = isPending && prevSouvenir ? `${name} (預計：${prevSouvenir})` : (isPending ? name : (parsed ? parsed[2].trim() : '其他'))
-
-    if (!groups[mainName]) {
-      groups[mainName] = {
-        total: 0,
-        isCard: mainName.includes('商品卡') || mainName.includes('禮物卡') || mainName.includes('禮券'),
-        subItems: {}
-      }
-    }
-
-    groups[mainName].total++
-    if (!groups[mainName].subItems[subLabel]) {
-      groups[mainName].subItems[subLabel] = { count: 0, companies: new Map() }
-    }
-    groups[mainName].subItems[subLabel].count++
-    // We use a Map to store unique companies and their inventory status
-    groups[mainName].subItems[subLabel].companies.set(companyName, inInventory)
-  })
-
-  return Object.entries(groups)
-    .map(([name, data]) => ({
-      name,
-      total: data.total,
-      isCard: data.isCard,
-      subItems: Object.entries(data.subItems)
-        .map(([label, subData]) => ({
-          label,
-          count: subData.count,
-          companies: Array.from(subData.companies.entries()).map(([compName, invStatus]) => ({
-            name: compName,
-            inInventory: invStatus
-          }))
-        }))
-        .sort((a, b) => {
-          const numA = parseInt(a.label) || 0
-          const numB = parseInt(b.label) || 0
-          return numA - numB
-        })
-    }))
-    .sort((a, b) => {
-      if (a.isCard && !b.isCard) return -1
-      if (!a.isCard && b.isCard) return 1
-      return b.total - a.total
-    })
-})
 
 // 新增到庫存
 const addToInventory = async (souvenirId) => {
@@ -771,10 +719,15 @@ const loadData = async () => {
     if (categories.value.length === 0) {
         await fetchCategories()
     }
-    await fetchMyCollections(selectedYear.value)
-    inventoryIds.value = await fetchUserInventoryIds()
-    // Fetch previous year data for hints
-    previousYearSouvenirs.value = await fetchPreviousYearSouvenirs(selectedYear.value)
+    // 🆕 效能優化：讓所有資源同步拉取，不再等待瀑布流 (Waterfall)
+    const [_, fetchedInventoryIds, prevSouvenirs] = await Promise.all([
+      fetchMyCollections(selectedYear.value),
+      fetchUserInventoryIds(),
+      fetchPreviousYearSouvenirs(selectedYear.value)
+    ])
+    
+    inventoryIds.value = fetchedInventoryIds
+    previousYearSouvenirs.value = prevSouvenirs
   }
 }
 
